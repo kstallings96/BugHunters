@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/*
+ * Game shell palette. Deliberately not purple or blue: those are the colors
+ * Maya and Leo asked for, and the shell must not compete with the apps
+ * being tested. Always light, for projectors and shared Chromebooks.
+ */
+:root {
+  --paper: #fff8e7;
+  --card: #ffffff;
+  --ink: #1f2933;
+  --ink-soft: #52606d;
+  --teal: #0f766e;
+  --teal-dark: #0b5a54;
+  --amber: #f59e0b;
+  --amber-soft: #fde9b8;
+  --line: #e4d9bf;
+  --danger: #b42318;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-line: var(--line);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-atkinson);
+}
+
+html {
+  color-scheme: light;
+  font-size: 20px;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-atkinson), Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 4px solid var(--amber);
+  outline-offset: 3px;
+}
