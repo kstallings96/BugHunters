@@ -229,7 +229,7 @@ function WritePhase({
       when_source: card.whenSource,
       should: card.should,
       edits: edits.current,
-      ms: Date.now() - enteredAt,
+      ms: elapsed(enteredAt),
     });
     onSubmit(card);
   }
