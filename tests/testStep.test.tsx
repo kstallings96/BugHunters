@@ -15,7 +15,7 @@ function setup(over: Partial<GameState> = {}, aiChecker = false) {
   let game: GameState = { ...newGame(false), step: "test", testStartedAt: Date.now(), phaseEnteredAt: Date.now(), ...over };
   const onFinish = vi.fn();
   const view = () => (
-    <TestStep form={formA} game={game} capSeconds={480} aiChecker={aiChecker} onUpdate={(p) => ((game = { ...game, ...p }), rerender())} onFinish={onFinish} />
+    <TestStep form={formA} game={game} capSeconds={600} aiChecker={aiChecker} onUpdate={(p) => ((game = { ...game, ...p }), rerender())} onFinish={onFinish} />
   );
   const utils = render(view());
   function rerender() {
@@ -26,13 +26,13 @@ function setup(over: Partial<GameState> = {}, aiChecker = false) {
 
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
 
-function writeCard(when: string, should: RegExp) {
+/** Writes the current card with an action chip and sends it to testing. */
+function writeCard(when: string) {
   click(when);
-  click(should);
   click(/Test it/);
 }
 
-describe("test-card rounds", () => {
+describe("one test card per request", () => {
   beforeEach(() => {
     logged.length = 0;
     vi.useFakeTimers();
@@ -42,67 +42,81 @@ describe("test-card rounds", () => {
     vi.useRealTimers();
   });
 
-  it("one thing at a time: the app only appears after a card is written", () => {
+  it("walks Maya's requests in order; the 'it should' part is filled in", () => {
     setup();
-    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+    expect(screen.getByText(/Card 1 of 5: Only 6, 7, and 8 times tables/)).toBeTruthy();
+    expect(screen.getByText(/it should only ask 6, 7, and 8 times tables\./)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull(); // no app while writing
     expect((screen.getByRole("button", { name: /Test it/ }) as HTMLButtonElement).disabled).toBe(true);
-    writeCard("get one wrong", /ask it again later/);
+    writeCard("play for a while");
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
-    expect(screen.getByText("When I get one wrong, it should ask it again later.")).toBeTruthy();
-    expect(logged.find((e) => e.type === "card_submit")?.payload).toMatchObject({ round: 1, when_source: "chip", should_item: "ask_again" });
+    expect(logged.find((e) => e.type === "card_submit")?.payload).toMatchObject({ round: 1, request_item: "tables", when: "play for a while" });
   });
 
-  it("a fail verdict on a broken request celebrates a caught glitch", () => {
+  it("stars: caught + right + tried + new idea, listed only when earned", () => {
     const t = setup();
-    writeCard("look at the screen", /have no timer/);
+    writeCard("play for a while");
+    click("Start");
     click(/It failed/);
     expect(screen.getByText("Your card caught a glitch!")).toBeTruthy();
-    expect(logged.find((e) => e.type === "card_feedback")?.payload).toMatchObject({ outcome: "caught", glitch_id: "timer" });
-    expect(t.game().cards[0]).toMatchObject({ shouldItem: "no_timer", verdict: "fail" });
+    for (const s of ["You caught a glitch!", "Right answer!", "You tried it in Maya's app.", "A new test idea!"]) {
+      expect(screen.getByText(`+⭐ ${s}`)).toBeTruthy();
+    }
+    expect(screen.getAllByLabelText("4 stars").length).toBeGreaterThan(0);
+    expect(t.game().cards[0]).toMatchObject({ shouldItem: "tables", verdict: "fail", interactions: 1 });
+    expect(logged.find((e) => e.type === "card_feedback")?.payload).toMatchObject({ outcome: "caught", stars_total: 4 });
   });
 
-  it("a pass verdict on a broken request says look again, with how to see it", () => {
+  it("a wrong verdict says look again, never lists missing stars", () => {
     setup();
-    writeCard("play for a while", /only ask 6, 7, and 8/);
+    writeCard("play for a while");
     click(/It passed/);
     expect(screen.getByText("Look again!")).toBeTruthy();
     expect(screen.getByText(/Question 5 is 2 × 3/)).toBeTruthy();
+    expect(screen.queryByText(/Right answer/)).toBeNull();
+    expect(screen.getByText("+⭐ A new test idea!")).toBeTruthy();
   });
 
-  it("app taps are logged with the round, and every card gets a fresh app", () => {
+  it("moves to the next request, with a fresh app, and the checklist shows progress", () => {
     setup();
-    writeCard("tap an answer", /have big buttons/);
-    click("Start");
-    expect(logged.find((e) => e.type === "app_interaction")?.payload).toMatchObject({ round: 1, feature: "start_button" });
-    click(/It passed/);
-    click(/Write another card/);
-    expect(logged.at(-1)).toMatchObject({ type: "round_start", payload: { round: 2 } });
-    writeCard("look at the screen", /be purple/);
-    expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
-    expect(screen.getByText(/My cards|Card 2/)).toBeTruthy();
-  });
-
-  it("typed parts of a card are allowed and left unscored", () => {
-    setup();
-    click("get one wrong");
-    // the second "my own" chip belongs to "it should…"
-    fireEvent.click(screen.getAllByRole("button", { name: /my own/i })[1]);
-    const box = screen.getAllByRole("textbox").at(-1)!;
-    fireEvent.change(box, { target: { value: "say good job" } });
-    click(/Test it/);
+    writeCard("play for a while");
     click(/It failed/);
-    expect(screen.getByText("Nice card!")).toBeTruthy();
-    expect(logged.find((e) => e.type === "card_submit")?.payload).toMatchObject({ should_item: null, should: "say good job" });
+    click(/Next card/);
+    expect(logged.at(-1)).toMatchObject({ type: "round_start", payload: { round: 2, request_item: "big_buttons" } });
+    expect(screen.getByText(/Card 2 of 5: Big buttons/)).toBeTruthy();
+    expect(screen.getByText("❌")).toBeTruthy(); // card 1 in the checklist
+    writeCard("tap an answer");
+    expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
+  });
+
+  it("your own idea can be typed", () => {
+    setup();
+    click(/my own idea/);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "wait and watch" } });
+    click(/Test it/);
+    expect(logged.find((e) => e.type === "card_submit")?.payload).toMatchObject({ when: "wait and watch", when_source: "typed" });
+  });
+
+  it("after the fifth card, the rounds end", () => {
+    const t = setup();
+    const actions = ["play for a while", "tap an answer", "look at the screen", "get one wrong", "play to the end"];
+    actions.forEach((a, i) => {
+      writeCard(a);
+      click(/It failed/);
+      click(i < 4 ? /Next card/ : /All done/);
+    });
+    expect(t.onFinish).toHaveBeenCalledWith(false);
+    expect(t.game().cards.map((c) => c.shouldItem)).toEqual(["tables", "big_buttons", "no_timer", "ask_again", "purple"]);
   });
 
   it("the AI checker only appears in the AI condition, and its verdict is recorded with the card", () => {
     setup({}, false);
-    writeCard("play for a while", /only ask 6, 7, and 8/);
+    writeCard("play for a while");
     expect(screen.queryByText(/Ask the AI/)).toBeNull();
     cleanup();
     logged.length = 0;
     const t = setup({}, true);
-    writeCard("play for a while", /only ask 6, 7, and 8/);
+    writeCard("play for a while");
     click(/Ask the AI/);
     act(() => vi.advanceTimersByTime(1600));
     expect(screen.getByText(formA.checker.passText)).toBeTruthy();
@@ -112,16 +126,8 @@ describe("test-card rounds", () => {
     expect(t.game().cards[0].aiVerdict).toBe("pass");
   });
 
-  it("'I'm done testing' ends the rounds", () => {
-    const t = setup();
-    writeCard("look at the screen", /be purple/);
-    click(/It passed/);
-    click(/done testing/);
-    expect(t.onFinish).toHaveBeenCalledWith(false);
-  });
-
   it("the hidden time cap stops testing gently", () => {
-    const t = setup({ testStartedAt: Date.now() - 479_000 });
+    const t = setup({ testStartedAt: Date.now() - 599_000 });
     expect(screen.queryByText(/Time to stop testing/)).toBeNull();
     act(() => vi.advanceTimersByTime(1500));
     expect(screen.getByText(/Time to stop testing/)).toBeTruthy();

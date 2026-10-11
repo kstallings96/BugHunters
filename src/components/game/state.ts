@@ -34,9 +34,6 @@ export interface GameState {
   fix: { glitchId: string; text: string } | null;
 }
 
-/** Most cards a student can write before the game moves on. */
-export const MAX_CARDS = 8;
-
 export const emptyDraft: CardDraft = { when: "", whenSource: "chip", should: "", shouldItem: null, aiVerdict: null };
 
 export function firstStep(surveyEnabled: boolean): Step {

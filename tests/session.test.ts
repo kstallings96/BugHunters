@@ -7,8 +7,8 @@ import { isTestSession, normalizeName } from "@/lib/identity";
 const settings = readStudySettings({});
 
 describe("study settings", () => {
-  it("defaults: random form, 50/50 checker, 8-minute hunt cap, survey off", () => {
-    expect(settings).toEqual({ defaultForm: "random", aiCheckerRatio: 0.5, huntCapSeconds: 480, surveyEnabled: false });
+  it("defaults: random form, 50/50 checker, 10-minute testing cap, survey off", () => {
+    expect(settings).toEqual({ defaultForm: "random", aiCheckerRatio: 0.5, huntCapSeconds: 600, surveyEnabled: false });
   });
   it("reads and clamps env values", () => {
     expect(readStudySettings({ DEFAULT_FORM: "b", AI_CHECKER_RATIO: "2", HUNT_CAP_SECONDS: "10", SURVEY_ENABLED: "TRUE" })).toEqual({

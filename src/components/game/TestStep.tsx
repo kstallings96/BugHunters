@@ -2,20 +2,21 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { GLITCH_APPS } from "@/apps";
-import type { FormContent } from "@/content/types";
-import { aiVerdictFor, judge, type Outcome, type TestCard, type Verdict } from "@/lib/cards";
+import type { FormContent, RequestItem } from "@/content/types";
+import { aiVerdictFor, judge, starsFor, totalStars, type Outcome, type TestCard, type Verdict } from "@/lib/cards";
 import { logEvent } from "@/lib/logger";
 import { ReadAloud } from "../ReadAloud";
 import { ArrowIcon } from "../icons";
 import { BigButton, Say } from "../ui";
 import { Modal } from "./parts";
-import { emptyDraft, MAX_CARDS, type CardDraft, type GameState } from "./state";
+import { emptyDraft, type CardDraft, type GameState } from "./state";
 
 /**
- * Testing rounds, one thing on screen at a time:
- *   write    build a card: "When I ___, it should ___."
- *   test     try it in the client's app, then say pass or fail
- *   feedback did the card catch a glitch? write another, or stop
+ * One test card for each thing the client asked for, in order. Each round
+ * shows one thing at a time:
+ *   write    "When I ___, it should <this request>."
+ *   test     try it in the client's app, then say passed or failed
+ *   feedback the stars this card earned, then the next card
  */
 
 function describe(target: EventTarget | null): string {
@@ -50,9 +51,11 @@ export function TestStep({
   onFinish: (capped: boolean) => void;
 }) {
   const round = game.cards.length + 1;
+  const item = form.requestItems[Math.min(round, form.requestItems.length) - 1];
+  const stars = totalStars(game.cards, form);
   const [capped, setCapped] = useState(false);
 
-  // Hidden time cap on all the rounds together; students never see a clock.
+  // Hidden time cap on all the cards together; students never see a clock.
   useEffect(() => {
     const left = capSeconds * 1000 - elapsed(game.testStartedAt);
     const t = window.setTimeout(() => {
@@ -69,28 +72,46 @@ export function TestStep({
     body = (
       <WritePhase
         form={form}
+        item={item}
         round={round}
+        stars={stars}
         draft={game.draft}
         cards={game.cards}
         enteredAt={game.phaseEnteredAt}
         onDraft={(draft) => onUpdate({ draft })}
-        onSubmit={() => phase("test")}
+        onSubmit={(draft) => phase("test", { draft })}
       />
     );
   } else if (game.phase === "test") {
-    body = <TestPhase form={form} round={round} game={game} aiChecker={aiChecker} onUpdate={onUpdate} onVerdict={(card) => phase("feedback", { cards: [...game.cards, card], draft: emptyDraft })} />;
+    body = (
+      <TestPhase
+        form={form}
+        round={round}
+        stars={stars}
+        game={game}
+        aiChecker={aiChecker}
+        onUpdate={onUpdate}
+        onVerdict={(card) => phase("feedback", { cards: [...game.cards, card], draft: emptyDraft })}
+      />
+    );
   } else {
     const last = game.cards.at(-1)!;
+    const more = game.cards.length < form.requestItems.length;
     body = (
       <FeedbackPhase
         form={form}
         card={last}
-        canWriteMore={game.cards.length < MAX_CARDS}
-        onAnother={() => {
-          logEvent("round_start", { round: game.cards.length + 1 });
-          phase("write");
+        earlier={game.cards.slice(0, -1)}
+        total={stars}
+        more={more}
+        onNext={() => {
+          if (more) {
+            logEvent("round_start", { round: game.cards.length + 1, request_item: form.requestItems[game.cards.length].id });
+            phase("write");
+          } else {
+            onFinish(false);
+          }
         }}
-        onDone={() => onFinish(false)}
       />
     );
   }
@@ -113,6 +134,14 @@ export function TestStep({
   );
 }
 
+function StarCount({ stars }: { stars: number }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold" aria-label={`${stars} stars`}>
+      ⭐ {stars}
+    </span>
+  );
+}
+
 // ------------------------------------------------------------- write
 
 function Chip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -130,9 +159,41 @@ function Chip({ selected, onClick, children }: { selected: boolean; onClick: () 
   );
 }
 
+/** The client's requests as a checklist: done (with the student's verdict), now, later. */
+function Checklist({ form, cards, round }: { form: FormContent; cards: TestCard[]; round: number }) {
+  return (
+    <ol className="flex flex-col gap-1.5 rounded-3xl border-2 border-line bg-card p-4" aria-label={`${form.client.name}'s checklist`}>
+      <li className="mb-1 text-lg font-bold">
+        {form.client.avatar} {form.client.name} asked for:
+      </li>
+      {form.requestItems.map((ri, i) => {
+        const card = cards[i];
+        const now = i === round - 1;
+        return (
+          <li
+            key={ri.id}
+            aria-current={now ? "step" : undefined}
+            className={`flex items-center gap-2 rounded-xl px-2 py-1 text-base font-bold ${now ? "bg-teal text-white" : card ? "" : "text-ink-soft"}`}
+          >
+            <span className="w-6 shrink-0 text-center" aria-hidden="true">
+              {card ? (card.verdict === "pass" ? "✅" : "❌") : now ? "▶" : "⬜"}
+            </span>
+            <span className="min-w-8 shrink-0 text-center whitespace-nowrap" aria-hidden="true">
+              {ri.icon}
+            </span>
+            {ri.label}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function WritePhase({
   form,
+  item,
   round,
+  stars,
   draft,
   cards,
   enteredAt,
@@ -140,150 +201,100 @@ function WritePhase({
   onSubmit,
 }: {
   form: FormContent;
+  item: RequestItem;
   round: number;
+  stars: number;
   draft: CardDraft;
   cards: TestCard[];
   enteredAt: number;
   onDraft: (d: CardDraft) => void;
-  onSubmit: () => void;
+  onSubmit: (d: CardDraft) => void;
 }) {
   const edits = useRef(0);
-  const [typing, setTyping] = useState<{ when: boolean; should: boolean }>({
-    when: draft.whenSource === "typed",
-    should: draft.should !== "" && draft.shouldItem === null,
-  });
-  const name = form.client.name;
+  const [typing, setTyping] = useState(draft.whenSource === "typed");
+  const total = form.requestItems.length;
+  const card = { ...draft, should: item.should, shouldItem: item.id };
 
-  function edit(field: "when" | "should", value: string, source: "chip" | "typed", item: string | null = null) {
+  function edit(value: string, source: "chip" | "typed") {
     edits.current += 1;
-    if (source === "chip") logEvent("card_edit", { round, field, value, source, request_item: item });
-    onDraft(
-      field === "when"
-        ? { ...draft, when: value, whenSource: source }
-        : { ...draft, should: value, shouldItem: source === "chip" ? item : null },
-    );
-  }
-
-  function typedBlur(field: "when" | "should") {
-    const value = draft[field];
-    if (value.trim()) logEvent("card_edit", { round, field, value, source: "typed" });
+    if (source === "chip") logEvent("card_edit", { round, field: "when", value, source, request_item: item.id });
+    onDraft({ ...draft, when: value, whenSource: source });
   }
 
   function submit() {
     logEvent("card_submit", {
       round,
-      when: draft.when.trim(),
-      when_source: draft.whenSource,
-      should: draft.should.trim(),
-      should_item: draft.shouldItem,
+      request_item: item.id,
+      when: card.when.trim(),
+      when_source: card.whenSource,
+      should: card.should,
       edits: edits.current,
       ms: Date.now() - enteredAt,
     });
-    onSubmit();
+    onSubmit(card);
   }
 
-  const ready = draft.when.trim() && draft.should.trim();
-  const input = "h-12 w-full max-w-md rounded-2xl border-4 border-line bg-white px-4 text-xl outline-none focus:border-teal";
-  const title = round === 1 ? `Make a test card for ${name}'s app.` : `Card ${round}: what will you test next?`;
+  const title = `Card ${round} of ${total}: ${item.label}`;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-6 py-4">
-      <Say
-        id="write.screen"
-        as="h1"
-        text={title}
-        speak={`${title} Finish the sentence. When I, blank, it should, blank. Tap a button for each part.`}
-        className="text-3xl!"
-      />
+    <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-[17rem_1fr] gap-6 px-6 py-4">
+      <Checklist form={form} cards={cards} round={round} />
 
-      <div className="flex flex-col gap-4 rounded-3xl border-4 border-ink bg-white px-6 py-4 shadow-[6px_6px_0_var(--ink)]">
-        <p className="text-2xl font-bold" aria-live="polite">
-          📝 {sentence(draft)}
-        </p>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-lg font-bold text-ink-soft">When I…</p>
-          <div className="flex flex-wrap gap-2">
-            {form.actions.map((a) => (
-              <Chip key={a} selected={draft.whenSource === "chip" && draft.when === a} onClick={() => edit("when", a, "chip")}>
-                {a}
-              </Chip>
-            ))}
-            <Chip selected={typing.when} onClick={() => setTyping({ ...typing, when: true })}>
-              ✏️ my own
-            </Chip>
-          </div>
-          {typing.when && (
-            <input
-              className={input}
-              autoFocus
-              maxLength={80}
-              value={draft.whenSource === "typed" ? draft.when : ""}
-              onChange={(e) => edit("when", e.target.value, "typed")}
-              onBlur={() => typedBlur("when")}
-              placeholder="Type what you will do"
-              aria-label="When I"
-            />
-          )}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <Say
+            id="write.screen"
+            as="h1"
+            text={title}
+            speak={`${title}. How will you test it? Finish the card: When I, blank, it should ${item.should}. Tap a button or type your own.`}
+            className="text-3xl!"
+          />
+          <StarCount stars={stars} />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-lg font-bold text-ink-soft">it should…</p>
-          <div className="flex flex-wrap gap-2">
-            {form.requestItems.map((ri) => (
-              <Chip key={ri.id} selected={draft.shouldItem === ri.id} onClick={() => edit("should", ri.should, "chip", ri.id)}>
-                <span aria-hidden="true" className="whitespace-nowrap">
-                  {ri.icon}
-                </span>
-                {ri.should}
+        <div className="flex flex-col gap-4 rounded-3xl border-4 border-ink bg-white px-6 py-5 shadow-[6px_6px_0_var(--ink)]">
+          <p className="text-2xl leading-snug font-bold" aria-live="polite">
+            📝 {sentence(card)}
+          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-lg font-bold text-ink-soft">How will you test it? When I…</p>
+            <div className="flex flex-wrap gap-2">
+              {form.actions.map((a) => (
+                <Chip
+                  key={a}
+                  selected={draft.whenSource === "chip" && draft.when === a}
+                  onClick={() => {
+                    setTyping(false);
+                    edit(a, "chip");
+                  }}
+                >
+                  {a}
+                </Chip>
+              ))}
+              <Chip selected={typing} onClick={() => setTyping(true)}>
+                ✏️ my own idea
               </Chip>
-            ))}
-            <Chip selected={typing.should} onClick={() => setTyping({ ...typing, should: true })}>
-              ✏️ my own
-            </Chip>
+            </div>
+            {typing && (
+              <input
+                className="h-12 w-full max-w-lg rounded-2xl border-4 border-line bg-white px-4 text-xl outline-none focus:border-teal"
+                autoFocus
+                maxLength={80}
+                value={draft.whenSource === "typed" ? draft.when : ""}
+                onChange={(e) => edit(e.target.value, "typed")}
+                onBlur={() => draft.whenSource === "typed" && draft.when.trim() && logEvent("card_edit", { round, field: "when", value: draft.when, source: "typed", request_item: item.id })}
+                placeholder="Type what you will do"
+                aria-label="When I"
+              />
+            )}
           </div>
-          {typing.should && (
-            <input
-              className={input}
-              autoFocus
-              maxLength={80}
-              value={draft.shouldItem === null ? draft.should : ""}
-              onChange={(e) => edit("should", e.target.value, "typed")}
-              onBlur={() => typedBlur("should")}
-              placeholder="Type what should happen"
-              aria-label="it should"
-            />
-          )}
         </div>
-      </div>
 
-      <div className="flex items-center gap-4">
-        <CardsSoFar form={form} cards={cards} />
-        <BigButton onClick={submit} disabled={!ready}>
+        <BigButton onClick={submit} disabled={!draft.when.trim()} className="self-end">
           Test it! <ArrowIcon />
         </BigButton>
       </div>
     </main>
-  );
-}
-
-/** A small row of earlier cards: ✅/❌ and the request it tested. */
-function CardsSoFar({ form, cards }: { form: FormContent; cards: TestCard[] }) {
-  if (!cards.length) return <div className="flex-1" />;
-  return (
-    <div className="flex flex-1 flex-wrap items-center gap-2">
-      <span className="text-base font-bold text-ink-soft">My cards:</span>
-      {cards.map((c) => (
-        <span
-          key={c.round}
-          title={sentence(c)}
-          className="inline-flex items-center gap-1 rounded-full border-2 border-line bg-card px-3 py-0.5 text-base"
-        >
-          {c.verdict === "pass" ? "✅" : "❌"}
-          <span aria-hidden="true">{form.requestItems.find((r) => r.id === c.shouldItem)?.icon ?? "✏️"}</span>
-        </span>
-      ))}
-    </div>
   );
 }
 
@@ -292,6 +303,7 @@ function CardsSoFar({ form, cards }: { form: FormContent; cards: TestCard[] }) {
 function TestPhase({
   form,
   round,
+  stars,
   game,
   aiChecker,
   onUpdate,
@@ -299,6 +311,7 @@ function TestPhase({
 }: {
   form: FormContent;
   round: number;
+  stars: number;
   game: GameState;
   aiChecker: boolean;
   onUpdate: (patch: Partial<GameState>) => void;
@@ -343,7 +356,16 @@ function TestPhase({
       ai_verdict: draft.aiVerdict,
       agreed_with_ai: draft.aiVerdict ? draft.aiVerdict === v : null,
     });
-    onVerdict({ round, when: draft.when.trim(), whenSource: draft.whenSource, should: draft.should.trim(), shouldItem: draft.shouldItem, verdict: v, aiVerdict: draft.aiVerdict });
+    onVerdict({
+      round,
+      when: draft.when.trim(),
+      whenSource: draft.whenSource,
+      should: draft.should,
+      shouldItem: draft.shouldItem,
+      verdict: v,
+      aiVerdict: draft.aiVerdict,
+      interactions: interactions.current,
+    });
   }
 
   return (
@@ -357,16 +379,21 @@ function TestPhase({
       </div>
 
       <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <p className="text-lg font-bold text-ink-soft">
+            Card {round} of {form.requestItems.length}
+          </p>
+          <StarCount stars={stars} />
+        </div>
         <div className="rounded-3xl border-4 border-ink bg-white p-4 shadow-[4px_4px_0_var(--ink)]">
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-base font-bold text-ink-soft">📝 Card {round}</p>
+          <div className="flex items-start gap-2">
+            <p className="flex-1 text-xl leading-snug font-bold">📝 {sentence(draft)}</p>
             <ReadAloud
               id="test.screen"
-              text={`Your card says: ${sentence(draft)} Try it in ${form.client.name}'s app. Then tap pass or fail.`}
+              text={`Your card says: ${sentence(draft)} Try it in ${form.client.name}'s app. Then tap passed or failed.`}
               className="h-11! w-11!"
             />
           </div>
-          <p className="text-xl leading-snug font-bold">{sentence(draft)}</p>
         </div>
 
         <p className="px-1 text-lg">Try it in {form.client.name}&apos;s app. Then tap:</p>
@@ -444,12 +471,12 @@ function AiDialog({ text, onClose }: { text: string; onClose: () => void }) {
 
 // ---------------------------------------------------------- feedback
 
-function feedbackText(outcome: Outcome, form: FormContent, glitchId: string | null, shouldItem: string | null) {
+function headline(outcome: Outcome, form: FormContent, glitchId: string | null, shouldItem: string | null) {
   const glitch = form.glitches.find((g) => g.id === glitchId);
   const name = form.client.name;
   switch (outcome) {
     case "caught":
-      return { icon: "🎉", title: "Your card caught a glitch!", line: `${glitch!.title}. Great testing!` };
+      return { icon: "🎉", title: "Your card caught a glitch!", line: `${glitch!.title}.` };
     case "missed":
       return { icon: "🔍", title: "Look again!", line: `This card should fail. ${glitch!.howToFind}` };
     case "confirmed":
@@ -459,52 +486,79 @@ function feedbackText(outcome: Outcome, form: FormContent, glitchId: string | nu
       return { icon: "🔍", title: "Look again!", line: herring?.why ?? `That part works the way ${name} asked.` };
     }
     default:
-      return { icon: "📝", title: "Nice card!", line: "We will check this one later. Try another card, too." };
+      return { icon: "📝", title: "Nice card!", line: "" };
   }
 }
 
 function FeedbackPhase({
   form,
   card,
-  canWriteMore,
-  onAnother,
-  onDone,
+  earlier,
+  total,
+  more,
+  onNext,
 }: {
   form: FormContent;
   card: TestCard;
-  canWriteMore: boolean;
-  onAnother: () => void;
-  onDone: () => void;
+  earlier: TestCard[];
+  total: number;
+  more: boolean;
+  onNext: () => void;
 }) {
   const { outcome, truth, glitchId } = judge(card, form);
-  const fb = feedbackText(outcome, form, glitchId, card.shouldItem);
+  const stars = starsFor(card, earlier, form);
+  const h = headline(outcome, form, glitchId, card.shouldItem);
   const logged = useRef(false);
 
   useEffect(() => {
     if (logged.current) return;
     logged.current = true;
-    logEvent("card_feedback", { round: card.round, outcome, truth, glitch_id: glitchId });
-  }, [card.round, outcome, truth, glitchId]);
+    logEvent("card_feedback", {
+      round: card.round,
+      outcome,
+      truth,
+      glitch_id: glitchId,
+      stars: { tried: stars.tried, right: stars.right, caught: stars.caught, own_idea: stars.ownIdea },
+      stars_total: total,
+    });
+  }, [card.round, outcome, truth, glitchId, stars.tried, stars.right, stars.caught, stars.ownIdea, total]);
 
+  // Only stars earned are listed; missing ones are never pointed out.
+  const earned = [
+    stars.caught && "You caught a glitch!",
+    stars.right && "Right answer!",
+    stars.tried && `You tried it in ${form.client.name}'s app.`,
+    stars.ownIdea && "A new test idea!",
+  ].filter(Boolean) as string[];
   const good = outcome === "caught" || outcome === "confirmed";
+
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-5 px-6 py-6 text-center">
-      <p className="rounded-2xl border-2 border-line bg-white px-5 py-3 text-lg">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-4 px-6 py-5 text-center">
+      <p className="rounded-2xl border-2 border-line bg-white px-5 py-2 text-lg">
         📝 {sentence(card)} <span className="font-bold">You said: {card.verdict === "pass" ? "✅ passed" : "❌ failed"}</span>
       </p>
-      <span className="text-7xl" aria-hidden="true">
-        {fb.icon}
+      <span className="text-6xl" aria-hidden="true">
+        {h.icon}
       </span>
-      <Say id="feedback.screen" as="h1" text={fb.title} speak={`${fb.title} ${fb.line}`} className={good ? "text-teal" : ""} />
-      <p className="text-2xl leading-snug">{fb.line}</p>
-      <div className="mt-2 flex flex-wrap justify-center gap-4">
-        {canWriteMore && (
-          <BigButton onClick={onAnother}>
-            📝 Write another card
-          </BigButton>
-        )}
-        <BigButton variant="secondary" onClick={onDone}>
-          ✋ I&apos;m done testing
+      <Say
+        id="feedback.screen"
+        as="h1"
+        text={h.title}
+        speak={[h.title, h.line, ...earned.map((e) => `Star: ${e}`)].join(" ")}
+        className={good ? "text-teal" : ""}
+      />
+      {h.line && <p className="text-2xl leading-snug">{h.line}</p>}
+      {earned.length > 0 && (
+        <ul className="flex flex-col gap-1 rounded-2xl bg-amber-soft px-6 py-3 text-left text-xl font-bold">
+          {earned.map((e) => (
+            <li key={e}>+⭐ {e}</li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-1 flex items-center gap-4">
+        <StarCount stars={total} />
+        <BigButton onClick={onNext}>
+          {more ? "Next card" : "All done!"} <ArrowIcon />
         </BigButton>
       </div>
     </main>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SURVEY } from "@/content";
 import type { FormContent } from "@/content/types";
-import { summarizeCards, truthFor } from "@/lib/cards";
+import { summarizeCards, totalStars, truthFor } from "@/lib/cards";
 import { logEvent } from "@/lib/logger";
 import { ReadAloud } from "../ReadAloud";
 import { ArrowIcon } from "../icons";
@@ -38,6 +38,10 @@ export function DoneStep({ onConfidence }: { onConfidence: (confidence: string) 
 
 export function RevealStep({ form, game, onNext }: { form: FormContent; game: GameState; onNext: () => void }) {
   const summary = summarizeCards(game.cards, form);
+  const stars = totalStars(game.cards, form);
+  const testMs = (game.testEndedAt ?? 0) - (game.testStartedAt ?? 0);
+  const minutes = Math.round(testMs / 60000);
+  const time = minutes < 1 ? "less than a minute" : minutes === 1 ? "1 minute" : `${minutes} minutes`;
   const logged = useRef(false);
 
   useEffect(() => {
@@ -47,16 +51,17 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
       found: summary.found,
       missed: summary.missed,
       cards: game.cards.length,
+      stars,
+      test_ms: testMs,
       correct_verdicts: summary.correct,
       scored_cards: summary.scored,
       ai_asked: summary.aiAsked,
       ai_wrong: summary.aiWrong,
       features_touched: game.featuresTouched.length,
     });
-  }, [summary, game.cards.length, game.featuresTouched.length]);
+  }, [summary, stars, testMs, game.cards.length, game.featuresTouched.length]);
 
-  const n = game.cards.length;
-  const cheer = n ? `You tested ${n} ${n === 1 ? "card" : "cards"}. Great testing!` : "Thanks for testing!";
+  const cheer = `You earned ${stars} ${stars === 1 ? "star" : "stars"} and tested for ${time}!`;
   const worked = form.requestItems.filter((r) => truthFor(r.id, form).truth === "pass");
   const aiText =
     summary.aiWrong > 0
@@ -76,7 +81,7 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Say id="reveal.screen" as="h1" text="Here are all the glitches!" speak={spoken} className="text-3xl!" />
-        <p className="rounded-2xl bg-amber-soft px-4 py-1.5 text-lg font-bold">🎉 {cheer}</p>
+        <p className="rounded-2xl bg-amber-soft px-4 py-1.5 text-lg font-bold">⭐ {cheer}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

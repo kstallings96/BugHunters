@@ -19,6 +19,8 @@ export interface TestCard {
   verdict: Verdict | null;
   /** What the AI checker said for this card, if asked. */
   aiVerdict: Verdict | null;
+  /** Taps in the app while testing this card. */
+  interactions: number;
 }
 
 export type Outcome =
@@ -52,6 +54,36 @@ export function aiVerdictFor(item: string | null, form: FormContent): { verdict:
   const verdict = (item && form.checker.verdicts[item]) || "pass";
   const text = verdict === "fail" ? (form.checker.failText[item!] ?? form.checker.passText) : form.checker.passText;
   return { verdict, text };
+}
+
+/**
+ * Stars a card earns. Each is a separate, positive reward; nothing is ever
+ * taken away, and no total is shown "out of" anything.
+ */
+export interface Stars {
+  /** Used the app before answering. */
+  tried: boolean;
+  /** Passed/failed matches what the app really does. */
+  right: boolean;
+  /** Right AND the request is broken: found a glitch. */
+  caught: boolean;
+  /** Typed their own "When I…", or used an action not used on an earlier card. */
+  ownIdea: boolean;
+  total: number;
+}
+
+export function starsFor(card: TestCard, earlier: TestCard[], form: FormContent): Stars {
+  const { outcome } = judge(card, form);
+  const tried = card.interactions > 0;
+  const right = outcome === "caught" || outcome === "confirmed";
+  const caught = outcome === "caught";
+  const when = card.when.trim().toLowerCase();
+  const ownIdea = card.whenSource === "typed" || !earlier.some((e) => e.when.trim().toLowerCase() === when);
+  return { tried, right, caught, ownIdea, total: [tried, right, caught, ownIdea].filter(Boolean).length };
+}
+
+export function totalStars(cards: TestCard[], form: FormContent): number {
+  return cards.reduce((sum, c, i) => sum + starsFor(c, cards.slice(0, i), form).total, 0);
 }
 
 export interface CardSummary {

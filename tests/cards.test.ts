@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { nextStep } from "@/components/game/state";
 import { formA } from "@/content/formA";
-import { aiVerdictFor, judge, summarizeCards, truthFor, type TestCard } from "@/lib/cards";
+import { aiVerdictFor, judge, starsFor, summarizeCards, totalStars, truthFor, type TestCard } from "@/lib/cards";
 
-function card(shouldItem: string | null, verdict: "pass" | "fail", aiVerdict: "pass" | "fail" | null = null, round = 1): TestCard {
-  return { round, when: "get one wrong", whenSource: "chip", should: "x", shouldItem, verdict, aiVerdict };
+function card(
+  shouldItem: string | null,
+  verdict: "pass" | "fail",
+  aiVerdict: "pass" | "fail" | null = null,
+  round = 1,
+  over: Partial<TestCard> = {},
+): TestCard {
+  return { round, when: "get one wrong", whenSource: "chip", should: "x", shouldItem, verdict, aiVerdict, interactions: 0, ...over };
 }
 
 describe("step order", () => {
@@ -67,5 +73,33 @@ describe("summarizing cards", () => {
       formA,
     );
     expect(s).toEqual({ found: ["timer"], missed: ["two_times_three", "never_again", "double_tap"], correct: 3, scored: 4, aiWrong: 1, aiAsked: 2 });
+  });
+});
+
+describe("stars", () => {
+  it("a caught glitch, tested in the app, with a new idea earns all four", () => {
+    expect(starsFor(card("no_timer", "fail", null, 1, { interactions: 3 }), [], formA)).toEqual({
+      tried: true,
+      right: true,
+      caught: true,
+      ownIdea: true,
+      total: 4,
+    });
+  });
+  it("a right 'passed' on a working request earns 'right' but not 'caught'", () => {
+    expect(starsFor(card("purple", "pass", null, 1, { interactions: 1 }), [], formA)).toMatchObject({ right: true, caught: false, total: 3 });
+  });
+  it("a wrong verdict still earns stars for effort, never fewer than zero", () => {
+    expect(starsFor(card("tables", "pass"), [], formA)).toMatchObject({ right: false, caught: false, tried: false, ownIdea: true, total: 1 });
+  });
+  it("reusing the same action is not a new idea, but typing your own always is", () => {
+    const first = card("tables", "fail", null, 1);
+    expect(starsFor(card("no_timer", "fail", null, 2), [first], formA).ownIdea).toBe(false);
+    expect(starsFor(card("no_timer", "fail", null, 2, { when: "Get One Wrong " }), [first], formA).ownIdea).toBe(false);
+    expect(starsFor(card("no_timer", "fail", null, 2, { whenSource: "typed" }), [first], formA).ownIdea).toBe(true);
+  });
+  it("totals add up across cards", () => {
+    const cards = [card("tables", "fail", null, 1, { interactions: 5 }), card("big_buttons", "pass", null, 2, { when: "tap an answer" })];
+    expect(totalStars(cards, formA)).toBe(4 + 2);
   });
 });

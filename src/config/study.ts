@@ -33,7 +33,7 @@ export function readStudySettings(env: Record<string, string | undefined> = proc
   return {
     defaultForm: form === "A" || form === "B" ? form : "random",
     aiCheckerRatio: number(env.AI_CHECKER_RATIO, 0.5, 0, 1),
-    huntCapSeconds: number(env.HUNT_CAP_SECONDS, 480, 60, 3600),
+    huntCapSeconds: number(env.HUNT_CAP_SECONDS, 600, 60, 3600),
     surveyEnabled: env.SURVEY_ENABLED?.trim().toLowerCase() === "true",
   };
 }

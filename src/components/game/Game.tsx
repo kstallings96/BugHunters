@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getForm } from "@/content";
-import { summarizeCards } from "@/lib/cards";
+import { summarizeCards, totalStars } from "@/lib/cards";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession, Step } from "@/lib/types";
 import { DoneStep, EndStep, FixStep, RevealStep, SurveyStep } from "./EndSteps";
@@ -43,7 +43,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     logEvent("step_exit", { ms: now - game.stepEnteredAt }, game.step);
     setStep(next);
     logEvent("step_enter", {}, next);
-    if (next === "test") logEvent("round_start", { round: 1 }, next);
+    if (next === "test") logEvent("round_start", { round: 1, request_item: form.requestItems[0].id }, next);
     setGame((g) => ({
       ...g,
       ...patch,
@@ -95,6 +95,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
               stopped_at: new Date(end).toISOString(),
               cards: game.cards.length,
               found: summary.found,
+              stars: totalStars(game.cards, form),
               ai_checks: game.aiChecks,
             });
             go({ confidence });
