@@ -1,5 +1,5 @@
 import { parseBatch } from "@/lib/eventBatch";
-import { serviceClient } from "@/lib/server/supabase";
+import { dataStore } from "@/lib/server/storage";
 import { verifyToken } from "@/lib/server/token";
 
 /**
@@ -8,7 +8,7 @@ import { verifyToken } from "@/lib/server/token";
  *
  * Status codes tell the client what to do with the batch:
  * 200 stored (duplicates included), 400 malformed (drop it), 401 bad token
- * (stop sending for that session), 5xx (keep it and retry later).
+ * (stop sending for that session), 5xx (keep it on the device, retry later).
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -17,34 +17,33 @@ export async function POST(request: Request) {
   const events = parseBatch(body?.events);
   if (!events) return Response.json({ error: "batch" }, { status: 400 });
 
-  const db = serviceClient();
-  if (!db) return Response.json({ error: "not_configured" }, { status: 503 });
+  const store = dataStore();
+  if (store.kind === "none") return Response.json({ error: "not_configured" }, { status: 503 });
 
+  const serverTs = new Date().toISOString();
   const rows = events.map((e) => ({
     session_id: sessionId,
     seq: e.seq,
     client_ts: e.client_ts,
+    server_ts: serverTs,
     step: e.step,
     event_type: e.event_type,
     payload: e.payload,
   }));
-  // A resent batch hits the (session_id, seq) unique key; ignoring those
-  // rows makes every retry safe.
-  const { error } = await db
-    .from("events")
-    .upsert(rows, { onConflict: "session_id,seq", ignoreDuplicates: true });
-  if (error) {
-    console.error("events insert failed", error.code, error.message);
-    return Response.json({ error: "db" }, { status: 502 });
-  }
+  try {
+    // A resent batch repeats (session_id, seq); the store ignores those
+    // rows, which makes every retry safe.
+    await store.insertEvents(sessionId, rows);
 
-  // Session-level columns derived from events, written only by the server.
-  const end = events.find((e) => e.event_type === "session_end");
-  if (end) {
-    await db.from("sessions").update({ ended_at: end.client_ts }).eq("id", sessionId).is("ended_at", null);
-  }
-  if (events.some((e) => e.event_type === "done" && e.payload.capped === true)) {
-    await db.from("sessions").update({ hunt_capped: true }).eq("id", sessionId);
+    // Session-level columns derived from events, written only by the server.
+    const end = events.find((e) => e.event_type === "session_end");
+    if (end) await store.markEnded(sessionId, end.client_ts);
+    if (events.some((e) => e.event_type === "done" && e.payload.capped === true)) {
+      await store.markHuntCapped(sessionId);
+    }
+  } catch (err) {
+    console.error("events store failed", (err as Error).message);
+    return Response.json({ error: "store" }, { status: 502 });
   }
 
   return Response.json({ ok: true, stored: rows.length });

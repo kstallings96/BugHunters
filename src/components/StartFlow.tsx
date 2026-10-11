@@ -10,7 +10,7 @@ import { BigButton, Card, Say } from "./ui";
 type Phase = "loading" | "name" | "game";
 
 const inputClass =
-  "h-16 w-full rounded-2xl border-4 border-line bg-white px-5 text-2xl font-bold text-ink outline-none focus:border-teal";
+  "h-16 w-full min-w-0 rounded-2xl border-4 border-line bg-white px-5 text-2xl font-bold text-ink outline-none focus:border-teal";
 
 function urlParams() {
   const p = new URLSearchParams(window.location.search);
@@ -112,18 +112,18 @@ export function StartFlow() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 px-6 py-10">
       <div className="flex items-center gap-3 text-teal">
-        <MagnifierIcon size={56} />
-        <span className="text-5xl font-bold tracking-tight text-ink">
+        <MagnifierIcon size={56} className="hidden shrink-0 sm:block" />
+        <span className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
           bug<span className="text-teal">Hunters</span>
         </span>
-        <BugIcon size={48} className="text-amber" />
+        <BugIcon size={48} className="shrink-0 text-amber" />
       </div>
 
         <Card className="w-full">
           <form onSubmit={submitName} className="flex flex-col gap-6">
             <Say id="name.prompt" as="h2" text="What is your name?" />
-            <div className="flex gap-4">
-              <label className="flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <label className="flex min-w-0 flex-1 flex-col gap-2">
                 <span className="text-lg font-bold text-ink-soft">First name</span>
                 <input
                   className={inputClass}
@@ -134,7 +134,7 @@ export function StartFlow() {
                   autoFocus
                 />
               </label>
-              <label className="flex w-36 flex-col gap-2">
+              <label className="flex w-36 shrink-0 flex-col gap-2">
                 <span className="text-lg font-bold text-ink-soft">Last initial</span>
                 <input
                   className={`${inputClass} text-center uppercase`}

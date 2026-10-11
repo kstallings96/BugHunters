@@ -35,5 +35,5 @@ export function Say({ id, text, as = "p", className = "" }: { id: string; text: 
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-3xl border-2 border-line bg-card p-8 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`rounded-3xl border-2 border-line bg-card p-6 shadow-sm sm:p-8 ${className}`}>{children}</div>;
 }

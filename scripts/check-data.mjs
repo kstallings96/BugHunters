@@ -1,21 +1,58 @@
-// Confirms data is arriving in Supabase without printing anything identifying.
+// Confirms data is arriving, without printing anything identifying.
+// Reads Supabase if its keys are set, otherwise the local data folder.
 // Usage: npm run check-data
-import { createClient } from "@supabase/supabase-js";
+import { readdir, readFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
-const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key) {
-  console.error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local first.");
-  process.exit(1);
+const useSupabase =
+  process.env.DATA_STORE === "supabase" ||
+  (!process.env.DATA_STORE && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+function show(s, events) {
+  console.log(
+    `\n${s.id.slice(0, 8)}  test=${s.is_test}  form=${s.form}(${s.form_assignment})  ${s.condition}(${s.condition_assignment})  ${s.app_version}  ended=${s.ended_at ? "yes" : "no"}`,
+  );
+  console.log("  " + events.map((e) => `${e.seq}:${e.step}/${e.event_type}`).join("  "));
 }
-const db = createClient(url, key, { auth: { persistSession: false } });
+
+if (!useSupabase) {
+  const dir = process.env.LOG_DIR || path.join(os.homedir(), "bughunters-data");
+  console.log(`local files in ${dir}`);
+  let files = [];
+  try {
+    files = (await readdir(path.join(dir, "sessions"))).filter((f) => f.endsWith(".json"));
+  } catch {
+    console.log("no sessions yet");
+    process.exit(0);
+  }
+  const sessions = await Promise.all(files.map(async (f) => JSON.parse(await readFile(path.join(dir, "sessions", f), "utf8"))));
+  sessions.sort((a, b) => b.started_at.localeCompare(a.started_at));
+  let total = 0;
+  const eventsBy = {};
+  for (const s of sessions) {
+    try {
+      const text = await readFile(path.join(dir, "events", `${s.id}.jsonl`), "utf8");
+      eventsBy[s.id] = text.trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)).sort((a, b) => a.seq - b.seq);
+    } catch {
+      eventsBy[s.id] = [];
+    }
+    total += eventsBy[s.id].length;
+  }
+  console.log(`sessions: ${sessions.length} (${sessions.filter((s) => s.is_test).length} test)   events: ${total}`);
+  for (const s of sessions.slice(0, 3)) show(s, eventsBy[s.id]);
+  process.exit(0);
+}
+
+const { createClient } = await import("@supabase/supabase-js");
+const url = process.env.SUPABASE_URL;
+const db = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 const { count: sessions } = await db.from("sessions").select("*", { count: "exact", head: true });
 const { count: tests } = await db.from("sessions").select("*", { count: "exact", head: true }).eq("is_test", true);
 const { count: events } = await db.from("events").select("*", { count: "exact", head: true });
-console.log(`sessions: ${sessions} (${tests} test)   events: ${events}`);
+console.log(`supabase\nsessions: ${sessions} (${tests} test)   events: ${events}`);
 
-// Latest sessions by id prefix only, with their event types.
 const { data: recent, error } = await db
   .from("sessions")
   .select("id, is_test, form, condition, form_assignment, condition_assignment, app_version, started_at, ended_at")
@@ -27,10 +64,7 @@ if (error) {
 }
 for (const s of recent) {
   const { data: ev } = await db.from("events").select("seq, step, event_type").eq("session_id", s.id).order("seq");
-  console.log(
-    `\n${s.id.slice(0, 8)}  test=${s.is_test}  form=${s.form}(${s.form_assignment})  ${s.condition}(${s.condition_assignment})  ${s.app_version}  ended=${s.ended_at ? "yes" : "no"}`,
-  );
-  console.log("  " + (ev ?? []).map((e) => `${e.seq}:${e.step}/${e.event_type}`).join("  "));
+  show(s, ev ?? []);
 }
 
 // RLS check: the anon key must see nothing.
