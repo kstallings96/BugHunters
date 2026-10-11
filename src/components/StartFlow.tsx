@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { normalizeName } from "@/lib/identity";
-import { beginSession, endSession, logEvent, savedSession, setStep, startLogger } from "@/lib/logger";
+import { beginSession, logEvent, savedSession, setStep, startLogger } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
+import { Game } from "./game/Game";
 import { ArrowIcon, BugIcon, MagnifierIcon } from "./icons";
 import { BigButton, Card, Say } from "./ui";
 
@@ -42,7 +43,11 @@ export function StartFlow() {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
+  const resumed = useRef(false);
+
   useEffect(() => {
+    if (resumed.current) return;
+    resumed.current = true;
     startLogger();
     const saved = savedSession();
     // Deciding what to show needs localStorage, which only exists here.
@@ -96,10 +101,10 @@ export function StartFlow() {
 
   if (phase === "game" && session) {
     return (
-      <Placeholder
+      <Game
+        key={session.id}
         session={session}
         onFinish={() => {
-          endSession();
           setSession(null);
           setFirst("");
           setInitial("");
@@ -151,30 +156,6 @@ export function StartFlow() {
             </BigButton>
           </form>
         </Card>
-    </main>
-  );
-}
-
-/** Stage 1 stand-in for the game: proves a session and its events reach the database. */
-function Placeholder({ session, onFinish }: { session: ClientSession; onFinish: () => void }) {
-  useEffect(() => {
-    setStep("meet");
-    logEvent("step_enter", {}, "meet");
-  }, []);
-  return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 px-6 py-10">
-      <Card className="flex w-full flex-col items-center gap-6 text-center">
-        <Say id="hello.title" as="h1" text={`Hi, ${session.firstName}!`} />
-        <Say id="hello.body" text="The game is coming soon." />
-        <BigButton
-          onClick={() => {
-            logEvent("step_exit", {}, "meet");
-            onFinish();
-          }}
-        >
-          Finish
-        </BigButton>
-      </Card>
     </main>
   );
 }

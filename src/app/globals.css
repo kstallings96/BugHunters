@@ -34,7 +34,21 @@
 
 html {
   color-scheme: light;
-  font-size: 20px;
+  font-size: 18px;
+}
+
+/* A Chromebook at 1366x768 has ~650px of page once the browser bars are
+   drawn; everything is sized in rem, so this scales the whole game to fit. */
+@media (max-height: 760px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media (min-height: 1000px) and (min-width: 1600px) {
+  html {
+    font-size: 20px;
+  }
 }
 
 body {
