@@ -48,3 +48,13 @@ body {
   outline: 4px solid var(--amber);
   outline-offset: 3px;
 }
+
+/* Form A's countdown bar (a planted glitch). */
+@keyframes bh-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
