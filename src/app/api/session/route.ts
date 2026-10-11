@@ -2,7 +2,7 @@ import { AVAILABLE_FORMS, readStudySettings } from "@/config/study";
 import { assign } from "@/lib/assignment";
 import { isTestSession, normalizeName } from "@/lib/identity";
 import { serviceClient } from "@/lib/server/supabase";
-import { accessCodeMatches, issueToken } from "@/lib/server/token";
+import { issueToken } from "@/lib/server/token";
 import { APP_VERSION, configVersion } from "@/lib/server/version";
 import type { ClientSession } from "@/lib/types";
 
@@ -11,14 +11,12 @@ function int(v: unknown): number | null {
 }
 
 /**
- * Creates a session: checks the access code and name, assigns the form and
- * condition, and returns a signed token the browser uses to post events.
+ * Creates a session: checks the name, assigns the form and condition, and
+ * returns a signed token the browser uses to post events.
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  if (!body || !accessCodeMatches(body.code)) {
-    return Response.json({ error: "access" }, { status: 401 });
-  }
+  if (!body) return Response.json({ error: "name" }, { status: 400 });
   const name = normalizeName(body.firstName, body.lastInitial);
   if (!name) return Response.json({ error: "name" }, { status: 400 });
 

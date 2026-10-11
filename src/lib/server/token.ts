@@ -32,12 +32,3 @@ export function verifyToken(token: unknown): string | null {
   const expected = Buffer.from(sign(id, key));
   return given.length === expected.length && timingSafeEqual(given, expected) ? id : null;
 }
-
-/** Constant-time comparison for the classroom access code. Case-insensitive. */
-export function accessCodeMatches(given: unknown): boolean {
-  const code = process.env.ACCESS_CODE?.trim();
-  if (!code || typeof given !== "string") return false;
-  const a = Buffer.from(given.trim().toLowerCase());
-  const b = Buffer.from(code.toLowerCase());
-  return a.length === b.length && timingSafeEqual(a, b);
-}

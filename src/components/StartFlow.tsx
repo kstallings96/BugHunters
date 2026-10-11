@@ -4,10 +4,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { normalizeName } from "@/lib/identity";
 import { beginSession, endSession, logEvent, savedSession, setStep, startLogger } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
-import { ArrowIcon, BugIcon, LockIcon, MagnifierIcon } from "./icons";
+import { ArrowIcon, BugIcon, MagnifierIcon } from "./icons";
 import { BigButton, Card, Say } from "./ui";
 
-type Phase = "loading" | "code" | "name" | "game";
+type Phase = "loading" | "name" | "game";
 
 const inputClass =
   "h-16 w-full rounded-2xl border-4 border-line bg-white px-5 text-2xl font-bold text-ink outline-none focus:border-teal";
@@ -17,7 +17,7 @@ function urlParams() {
   return { form: p.get("form"), checker: p.get("checker"), test: p.get("test") };
 }
 
-async function createSession(body: object): Promise<ClientSession | "access" | "name" | null> {
+async function createSession(body: object): Promise<ClientSession | "name" | null> {
   // School wifi hiccups: try a few times before giving up.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -27,7 +27,6 @@ async function createSession(body: object): Promise<ClientSession | "access" | "
         body: JSON.stringify(body),
       });
       if (res.ok) return (await res.json()) as ClientSession;
-      if (res.status === 401) return "access";
       if (res.status === 400) return "name";
     } catch {}
     await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
@@ -38,7 +37,6 @@ async function createSession(body: object): Promise<ClientSession | "access" | "
 export function StartFlow() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [session, setSession] = useState<ClientSession | null>(null);
-  const [code, setCode] = useState("");
   const [first, setFirst] = useState("");
   const [initial, setInitial] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,30 +52,10 @@ export function StartFlow() {
       setPhase("game");
       logEvent("session_resume", {}, "setup");
     } else {
-      setPhase("code");
+      setPhase("name");
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
-
-  async function submitCode(e: FormEvent) {
-    e.preventDefault();
-    if (!code.trim() || busy) return;
-    setBusy(true);
-    setProblem(null);
-    try {
-      const res = await fetch("/api/access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      if (res.ok) setPhase("name");
-      else setProblem("That code didn't work. Ask your teacher.");
-    } catch {
-      setProblem("We can't connect. Ask your teacher.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function submitName(e: FormEvent) {
     e.preventDefault();
@@ -90,7 +68,6 @@ export function StartFlow() {
     setBusy(true);
     setProblem(null);
     const result = await createSession({
-      code,
       firstName: name.firstName,
       lastInitial: name.lastInitial,
       params: urlParams(),
@@ -98,10 +75,7 @@ export function StartFlow() {
       viewport: { width: window.innerWidth, height: window.innerHeight },
     });
     setBusy(false);
-    if (result === "access") {
-      setPhase("code");
-      setProblem("Please type the class code again.");
-    } else if (result === "name") {
+    if (result === "name") {
       setProblem("Use letters only, please.");
     } else if (!result) {
       setProblem("We can't connect. Ask your teacher.");
@@ -127,10 +101,9 @@ export function StartFlow() {
         onFinish={() => {
           endSession();
           setSession(null);
-          setCode("");
           setFirst("");
           setInitial("");
-          setPhase("code");
+          setPhase("name");
         }}
       />
     );
@@ -146,30 +119,6 @@ export function StartFlow() {
         <BugIcon size={48} className="text-amber" />
       </div>
 
-      {phase === "code" ? (
-        <Card className="w-full">
-          <form onSubmit={submitCode} className="flex flex-col gap-6">
-            <Say id="gate.prompt" as="h2" text="Type your class code." />
-            <label className="flex items-center gap-4">
-              <LockIcon size={36} className="shrink-0 text-ink-soft" />
-              <span className="sr-only">Class code</span>
-              <input
-                className={inputClass}
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                autoComplete="off"
-                autoCapitalize="characters"
-                spellCheck={false}
-                autoFocus
-              />
-            </label>
-            {problem && <Say id="gate.problem" text={problem} className="text-danger" />}
-            <BigButton type="submit" disabled={busy || !code.trim()}>
-              {busy ? "Checking…" : "Go"} <ArrowIcon />
-            </BigButton>
-          </form>
-        </Card>
-      ) : (
         <Card className="w-full">
           <form onSubmit={submitName} className="flex flex-col gap-6">
             <Say id="name.prompt" as="h2" text="What is your name?" />
@@ -202,7 +151,6 @@ export function StartFlow() {
             </BigButton>
           </form>
         </Card>
-      )}
     </main>
   );
 }
