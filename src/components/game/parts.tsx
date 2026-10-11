@@ -6,8 +6,7 @@ import { BugIcon, MagnifierIcon } from "../icons";
 
 const STEPS: { step: Step; icon: string; label: string }[] = [
   { step: "meet", icon: "👋", label: "Meet" },
-  { step: "card", icon: "📝", label: "Plan" },
-  { step: "hunt", icon: "🔍", label: "Hunt" },
+  { step: "test", icon: "📝", label: "Test" },
   { step: "done", icon: "✋", label: "Stop" },
   { step: "reveal", icon: "🗺️", label: "Map" },
   { step: "fix", icon: "🔧", label: "Fix" },

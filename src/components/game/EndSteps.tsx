@@ -3,15 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { SURVEY } from "@/content";
 import type { FormContent } from "@/content/types";
+import { summarizeCards, truthFor } from "@/lib/cards";
 import { logEvent } from "@/lib/logger";
-import { summarize } from "@/lib/matching";
 import { ReadAloud } from "../ReadAloud";
 import { ArrowIcon } from "../icons";
 import { BigButton, Card, Say } from "../ui";
 import { OptionButton } from "./parts";
 import type { GameState } from "./state";
 
-// ------------------------------------------------------------ 4. Done
+// ------------------------------------------------------------ 3. Done
 
 export const CONFIDENCE = [
   { id: "not_sure", icon: "🤔", label: "Not sure" },
@@ -19,57 +19,10 @@ export const CONFIDENCE = [
   { id: "very_sure", icon: "😎", label: "Very sure" },
 ] as const;
 
-export const CARD_RESULTS = [
-  { id: "pass", icon: "✅", label: "Pass" },
-  { id: "fail", icon: "❌", label: "Fail" },
-  { id: "not_tried", icon: "🤷", label: "I didn't try it" },
-] as const;
-
-/**
- * Two questions, one at a time: did the test card pass, then how sure the
- * student is that they found every glitch.
- */
-export function DoneStep({
-  card,
-  onCardResult,
-  onConfidence,
-}: {
-  card: { when: string; should: string };
-  onCardResult: (result: string) => void;
-  onConfidence: (confidence: string) => void;
-}) {
-  const [cardDone, setCardDone] = useState(false);
-  const cardLine = `When I ${card.when}, it should ${card.should}.`;
-  const sure = "How sure are you that you found them all?";
-
-  if (!cardDone) {
-    return (
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-5 px-6 py-6">
-        <Say id="done.card" as="h1" text="Did your test card pass?" speak={`Did your test card pass? ${cardLine}`} className="text-3xl!" />
-        <div className="rounded-3xl border-4 border-ink bg-white px-5 py-4 text-xl shadow-[6px_6px_0_var(--ink)]">
-          <span className="font-bold">📝 When I</span> {card.when}, <span className="font-bold">it should</span> {card.should}.
-        </div>
-        <div className="flex flex-col gap-3">
-          {CARD_RESULTS.map((r) => (
-            <OptionButton
-              key={r.id}
-              icon={r.icon}
-              onClick={() => {
-                onCardResult(r.id);
-                setCardDone(true);
-              }}
-            >
-              {r.label}
-            </OptionButton>
-          ))}
-        </div>
-      </main>
-    );
-  }
-
+export function DoneStep({ onConfidence }: { onConfidence: (confidence: string) => void }) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-6 px-6 py-6">
-      <Say id="done.question" as="h1" text={sure} className="text-3xl!" />
+      <Say id="done.question" as="h1" text="How sure are you that you found all the glitches?" className="text-3xl!" />
       <div className="flex flex-col gap-4">
         {CONFIDENCE.map((c) => (
           <OptionButton key={c.id} icon={c.icon} onClick={() => onConfidence(c.id)}>
@@ -81,12 +34,10 @@ export function DoneStep({
   );
 }
 
-// ---------------------------------------------------------- 5. Reveal
+// ---------------------------------------------------------- 4. Reveal
 
 export function RevealStep({ form, game, onNext }: { form: FormContent; game: GameState; onNext: () => void }) {
-  const summary = summarize(game.flags, form);
-  const usedAi = game.aiChecks > 0;
-  const aiMissed = form.glitches.length - form.checker.caught.length;
+  const summary = summarizeCards(game.cards, form);
   const logged = useRef(false);
 
   useEffect(() => {
@@ -95,50 +46,46 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
     logEvent("reveal_view", {
       found: summary.found,
       missed: summary.missed,
-      red_herrings_flagged: summary.redHerringsFlagged,
-      ai_checker_used: usedAi,
-      flags: game.flags.length,
+      cards: game.cards.length,
+      correct_verdicts: summary.correct,
+      scored_cards: summary.scored,
+      ai_asked: summary.aiAsked,
+      ai_wrong: summary.aiWrong,
       features_touched: game.featuresTouched.length,
     });
-  }, [summary, usedAi, game.flags.length, game.featuresTouched.length]);
+  }, [summary, game.cards.length, game.featuresTouched.length]);
 
-  const nFlags = game.flags.length;
-  const nParts = game.featuresTouched.length;
-  const did = [
-    nFlags > 0 ? `made ${nFlags} ${nFlags === 1 ? "flag" : "flags"}` : null,
-    nParts > 0 ? `tried ${nParts} ${nParts === 1 ? "part" : "parts"} of the app` : null,
-  ].filter(Boolean);
-  const cheer = did.length ? `You ${did.join(" and ")}. Great bug hunting!` : "Thanks for hunting!";
-  const aiText = `The AI checker said ${form.client.name}'s app was ready. It missed ${aiMissed} glitches! That's why people need to test apps too.`;
-  const glitchName = (id: string) => form.glitches.find((g) => g.id === id)!;
+  const n = game.cards.length;
+  const cheer = n ? `You tested ${n} ${n === 1 ? "card" : "cards"}. Great testing!` : "Thanks for testing!";
+  const worked = form.requestItems.filter((r) => truthFor(r.id, form).truth === "pass");
+  const aiText =
+    summary.aiWrong > 0
+      ? `The AI checker was wrong ${summary.aiWrong === 1 ? "1 time" : `${summary.aiWrong} times`}! It said a card passed when it really failed. That's why people need to test apps too.`
+      : "The AI checker was right this time. But AI checkers can miss things, so always test it yourself!";
+  const glitch = (id: string) => form.glitches.find((g) => g.id === id)!;
   const spoken = [
     "Here are all the glitches!",
     cheer,
-    ...summary.found.map((id) => `You found: ${glitchName(id).title}.`),
-    ...summary.missed.map((id) => `Hidden glitch: ${glitchName(id).title}. ${glitchName(id).howToFind}`),
-    ...form.redHerrings.map((h) => `Not a glitch: ${h.title}. ${h.why}`),
-    usedAi ? aiText : "",
+    ...summary.found.map((id) => `Your card caught: ${glitch(id).title}.`),
+    ...summary.missed.map((id) => `Hidden glitch: ${glitch(id).title}. ${glitch(id).howToFind}`),
+    `These parts worked: ${worked.map((w) => w.label).join(", ")}.`,
+    summary.aiAsked ? aiText : "",
   ].join(" ");
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-2.5 px-6 py-3">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Say id="reveal.screen" as="h1" text="Here are all the glitches!" speak={spoken} className="text-3xl!" />
-        <div className="flex items-center gap-3 rounded-2xl bg-amber-soft px-4 py-1.5">
-          <span className="text-2xl" aria-hidden="true">
-            🎉
-          </span>
-          <p className="text-lg font-bold">{cheer}</p>
-        </div>
+        <p className="rounded-2xl bg-amber-soft px-4 py-1.5 text-lg font-bold">🎉 {cheer}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {form.glitches.map((g) => {
           const found = summary.found.includes(g.id);
           return (
             <div
               key={g.id}
-              className={`flex items-center gap-3 rounded-2xl border-4 px-3 py-2 ${
+              className={`flex items-start gap-3 rounded-2xl border-4 px-3 py-2 ${
                 found ? "border-teal bg-teal/5" : "border-dashed border-amber bg-amber-soft/40"
               }`}
             >
@@ -148,33 +95,35 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
               <div className="flex-1">
                 <p className="text-lg leading-tight font-bold">
                   {g.title}
-                  <span className={`ml-2 rounded-full px-2 py-0.5 text-sm ${found ? "bg-teal text-white" : "bg-amber text-ink"}`}>
-                    {found ? "You found it!" : "Hidden glitch"}
+                  <span className={`ml-2 rounded-full px-2 py-0.5 text-sm whitespace-nowrap ${found ? "bg-teal text-white" : "bg-amber text-ink"}`}>
+                    {found ? "Your card caught it!" : "Hidden glitch"}
                   </span>
                 </p>
-                {!found && <p className="text-base leading-snug">{g.howToFind}</p>}
+                {!found && (
+                  <p className="mt-0.5 text-base leading-snug">
+                    {g.howToFind}{" "}
+                    <span className="text-ink-soft">
+                      Card idea: <i>When I {g.cardIdea.when}, it should {g.cardIdea.should}.</i>
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-        {form.redHerrings.map((h) => (
-          <div key={h.id} className="flex items-center gap-3 rounded-2xl border-2 border-line bg-card px-3 py-1.5">
-            <span className="text-2xl" aria-hidden="true">
-              👍
-            </span>
-            <p className="flex-1 text-base leading-snug">
-              <span className="font-bold">Not a glitch: {h.title.toLowerCase()}.</span> {h.why}
-              {summary.redHerringsFlagged.includes(h.id) && <span className="text-ink-soft"> (You flagged it. Good checking!)</span>}
-            </p>
-          </div>
+      <p className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-line bg-card px-4 py-2 text-lg">
+        <span className="font-bold">👍 These parts worked:</span>
+        {worked.map((w) => (
+          <span key={w.id} className="whitespace-nowrap">
+            {w.icon} {w.label}
+          </span>
         ))}
-      </div>
+      </p>
 
       <div className="flex items-center gap-4">
-        {usedAi ? (
+        {summary.aiAsked > 0 ? (
           <div className="flex flex-1 items-center gap-3 rounded-2xl border-4 border-[#475569] bg-[#f1f5f9] px-3 py-2">
             <span className="text-3xl" aria-hidden="true">
               🤖
@@ -192,7 +141,7 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
   );
 }
 
-// ------------------------------------------------------------- 6. Fix
+// ------------------------------------------------------------- 5. Fix
 
 export function FixStep({
   form,

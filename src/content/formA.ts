@@ -8,17 +8,14 @@ export const formA: FormContent = {
   requestText:
     "I want a game to practice my 6, 7, and 8 times tables. Big buttons please. No timer, timers make me nervous. If I get one wrong, ask me again later. Make it purple!",
   requestItems: [
-    { id: "tables", icon: "🔢", label: "Only 6, 7, and 8 times tables" },
-    { id: "big_buttons", icon: "👆", label: "Big buttons" },
-    { id: "no_timer", icon: "🚫⏰", label: "No timer" },
-    { id: "ask_again", icon: "🔁", label: "Ask again if I get one wrong" },
-    { id: "purple", icon: "💜", label: "Make it purple" },
+    { id: "tables", icon: "🔢", label: "Only 6, 7, and 8 times tables", should: "only ask 6, 7, and 8 times tables" },
+    { id: "big_buttons", icon: "👆", label: "Big buttons", should: "have big buttons" },
+    { id: "no_timer", icon: "🚫⏰", label: "No timer", should: "have no timer" },
+    { id: "ask_again", icon: "🔁", label: "Ask again if I get one wrong", should: "ask it again later" },
+    { id: "purple", icon: "💜", label: "Make it purple", should: "be purple" },
   ],
   glitchDefinition: "A glitch is anything that doesn't match what Maya asked for.",
-  card: {
-    whenStarters: ["get one wrong", "tap an answer", "play for a while", "look at the screen"],
-    shouldStarters: ["ask me again later", "have no timer", "only show 6, 7, and 8", "have big buttons", "be purple"],
-  },
+  actions: ["look at the screen", "get one wrong", "play for a while", "play to the end", "tap an answer"],
   glitches: [
     {
       id: "timer",
@@ -26,8 +23,9 @@ export const formA: FormContent = {
       requestItem: "no_timer",
       features: ["countdown_bar"],
       title: "A timer bar at the top",
-      howToFind: "It was at the top the whole time. Maya said no timer!",
+      howToFind: "Look at the top. There is a bar that runs out like a timer.",
       shortName: "The timer bar",
+      cardIdea: { when: "look at the screen", should: "have no timer" },
     },
     {
       id: "two_times_three",
@@ -35,17 +33,19 @@ export const formA: FormContent = {
       requestItem: "tables",
       features: ["question"],
       title: "A 2 × 3 question",
-      howToFind: "You had to keep playing. Question 5 was 2 × 3.",
+      howToFind: "Keep playing. Question 5 is 2 × 3.",
       shortName: "The 2 × 3 question",
+      cardIdea: { when: "play for a while", should: "only ask 6, 7, and 8 times tables" },
     },
     {
       id: "never_again",
       kind: "sequence",
       requestItem: "ask_again",
       features: ["question", "answer_button", "feedback", "finish_message"],
-      title: "Missed questions never came back",
-      howToFind: "You had to miss one on purpose, then play to the end.",
+      title: "Missed questions never come back",
+      howToFind: "Miss one on purpose, then play to the end. It never comes back.",
       shortName: "Missed questions",
+      cardIdea: { when: "get one wrong", should: "ask it again later" },
     },
     {
       id: "double_tap",
@@ -53,8 +53,9 @@ export const formA: FormContent = {
       requestItem: null,
       features: ["answer_button", "question"],
       title: "Tapping twice skips a question",
-      howToFind: "You had to tap an answer two times, fast.",
+      howToFind: "Tap an answer two times, fast. The next question is skipped.",
       shortName: "The double tap",
+      cardIdea: { when: "tap an answer two times fast", should: "not skip a question" },
     },
   ],
   redHerrings: [
@@ -89,8 +90,8 @@ export const formA: FormContent = {
     { id: "background", label: "Background", interactive: false },
   ],
   checker: {
-    answer:
-      "I checked Maya's app. I found 1 glitch: there is a timer bar at the top, and Maya said no timer. Everything else looks great! The app is ready for Maya.",
-    caught: ["timer"],
+    verdicts: { no_timer: "fail" },
+    passText: "I checked. This card passes! Maya's app works great.",
+    failText: { no_timer: "I checked. This card fails. There is a timer bar at the top, and Maya said no timer." },
   },
 };

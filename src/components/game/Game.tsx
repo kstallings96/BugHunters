@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getForm } from "@/content";
+import { summarizeCards } from "@/lib/cards";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession, Step } from "@/lib/types";
 import { DoneStep, EndStep, FixStep, RevealStep, SurveyStep } from "./EndSteps";
-import { HuntStep } from "./HuntStep";
-import { CardStep, MeetStep } from "./IntroSteps";
+import { MeetStep } from "./IntroSteps";
 import { GameHeader } from "./parts";
 import { clearGame, loadGame, newGame, nextStep, saveGame, type GameState } from "./state";
+import { TestStep } from "./TestStep";
 
 /**
  * Runs one session through the steps. Every step change logs step_exit (with
@@ -42,19 +43,20 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     logEvent("step_exit", { ms: now - game.stepEnteredAt }, game.step);
     setStep(next);
     logEvent("step_enter", {}, next);
-    setGame({
-      ...game,
+    if (next === "test") logEvent("round_start", { round: 1 }, next);
+    setGame((g) => ({
+      ...g,
       ...patch,
       step: next,
       stepEnteredAt: now,
-      huntStartedAt: next === "hunt" ? now : (patch.huntStartedAt ?? game.huntStartedAt),
-    });
+      ...(next === "test" ? { testStartedAt: now, phase: "write" as const, phaseEnteredAt: now } : {}),
+    }));
     void flushNow();
   }
 
   function finish() {
     logEvent("step_exit", { ms: Date.now() - game.stepEnteredAt }, game.step);
-    endSession({ flags: game.flags.length });
+    endSession({ cards: game.cards.length });
     clearGame(session.id);
     onFinish();
   }
@@ -68,38 +70,31 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     case "meet":
       body = <MeetStep form={form} onNext={() => go()} />;
       break;
-    case "card":
-      body = <CardStep form={form} card={game.card} enteredAt={game.stepEnteredAt} onChange={(change) => setGame((g) => ({ ...g, card: change(g.card) }))} onNext={() => go()} />;
-      break;
-    case "hunt":
+    case "test":
       body = (
-        <HuntStep
+        <TestStep
           form={form}
           game={game}
-          huntCapSeconds={session.huntCapSeconds}
+          capSeconds={session.huntCapSeconds}
           aiChecker={session.condition === "ai_checker"}
           onUpdate={update}
-          onDone={(capped) => go({ huntCapped: capped, huntEndedAt: Date.now() })}
+          onFinish={(capped) => go({ capped, testEndedAt: Date.now() })}
         />
       );
       break;
     case "done":
       body = (
         <DoneStep
-          card={game.card}
-          onCardResult={(result) => {
-            logEvent("card_run", { result, asked: "after_hunt" });
-            update({ cardResult: result as GameState["cardResult"] });
-          }}
           onConfidence={(confidence) => {
-            const end = game.huntEndedAt ?? Date.now();
+            const end = game.testEndedAt ?? Date.now();
+            const summary = summarizeCards(game.cards, form);
             logEvent("done", {
               confidence,
-              capped: game.huntCapped,
-              hunt_ms: end - (game.huntStartedAt ?? end),
+              capped: game.capped,
+              test_ms: end - (game.testStartedAt ?? end),
               stopped_at: new Date(end).toISOString(),
-              flags: game.flags.length,
-              card_result: game.cardResult,
+              cards: game.cards.length,
+              found: summary.found,
               ai_checks: game.aiChecks,
             });
             go({ confidence });
@@ -118,7 +113,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   }
 
   return (
-    <div className={`flex flex-1 flex-col ${game.step === "hunt" ? "h-dvh" : "min-h-dvh"}`}>
+    <div className={`flex flex-1 flex-col ${game.step === "test" ? "h-dvh" : "min-h-dvh"}`}>
       <GameHeader step={game.step} />
       {body}
     </div>
