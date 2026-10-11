@@ -40,9 +40,10 @@ describe("hunt step", () => {
     expect(logged.some((e) => e.type === "app_event" && e.payload.type === "question_shown")).toBe(true);
   });
 
-  it("in flag mode a tap opens the Why? dialog and never reaches the app", () => {
+  it("the flag button, then a tap on the app, opens Why? and the app never sees that tap", () => {
     const t = setup();
-    fireEvent.click(screen.getByRole("button", { name: /Flag/ }));
+    fireEvent.click(screen.getByText(/I found a glitch/));
+    expect(logged.some((e) => e.type === "flag_start")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Start" }));
     expect(screen.getByText("Why did you flag it?")).toBeTruthy();
     expect(logged.some((e) => e.type === "app_event")).toBe(false);
@@ -54,23 +55,47 @@ describe("hunt step", () => {
     expect(t.game().flags).toHaveLength(1);
   });
 
-  it("Something happened makes a flag with no location", () => {
+  it("after a flag, taps go to the app again (no mode to switch back)", () => {
+    setup();
+    fireEvent.click(screen.getByText(/I found a glitch/));
+    fireEvent.click(screen.getByRole("button", { name: "Owl" }));
+    fireEvent.click(screen.getByText(/just don't like it/));
+    fireEvent.click(screen.getByText(/Save flag/));
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(logged.some((e) => e.type === "app_event" && e.payload.type === "question_shown")).toBe(true);
+  });
+
+  it("'It's not in one spot' makes a flag with no location", () => {
     const t = setup();
-    fireEvent.click(screen.getByText(/Something happened/));
+    fireEvent.click(screen.getByText(/I found a glitch/));
+    fireEvent.click(screen.getByText(/not in one spot/));
     fireEvent.click(screen.getByText(/It's broken/));
     fireEvent.click(screen.getByText(/Save flag/));
     expect(t.game().flags[0]).toMatchObject({ kind: "something", feature: null, reason: "broken" });
   });
 
-  it("the counter shows flags made, never a total", () => {
+  it("cancelling before tapping a spot is logged", () => {
+    setup();
+    fireEvent.click(screen.getByText(/I found a glitch/));
+    fireEvent.click(screen.getByText("Cancel"));
+    expect(logged.find((e) => e.type === "flag_cancel")?.payload).toMatchObject({ stage: "pick" });
+    expect(screen.getByText(/I found a glitch/)).toBeTruthy();
+  });
+
+  it("the counter shows flags made, never a total, and opens the list to remove one", () => {
     const t = setup();
     expect(screen.getByText("🐞 Glitches found: 0")).toBeTruthy();
-    fireEvent.click(screen.getByText(/Something happened/));
+    fireEvent.click(screen.getByText(/I found a glitch/));
+    fireEvent.click(screen.getByText(/not in one spot/));
     fireEvent.click(screen.getByText(/It's broken/));
     fireEvent.click(screen.getByText(/Save flag/));
     t.rerender();
     expect(screen.getByText("🐞 Glitches found: 1")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/of 4|\/ ?4/);
+    fireEvent.click(screen.getByText("🐞 Glitches found: 1"));
+    fireEvent.click(screen.getByText("Remove"));
+    expect(logged.some((e) => e.type === "flag_delete")).toBe(true);
+    expect(t.game().flags).toHaveLength(0);
   });
 
   it("the AI checker button only appears in the AI condition", () => {
@@ -82,12 +107,6 @@ describe("hunt step", () => {
     expect(logged.find((e) => e.type === "ai_check_used")?.payload).toMatchObject({ n: 1 });
     act(() => vi.advanceTimersByTime(2000));
     expect(screen.getByText(formA.checker.answer)).toBeTruthy();
-  });
-
-  it("test card pass/fail is logged", () => {
-    setup();
-    fireEvent.click(screen.getByText("❌ Fail"));
-    expect(logged.find((e) => e.type === "card_run")?.payload).toMatchObject({ result: "fail", previous: null });
   });
 
   it("the hidden time cap ends the hunt gently", () => {

@@ -1,9 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { FormContent } from "@/content/types";
 import type { Step } from "@/lib/types";
-import { ReadAloud } from "../ReadAloud";
 import { BugIcon, MagnifierIcon } from "../icons";
 
 const STEPS: { step: Step; icon: string; label: string }[] = [
@@ -44,29 +42,6 @@ export function GameHeader({ step }: { step: Step }) {
       )}
       <div className="w-40" aria-hidden="true" />
     </header>
-  );
-}
-
-/** The client's request as icon chips, for steps that refer back to it. */
-export function RequestChips({ form, compact = false }: { form: FormContent; compact?: boolean }) {
-  const spoken = `${form.client.name} asked for: ${form.requestItems.map((i) => i.label).join(". ")}.`;
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className={`font-bold ${compact ? "text-base" : "text-lg"}`}>
-        {form.client.avatar} {form.client.name} asked for:
-      </span>
-      {form.requestItems.map((item) => (
-        <span
-          key={item.id}
-          className={`inline-flex items-center gap-1 rounded-full border-2 border-line bg-card font-bold ${
-            compact ? "px-3 py-0.5 text-sm" : "px-4 py-1 text-base"
-          }`}
-        >
-          <span aria-hidden="true">{item.icon}</span> {item.label}
-        </span>
-      ))}
-      <ReadAloud id="request.chips" text={spoken} className={compact ? "h-11! w-11!" : ""} />
-    </div>
   );
 }
 

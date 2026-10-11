@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import type { FormContent } from "@/content/types";
 import { logEvent } from "@/lib/logger";
-import { ReadAloud } from "../ReadAloud";
 import { ArrowIcon } from "../icons";
 import { BigButton, Card, Say } from "../ui";
 
@@ -11,9 +10,16 @@ import { BigButton, Card, Say } from "../ui";
 
 export function MeetStep({ form, onNext }: { form: FormContent; onNext: () => void }) {
   const { client } = form;
+  const title = `An AI built an app for ${client.name}. Did it get it right?`;
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-6 py-4">
-      <Say id="meet.title" as="h1" text={`An AI built an app for ${client.name}. Did it get it right?`} className="text-3xl!" />
+      <Say
+        id="meet.screen"
+        as="h1"
+        text={title}
+        speak={`${title} ${client.name} says: ${form.requestText} ${form.glitchDefinition}`}
+        className="text-3xl!"
+      />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.15fr_1fr]">
         <Card className="flex flex-col gap-3 p-5!">
           <div className="flex items-center gap-3">
@@ -23,20 +29,16 @@ export function MeetStep({ form, onNext }: { form: FormContent; onNext: () => vo
             <p className="flex-1 text-2xl font-bold">
               {client.name} <span className="text-lg font-normal text-ink-soft">· age {client.age}</span>
             </p>
-            <ReadAloud id="meet.request" text={`${client.name} says: ${form.requestText}`} />
           </div>
           <p className="rounded-2xl bg-amber-soft p-4 text-xl leading-relaxed">&ldquo;{form.requestText}&rdquo;</p>
         </Card>
 
         <Card className="flex flex-col gap-2 p-5!">
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-bold">{client.name} asked for:</p>
-            <ReadAloud id="meet.items" text={`${client.name} asked for: ${form.requestItems.map((i) => i.label).join(". ")}.`} />
-          </div>
+          <p className="text-xl font-bold">{client.name} asked for:</p>
           <ul className="flex flex-col gap-1.5">
             {form.requestItems.map((item) => (
               <li key={item.id} className="flex items-center gap-3 rounded-xl bg-paper px-3 py-1 text-lg font-bold">
-                <span className="w-12 text-center text-2xl" aria-hidden="true">
+                <span className="min-w-12 shrink-0 text-center text-2xl whitespace-nowrap" aria-hidden="true">
                   {item.icon}
                 </span>
                 {item.label}
@@ -51,7 +53,6 @@ export function MeetStep({ form, onNext }: { form: FormContent; onNext: () => vo
             🐞
           </span>
           <p className="flex-1 text-xl font-bold">{form.glitchDefinition}</p>
-          <ReadAloud id="meet.glitch" text={form.glitchDefinition} />
         </div>
         <BigButton onClick={onNext}>
           Next <ArrowIcon />
@@ -133,7 +134,13 @@ export function CardStep({
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-3 px-6 py-4">
-      <Say id="card.title" as="h1" text={`Make a test card. What will you check in ${form.client.name}'s app?`} className="text-3xl!" />
+      <Say
+        id="card.screen"
+        as="h1"
+        text={`Make a test card. What will you check in ${form.client.name}'s app?`}
+        speak={`Make a test card. What will you check in ${form.client.name}'s app? Finish the sentence: When I, blank, it should, blank. Tap an idea or type your own.`}
+        className="text-3xl!"
+      />
       <div className="rounded-3xl border-4 border-ink bg-white px-6 py-4 shadow-[6px_6px_0_var(--ink)]">
         <p className="mb-3 flex items-center gap-2 text-lg font-bold text-ink-soft">
           <span aria-hidden="true">📝</span> My test card

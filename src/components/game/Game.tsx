@@ -86,7 +86,12 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     case "done":
       body = (
         <DoneStep
-          onPick={(confidence) => {
+          card={game.card}
+          onCardResult={(result) => {
+            logEvent("card_run", { result, asked: "after_hunt" });
+            update({ cardResult: result as GameState["cardResult"] });
+          }}
+          onConfidence={(confidence) => {
             const end = game.huntEndedAt ?? Date.now();
             logEvent("done", {
               confidence,

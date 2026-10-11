@@ -19,14 +19,60 @@ export const CONFIDENCE = [
   { id: "very_sure", icon: "😎", label: "Very sure" },
 ] as const;
 
-export function DoneStep({ onPick }: { onPick: (confidence: string) => void }) {
-  const q = "How sure are you that you found them all?";
+export const CARD_RESULTS = [
+  { id: "pass", icon: "✅", label: "Pass" },
+  { id: "fail", icon: "❌", label: "Fail" },
+  { id: "not_tried", icon: "🤷", label: "I didn't try it" },
+] as const;
+
+/**
+ * Two questions, one at a time: did the test card pass, then how sure the
+ * student is that they found every glitch.
+ */
+export function DoneStep({
+  card,
+  onCardResult,
+  onConfidence,
+}: {
+  card: { when: string; should: string };
+  onCardResult: (result: string) => void;
+  onConfidence: (confidence: string) => void;
+}) {
+  const [cardDone, setCardDone] = useState(false);
+  const cardLine = `When I ${card.when}, it should ${card.should}.`;
+  const sure = "How sure are you that you found them all?";
+
+  if (!cardDone) {
+    return (
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-5 px-6 py-6">
+        <Say id="done.card" as="h1" text="Did your test card pass?" speak={`Did your test card pass? ${cardLine}`} className="text-3xl!" />
+        <div className="rounded-3xl border-4 border-ink bg-white px-5 py-4 text-xl shadow-[6px_6px_0_var(--ink)]">
+          <span className="font-bold">📝 When I</span> {card.when}, <span className="font-bold">it should</span> {card.should}.
+        </div>
+        <div className="flex flex-col gap-3">
+          {CARD_RESULTS.map((r) => (
+            <OptionButton
+              key={r.id}
+              icon={r.icon}
+              onClick={() => {
+                onCardResult(r.id);
+                setCardDone(true);
+              }}
+            >
+              {r.label}
+            </OptionButton>
+          ))}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-6 px-6 py-6">
-      <Say id="done.question" as="h1" text={q} className="text-3xl!" />
+      <Say id="done.question" as="h1" text={sure} className="text-3xl!" />
       <div className="flex flex-col gap-4">
         {CONFIDENCE.map((c) => (
-          <OptionButton key={c.id} icon={c.icon} onClick={() => onPick(c.id)}>
+          <OptionButton key={c.id} icon={c.icon} onClick={() => onConfidence(c.id)}>
             {c.label}
           </OptionButton>
         ))}
@@ -64,24 +110,31 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
   ].filter(Boolean);
   const cheer = did.length ? `You ${did.join(" and ")}. Great bug hunting!` : "Thanks for hunting!";
   const aiText = `The AI checker said ${form.client.name}'s app was ready. It missed ${aiMissed} glitches! That's why people need to test apps too.`;
+  const glitchName = (id: string) => form.glitches.find((g) => g.id === id)!;
+  const spoken = [
+    "Here are all the glitches!",
+    cheer,
+    ...summary.found.map((id) => `You found: ${glitchName(id).title}.`),
+    ...summary.missed.map((id) => `Hidden glitch: ${glitchName(id).title}. ${glitchName(id).howToFind}`),
+    ...form.redHerrings.map((h) => `Not a glitch: ${h.title}. ${h.why}`),
+    usedAi ? aiText : "",
+  ].join(" ");
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-2.5 px-6 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Say id="reveal.title" as="h1" text="Here are all the glitches!" className="text-3xl!" />
+        <Say id="reveal.screen" as="h1" text="Here are all the glitches!" speak={spoken} className="text-3xl!" />
         <div className="flex items-center gap-3 rounded-2xl bg-amber-soft px-4 py-1.5">
           <span className="text-2xl" aria-hidden="true">
             🎉
           </span>
           <p className="text-lg font-bold">{cheer}</p>
-          <ReadAloud id="reveal.cheer" text={cheer} className="h-11! w-11!" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
         {form.glitches.map((g) => {
           const found = summary.found.includes(g.id);
-          const text = found ? `You found it! ${g.title}.` : `Hidden glitch: ${g.title}. ${g.howToFind}`;
           return (
             <div
               key={g.id}
@@ -101,7 +154,6 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
                 </p>
                 {!found && <p className="text-base leading-snug">{g.howToFind}</p>}
               </div>
-              <ReadAloud id={`reveal.${g.id}`} text={text} className="h-11! w-11!" />
             </div>
           );
         })}
@@ -117,7 +169,6 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
               <span className="font-bold">Not a glitch: {h.title.toLowerCase()}.</span> {h.why}
               {summary.redHerringsFlagged.includes(h.id) && <span className="text-ink-soft"> (You flagged it. Good checking!)</span>}
             </p>
-            <ReadAloud id={`reveal.${h.id}`} text={`Not a glitch: ${h.title}. ${h.why}`} className="h-10! w-10!" />
           </div>
         ))}
       </div>
@@ -129,7 +180,6 @@ export function RevealStep({ form, game, onNext }: { form: FormContent; game: Ga
               🤖
             </span>
             <p className="flex-1 text-lg font-bold">{aiText}</p>
-            <ReadAloud id="reveal.ai" text={aiText} className="h-11! w-11!" />
           </div>
         ) : (
           <div className="flex-1" />
@@ -155,7 +205,6 @@ export function FixStep({
 }) {
   const [pick, setPick] = useState<string | null>(null);
   const [text, setText] = useState("");
-  const name = form.client.name;
 
   function send() {
     if (!pick || !text.trim()) return;
@@ -165,7 +214,13 @@ export function FixStep({
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-6 py-5">
-      <Say id="fix.title" as="h1" text="Pick one glitch. Tell the AI how to fix it." className="text-3xl!" />
+      <Say
+        id="fix.screen"
+        as="h1"
+        text="Pick one glitch. Tell the AI how to fix it."
+        speak="Pick one glitch. Then write a message to the AI that tells it how to fix the glitch."
+        className="text-3xl!"
+      />
       <div className="grid grid-cols-2 gap-3">
         {form.glitches.map((g) => (
           <OptionButton key={g.id} icon="🐞" selected={pick === g.id} onClick={() => setPick(g.id)}>
@@ -181,7 +236,6 @@ export function FixStep({
           <label htmlFor="fix-text" className="flex-1 text-xl font-bold">
             Your message to the AI:
           </label>
-          <ReadAloud id="fix.label" text={`Your message to the AI. Tell it how to fix ${name}'s app.`} />
         </div>
         <textarea
           id="fix-text"
@@ -240,8 +294,8 @@ export function EndStep({ form, onFinish }: { form: FormContent; onFinish: () =>
       <span className="text-8xl" aria-hidden="true">
         🐞
       </span>
-      <Say id="end.title" as="h1" text="Thank you, bug hunter!" />
-      <Say id="end.body" text={`You helped make ${form.client.name}'s app better.`} />
+      <Say id="end.screen" as="h1" text="Thank you, bug hunter!" speak={`Thank you, bug hunter! You helped make ${form.client.name}'s app better.`} />
+      <p className="text-xl">You helped make {form.client.name}&apos;s app better.</p>
       <BigButton onClick={onFinish}>Finish</BigButton>
     </main>
   );

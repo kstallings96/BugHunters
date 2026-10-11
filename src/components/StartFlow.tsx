@@ -150,7 +150,7 @@ export function StartFlow() {
                 />
               </label>
             </div>
-            {problem && <Say id="name.problem" text={problem} className="text-danger" />}
+            {problem && <Say id="name.problem" text={problem} speak={false} className="text-danger" />}
             <BigButton type="submit" disabled={busy || !first.trim() || !initial.trim()}>
               {busy ? "Getting ready…" : "Start"} <ArrowIcon />
             </BigButton>

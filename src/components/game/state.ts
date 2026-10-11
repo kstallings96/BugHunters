@@ -9,7 +9,8 @@ export interface GameState {
   step: Step;
   stepEnteredAt: number;
   card: { when: string; should: string; edits: number };
-  cardResult: "pass" | "fail" | null;
+  /** Asked right after the hunt: pass, fail or not_tried. */
+  cardResult: "pass" | "fail" | "not_tried" | null;
   flags: Flag[];
   nextFlagId: number;
   huntStartedAt: number | null;

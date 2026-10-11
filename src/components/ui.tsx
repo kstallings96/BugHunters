@@ -22,14 +22,30 @@ export function BigButton({
   );
 }
 
-/** A line of instruction with its read-aloud button. */
-export function Say({ id, text, as = "p", className = "" }: { id: string; text: string; as?: "p" | "h1" | "h2"; className?: string }) {
+/**
+ * A line of text with a read-aloud button. Each screen gets one speaker, on
+ * its main instruction; `speak` sets what it reads (often the whole screen),
+ * and `speak={false}` shows the text with no button.
+ */
+export function Say({
+  id,
+  text,
+  speak,
+  as = "p",
+  className = "",
+}: {
+  id: string;
+  text: string;
+  speak?: string | false;
+  as?: "p" | "h1" | "h2";
+  className?: string;
+}) {
   const Tag = as;
   const size = as === "h1" ? "text-4xl font-bold" : as === "h2" ? "text-2xl font-bold" : "text-xl";
   return (
     <div className={`flex items-center gap-4 ${className}`}>
       <Tag className={`${size} leading-snug`}>{text}</Tag>
-      <ReadAloud id={id} text={text} />
+      {speak !== false && <ReadAloud id={id} text={speak ?? text} />}
     </div>
   );
 }

@@ -24,6 +24,7 @@ export type EventType =
   | "card_run"
   | "mode_toggle"
   | "app_interaction"
+  | "flag_start"
   | "flag_create"
   | "flag_delete"
   | "flag_cancel"
