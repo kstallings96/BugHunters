@@ -12,7 +12,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 /** Pizza Splitter with a tiny in-test store standing in for Game. */
-function setup(opts: { nudgeAt?: number | null } = {}) {
+function setup(opts: { nudgeAt?: number | null; maxTries?: number } = {}) {
   let tries: Try[] = [];
   const busted: BustedBug[] = [];
   const onAccept = vi.fn();
@@ -34,6 +34,7 @@ function setup(opts: { nudgeAt?: number | null } = {}) {
       acceptLabel="Looks good, next machine →"
       onAccept={onAccept}
       nudgeAt={opts.nudgeAt ?? null}
+      maxTries={opts.maxTries}
       onNudge={onNudge}
     />
   );
@@ -104,7 +105,8 @@ describe("a machine", () => {
     click("Keep testing");
     tryIt("5", "0");
     bust();
-    expect(screen.getByText(/already found a Zero bug here/)).toBeTruthy();
+    expect(screen.getByText("Busted! Another Zero bug.")).toBeTruthy();
+    expect(screen.queryByText(/different kind/)).toBeNull();
     expect(t.busted).toHaveLength(1);
   });
 
@@ -148,5 +150,15 @@ describe("a machine", () => {
     expect(t.onAccept).not.toHaveBeenCalled();
     click("Keep testing");
     expect(screen.queryByText(/Ready for the next machine/)).toBeNull();
+  });
+
+  it("caps tries: after the 8th, Try it is off but Busted! still works", () => {
+    setup({ maxTries: 8 });
+    for (let i = 1; i <= 8; i++) tryIt(String(i), "2");
+    expect(screen.getByText("Tries: 8 of 8")).toBeTruthy();
+    expect((screen.getByRole("button", { name: /Try it/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/That was your last try/)).toBeTruthy();
+    expect((screen.getByRole("button", { name: /^💥 Busted!$/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect(logged.filter((e) => e.type === "tries_used_up")).toHaveLength(1);
   });
 });

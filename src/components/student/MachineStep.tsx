@@ -48,6 +48,7 @@ export function MachineStep({
   highlightField,
   pulseBusted = false,
   locked = false,
+  maxTries,
 }: {
   machine: Machine;
   title: string;
@@ -66,11 +67,14 @@ export function MachineStep({
   pulseBusted?: boolean;
   /** Tutorial steps that wait for one specific action. */
   locked?: boolean;
+  /** Tries allowed on this machine; scarcity makes each one a choice. Unlimited if absent. */
+  maxTries?: number;
 }) {
   const [values, setValues] = useState<Inputs>(() => blankInputs(machine));
   const [bustOpen, setBustOpen] = useState(false);
   const [nudge, setNudge] = useState<"hidden" | "shown" | "dismissed">("hidden");
   const last = tries.at(-1) ?? null;
+  const outOfTries = maxTries !== undefined && tries.length >= maxTries;
 
   useEffect(() => {
     if (nudgeAt == null) return;
@@ -110,6 +114,7 @@ export function MachineStep({
       debatable: e.debatable,
     });
     onTry(t);
+    if (maxTries !== undefined && t.n === maxTries) logEvent("tries_used_up", { max: maxTries });
   }
 
   return (
@@ -147,14 +152,22 @@ export function MachineStep({
           onTry={tryIt}
           output={last?.output ?? null}
           highlightField={highlightField}
-          disabled={locked}
+          disabled={locked || outOfTries}
         />
       </div>
 
       <aside className="flex min-h-0 flex-col gap-3">
-        <p className="text-lg font-bold text-ink-soft">{title}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-lg font-bold text-ink-soft">{title}</p>
+          {maxTries !== undefined && (
+            <p className="rounded-full bg-paper px-3 py-0.5 text-lg font-bold" aria-live="polite">
+              Tries: {tries.length} of {maxTries}
+            </p>
+          )}
+        </div>
         <div className="flex min-h-0 flex-1 flex-col rounded-3xl border-2 border-line bg-card p-3">
           <p className="mb-1 text-lg font-bold">Your tries</p>
+          {outOfTries && <p className="mb-1 rounded-xl bg-amber-soft px-3 py-1 text-base font-bold">That was your last try! Bust a bug, or move on.</p>}
           {tries.length === 0 ? (
             <p className="text-base text-ink-soft">Nothing yet. Type something and tap Try it.</p>
           ) : (
@@ -255,7 +268,7 @@ function BustedDialog({
       result.verdict === "real"
         ? result.counted
           ? `Busted! You found ${withArticle(CATEGORY_LABEL[result.kind!])} bug 🎉`
-          : `Busted! You already found ${withArticle(CATEGORY_LABEL[result.kind!])} bug here. Can you find a different kind?`
+          : `Busted! Another ${CATEGORY_LABEL[result.kind!]} bug.`
         : result.verdict === "debatable"
           ? "Good thinking. People might disagree about this one!"
           : "Hmm, that one works the way it should. Keep testing!";

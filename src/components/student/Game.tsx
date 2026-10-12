@@ -7,6 +7,9 @@ import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
 import { MachineStep, type BustedResult } from "./MachineStep";
+
+/** Tries per measured machine. Scarcity makes probes deliberate (as in AlwaysNever). */
+const MAX_TRIES = 8;
 import { EndScreen, GuiltyLine, SurveyScreen } from "./Screens";
 import {
   categoryCounts,
@@ -116,6 +119,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
           isNewKind={isNewKind(id)}
           onBusted={(r) => busted(id, r, true)}
           acceptLabel={lastMachine ? "Looks good, I'm done →" : "Looks good, next machine →"}
+          maxTries={MAX_TRIES}
           onAccept={(via) => accept(id, via, advance)}
           nudgeAt={game.machineStartedAt + session.nudgeSeconds * 1000}
           onNudge={() => {
