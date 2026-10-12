@@ -1,3 +1,4 @@
+import { missingLine } from "./classify";
 import type { Context, Inputs, Machine, Output } from "./types";
 
 /**
@@ -47,6 +48,7 @@ export const birthday: Machine = {
   name: "Birthday Countdown",
   icon: "🎂",
   purpose: "Counts the days until your birthday.",
+  hint: "Try a date that doesn't exist. Or try today!",
   fields: [
     { id: "month", label: "Month", kind: "select", options: MONTHS.map((label, i) => ({ value: String(i + 1), label })) },
     {
@@ -78,12 +80,15 @@ export const birthday: Machine = {
     return m === 2 && d === 29;
   },
   resultBugKind: () => "boundary",
-  expectLabel: "a number of days",
+  otherAnswers: () => ["0 days until your birthday!", "Happy birthday! 🎂", "1 day until your birthday!"],
   pseudocode: [
     "birthday = month + day",
     "if birthday is on or before today → use next year",
     "days = birthday − today",
     'show days + " days until your birthday!"',
   ],
-  guiltyLine: (kind) => (kind === "boundary" ? 2 : "missing"),
+  fixFor: (kind) =>
+    kind === "boundary"
+      ? { type: "wrong_line", line: 2 }
+      : missingLine(1, `if the date doesn't exist → say "That date doesn't exist."`, 'if birthday is in May → say "Spring!"', "days = days + 1"),
 };

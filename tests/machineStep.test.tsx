@@ -50,7 +50,7 @@ function tryIt(slices: string, friends: string) {
   click(/Try it/);
 }
 
-function bust(expect: RegExp = /not allowed/) {
+function bust(expect: RegExp = /not sure/) {
   click(/^💥 Busted!$/);
   fireEvent.click(screen.getByRole("button", { name: expect }));
   fireEvent.click(screen.getAllByRole("button", { name: /Busted!/ }).at(-1)!);
@@ -78,10 +78,10 @@ describe("a machine", () => {
   it("Try it shows the buggy output and logs the classified input", () => {
     setup();
     tryIt("8", "0");
-    expect(screen.getAllByText("Each friend gets Infinity").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Each friend gets Infinity slices").length).toBeGreaterThan(0);
     expect(logged.find((e) => e.type === "input_submit")?.payload).toMatchObject({
       inputs: { slices: "8", friends: "0" },
-      output_shown: "Each friend gets Infinity",
+      output_shown: "Each friend gets Infinity slices",
       categories: ["zero"],
       reveals_bug: true,
       bug_kind: "zero",
@@ -100,7 +100,7 @@ describe("a machine", () => {
     tryIt("8", "0");
     bust();
     expect(screen.getByText("Busted! You found a Zero bug 🎉")).toBeTruthy();
-    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "real", bug_kind: "zero", counted: true, expected_type: "not_allowed" });
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "real", bug_kind: "zero", counted: true, expected_unsure: true });
     click("Keep testing");
     tryIt("5", "0");
     bust();
@@ -111,11 +111,11 @@ describe("a machine", () => {
   it("a false alarm and a debatable case get friendly messages", () => {
     setup();
     tryIt("8", "4");
-    bust(/a number/);
+    bust(/^Each friend gets 2 slices$/);
     expect(screen.getByText("Hmm, that one works the way it should. Keep testing!")).toBeTruthy();
     click("Keep testing");
     tryIt("8", "3");
-    bust(/something else/);
+    bust(/not sure/);
     expect(screen.getByText("Good thinking. People might disagree about this one!")).toBeTruthy();
   });
 
@@ -126,10 +126,10 @@ describe("a machine", () => {
     click(/^💥 Busted!$/);
     click(/Pick another try/);
     fireEvent.click(screen.getByRole("button", { name: /"-2"/ }));
-    click(/not allowed/);
+    click(/Numbers can't be below zero/);
     fireEvent.click(screen.getAllByRole("button", { name: /Busted!/ }).at(-1)!);
     expect(screen.getByText("Busted! You found a Negative bug 🎉")).toBeTruthy();
-    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ input_n: 1 });
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ input_n: 1, expected_correct: true });
   });
 
   it("Looks good accepts the AI's claim", () => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BigButton } from "@/components/ui";
-import { BIRTHDAY_QUESTION, CODING_QUESTION } from "@/config/survey";
+import { CODING_QUESTION } from "@/config/survey";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
@@ -24,8 +24,8 @@ import {
 } from "./state";
 
 /**
- * One student's session: pre questions → tutorial → three machines →
- * post question → end (→ optional bonus). Every screen change logs
+ * One student's session: coding-experience question → tutorial → three
+ * machines → end (→ optional bonus). Every screen change logs
  * step_exit and step_enter; progress is kept in sessionStorage so a reload
  * lands on the same screen.
  */
@@ -97,10 +97,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   let body: React.ReactNode;
   switch (game.screen) {
     case "pre_coding":
-      body = <SurveyScreen key="coding" q={CODING_QUESTION} when="pre" onAnswer={() => go("pre_birthday")} />;
-      break;
-    case "pre_birthday":
-      body = <SurveyScreen key="pre_bday" q={BIRTHDAY_QUESTION} when="pre" onAnswer={() => go("tutorial")} />;
+      body = <SurveyScreen q={CODING_QUESTION} onAnswer={() => go("tutorial")} />;
       break;
     case "tutorial":
       body = <Tutorial game={game} onTry={(t) => addTry("double", t)} onStart={() => go("machine", { machineIndex: 0 })} />;
@@ -108,7 +105,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     case "machine": {
       const id = session.machineOrder[game.machineIndex];
       const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
-      const advance = () => (lastMachine ? go("post_birthday") : go("machine", { machineIndex: game.machineIndex + 1 }));
+      const advance = () => (lastMachine ? go("end") : go("machine", { machineIndex: game.machineIndex + 1 }));
       body = (
         <MachineStep
           key={id}
@@ -130,9 +127,6 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       );
       break;
     }
-    case "post_birthday":
-      body = <SurveyScreen key="post_bday" q={BIRTHDAY_QUESTION} when="post" onAnswer={() => go("end")} />;
-      break;
     case "bonus_machine":
       body = (
         <MachineStep

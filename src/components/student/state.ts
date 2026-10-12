@@ -4,20 +4,16 @@ import type { Category, Inputs, MachineId, Output } from "@/machines/types";
 /** Screens in order. Each maps to a logged `step`. */
 export type Screen =
   | "pre_coding"
-  | "pre_birthday"
   | "tutorial"
   | "machine"
-  | "post_birthday"
   | "end"
   | "bonus_machine"
   | "bonus_guilty";
 
 export const STEP_OF: Record<Screen, Step> = {
   pre_coding: "pre_survey",
-  pre_birthday: "pre_survey",
   tutorial: "tutorial",
   machine: "machine",
-  post_birthday: "post_survey",
   end: "end",
   bonus_machine: "bonus_machine",
   bonus_guilty: "bonus_guilty",
@@ -28,6 +24,8 @@ export interface Try {
   n: number;
   inputs: Inputs;
   output: Output;
+  /** What the machine should have said (reference version). */
+  correct: string;
   categories: Category[];
   revealsBug: boolean;
   bugKind: Category | null;
@@ -69,9 +67,7 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
       ? "tutorial"
       : p.step === "machine"
         ? "machine"
-        : p.step === "post_survey"
-          ? "post_birthday"
-          : p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
+        : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
             ? "end"
             : "pre_coding";
   return { ...newGame(now), screen, machineIndex: Math.min(2, Math.max(0, p.machineIndex)), busted: p.busted };

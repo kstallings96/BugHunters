@@ -1,5 +1,5 @@
-import { parseNumber } from "./classify";
-import type { Category, Inputs, Machine, Output } from "./types";
+import { missingLine, parseNumber } from "./classify";
+import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
  * Grade Checker. Buggy: uses > instead of >= (90 → B, 80 → C, 70 → D,
@@ -16,6 +16,14 @@ const CUTS: [number, string][] = [
 ];
 
 export const GRADE_BOUNDARIES = [0, 60, 70, 80, 90, 100];
+
+// Missing checks go at the very top (after line 0).
+const FIXES: Partial<Record<Category, Fix>> = {
+  out_of_range: missingLine(0, 'if score is below 0 or above 100 → say "Scores go from 0 to 100."', "if score > 95 → A+", 'if score is 50 → say "Halfway!"'),
+  empty: missingLine(0, 'if score is blank → say "Please type a score."', "if score > 95 → A+", "score = score + 10"),
+  spaces_only: missingLine(0, 'if score is blank → say "Please type a score."', 'if score is 50 → say "Halfway!"', "score = score × 2"),
+  wrong_type: missingLine(0, 'if score is not a number → say "That\'s not a score."', "if score > 95 → A+", "score = score − 10"),
+};
 
 export const grade: Machine = {
   id: "grade",
@@ -52,11 +60,13 @@ export const grade: Machine = {
     return s !== null && !Number.isInteger(s) && s >= 0 && s <= 100;
   },
   resultBugKind: () => "boundary",
-  expectLabel: "a grade",
+  otherAnswers: () => ["Grade: A", "Grade: C", "Grade: F"],
   pseudocode: ["if score > 90 → A", "else if score > 80 → B", "else if score > 70 → C", "else if score > 60 → D", "else → F"],
-  guiltyLine: (kind, { score }) => {
-    if (kind !== "boundary") return "missing";
-    const line = CUTS.findIndex(([cut]) => parseNumber(score) === cut);
-    return line >= 0 ? line + 1 : "missing";
+  fixFor: (kind, { score }) => {
+    if (kind === "boundary") {
+      const line = CUTS.findIndex(([cut]) => parseNumber(score) === cut);
+      return { type: "wrong_line", line: line >= 0 ? line + 1 : 1 };
+    }
+    return FIXES[kind] ?? FIXES.wrong_type!;
   },
 };

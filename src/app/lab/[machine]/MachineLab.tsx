@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { blankInputs, MachineCard } from "@/components/MachineCard";
-import { CATEGORY_LABEL, evaluate, MACHINES, verdictFor, type Evaluation, type Inputs, type MachineId } from "@/machines";
+import { answerChoices, CATEGORY_LABEL, evaluate, MACHINES, verdictFor, type Evaluation, type Inputs, type MachineId } from "@/machines";
 
 export function MachineLab({ id }: { id: MachineId }) {
   const machine = MACHINES[id];
@@ -49,11 +49,22 @@ export function MachineLab({ id }: { id: MachineId }) {
                 <b>Busted! would be:</b> {verdictFor(result.e)}
                 {result.e.bugKind && ` · ${CATEGORY_LABEL[result.e.bugKind]} bug`}
               </p>
-              {result.e.bugKind && (
-                <p>
-                  <b>Guilty line:</b> {String(machine.guiltyLine(result.e.bugKind, result.inputs))}
-                </p>
-              )}
+              <p>
+                <b>&ldquo;It should say&rdquo; choices:</b>{" "}
+                {answerChoices(machine, result.inputs, result.e.buggy.text, result.e.reference.text)
+                  .options.map((o) => (o === result.e.reference.text ? `✔ ${o}` : o))
+                  .join("  |  ")}
+              </p>
+              {result.e.bugKind &&
+                (() => {
+                  const fix = machine.fixFor(result.e.bugKind, result.inputs);
+                  return (
+                    <p>
+                      <b>Bonus fix:</b>{" "}
+                      {fix.type === "wrong_line" ? `line ${fix.line} is wrong` : `missing after line ${fix.after}: ${fix.options[fix.answer]}`}
+                    </p>
+                  );
+                })()}
             </>
           ) : (
             <p className="text-ink-soft">Try an input to see how it is scored.</p>

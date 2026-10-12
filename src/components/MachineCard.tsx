@@ -44,6 +44,7 @@ export function MachineCard({
       </div>
 
       {machine.clientNote && <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">📌 {machine.clientNote}</p>}
+      {machine.hint && <p className="rounded-2xl border-2 border-dashed border-teal bg-teal/5 px-4 py-2 text-lg font-bold">💡 Hint: {machine.hint}</p>}
 
       <p className="self-start rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">
         ✅ Built by AI. &ldquo;I tested it. It works perfectly!&rdquo;
@@ -89,7 +90,7 @@ export function MachineCard({
         </button>
       </form>
 
-      <div className="flex min-h-20 items-center rounded-2xl border-4 border-dashed border-line bg-paper px-5" aria-live="polite">
+      <div className="flex min-h-20 max-w-[36rem] items-center rounded-2xl border-4 border-dashed border-line bg-paper px-5" aria-live="polite">
         {output ? (
           // whitespace-pre keeps every space the machine printed, and a very
           // long greeting is allowed to run off the edge: both are bugs

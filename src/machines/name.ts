@@ -1,5 +1,5 @@
-import { LONG_TEXT } from "./classify";
-import type { Category, Inputs, Machine, Output } from "./types";
+import { LONG_TEXT, missingLine } from "./classify";
+import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
  * Name Greeter (the transfer machine: text instead of numbers).
@@ -8,6 +8,15 @@ import type { Category, Inputs, Machine, Output } from "./types";
  * Reference: trims, refuses empty or spaces-only, caps the length.
  * Numbers-only and all-lowercase names are debatable.
  */
+
+// Missing lines go after line 1 (after reading the name).
+const FIXES: Partial<Record<Category, Fix>> = {
+  empty: missingLine(1, 'if name is blank → say "Please type your name."', "name = name in capital letters", 'if name is short → say "Hi!"'),
+  spaces_only: missingLine(1, 'if name is only spaces → say "Please type your name."', "name = name backwards", 'if name has an A → say "Hey!"'),
+  extra_spaces: missingLine(1, "name = name without spaces at the start and end", "name = name in capital letters", "name = name + name"),
+  very_long: missingLine(1, `if name is longer than ${LONG_TEXT} letters → say "Names can be up to ${LONG_TEXT} letters."`, "name = name backwards", 'if name is short → say "Hi!"'),
+};
+
 export const nameGreeter: Machine = {
   id: "name",
   name: "Name Greeter",
@@ -29,7 +38,7 @@ export const nameGreeter: Machine = {
   },
   // Both versions answer, but the buggy one kept the spaces.
   resultBugKind: (_inputs, categories: Category[]) => (categories.includes("extra_spaces") ? "extra_spaces" : categories[0]),
-  expectLabel: "a greeting",
+  otherAnswers: () => ["Hi, friend!", "Hello!"],
   pseudocode: ["name = what you typed", 'show "Hi, " + name + "!"'],
-  guiltyLine: () => "missing",
+  fixFor: (kind) => FIXES[kind] ?? FIXES.empty!,
 };

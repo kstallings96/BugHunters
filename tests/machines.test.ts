@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyNumberField, classifyTextField, finalize, HUGE, LONG_TEXT, parseNumber } from "@/machines/classify";
-import { evaluate, MACHINES, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
+import { answerChoices, evaluate, MACHINES, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
 
 // A fixed "today" so date machines are deterministic: Tuesday 14 Oct 2025 (not a leap year).
 const ctx = { today: new Date(2025, 9, 14, 10, 30) };
@@ -73,8 +73,8 @@ describe("Double It", () => {
     [{ number: "cat" }, ["wrong_type"], "wrong_type"],
     [{ number: "" }, ["empty"], "empty"],
   ]);
-  it("shows NaN for cat (the tutorial bug)", () => {
-    expect(run("double", { number: "cat" }).buggy.text).toBe("Answer: NaN");
+  it("shows ??? (not NaN) for cat, the tutorial bug", () => {
+    expect(run("double", { number: "cat" }).buggy.text).toBe("Answer: ???");
     expect(run("double", { number: "4" }).buggy.text).toBe("Answer: 8");
   });
 });
@@ -96,10 +96,11 @@ describe("Pizza Splitter", () => {
     [{ slices: "8", friends: "3" }, ["normal"], null, true],
   ]);
   it("shows the planted outputs", () => {
-    expect(run("pizza", { slices: "8", friends: "0" }).buggy.text).toBe("Each friend gets Infinity");
-    expect(run("pizza", { slices: "", friends: "2" }).buggy.text).toBe("Each friend gets NaN");
-    expect(run("pizza", { slices: "8", friends: "3" }).buggy.text).toBe("Each friend gets 2.6666666666666665");
-    expect(run("pizza", { slices: "8", friends: "-2" }).buggy.text).toBe("Each friend gets -4");
+    expect(run("pizza", { slices: "8", friends: "0" }).buggy.text).toBe("Each friend gets Infinity slices");
+    expect(run("pizza", { slices: "", friends: "2" }).buggy.text).toBe("Each friend gets ??? slices");
+    expect(run("pizza", { slices: "8", friends: "3" }).buggy.text).toBe("Each friend gets 2.6666666666666665 slices");
+    expect(run("pizza", { slices: "8", friends: "-2" }).buggy.text).toBe("Each friend gets -4 slices");
+    expect(run("pizza", { slices: "8", friends: "4" }).reference.text).toBe("Each friend gets 2 slices");
     expect(run("pizza", { slices: "8", friends: "0" }).reference).toMatchObject({ type: "not_allowed", rule: "zero" });
   });
 });
@@ -129,10 +130,12 @@ describe("Grade Checker", () => {
     expect(run("grade", { score: "-5" }).buggy.text).toBe("Grade: F");
     expect(run("grade", { score: "cat" }).buggy.text).toBe("Grade: F");
   });
-  it("names the guilty line for each boundary", () => {
-    const g = MACHINES.grade.guiltyLine;
-    expect([90, 80, 70, 60].map((s) => g("boundary", { score: String(s) }))).toEqual([1, 2, 3, 4]);
-    expect(g("out_of_range", { score: "105" })).toBe("missing");
+  it("bonus: a boundary bug is a wrong line; out of range is a missing line", () => {
+    const f = MACHINES.grade.fixFor;
+    expect([90, 80, 70, 60].map((s) => f("boundary", { score: String(s) }))).toEqual([1, 2, 3, 4].map((line) => ({ type: "wrong_line", line })));
+    const missing = f("out_of_range", { score: "105" });
+    expect(missing.type).toBe("missing_line");
+    if (missing.type === "missing_line") expect(missing.options[missing.answer]).toMatch(/0 to 100/);
   });
 });
 
@@ -173,8 +176,11 @@ describe("Birthday Countdown (today is Oct 14)", () => {
   it("Feb 30 rolls over silently", () => {
     expect(run("birthday", { month: "2", day: "30" }).buggy.text).toMatch(/^\d+ days until your birthday!$/);
   });
-  it("names line 2 for the today bug", () => {
-    expect(MACHINES.birthday.guiltyLine("boundary", {})).toBe(2);
+  it("bonus: line 2 is wrong for the today bug", () => {
+    expect(MACHINES.birthday.fixFor("boundary", {})).toEqual({ type: "wrong_line", line: 2 });
+  });
+  it("has a hint for the bonus", () => {
+    expect(MACHINES.birthday.hint).toMatch(/doesn't exist/);
   });
 });
 
@@ -188,11 +194,69 @@ describe("busted verdicts", () => {
 });
 
 describe("every machine", () => {
-  it("has a name, purpose, fields, pseudocode and an expected-answer label", () => {
+  it("has a name, purpose, fields and pseudocode", () => {
     for (const m of Object.values(MACHINES)) {
-      expect(m.name && m.purpose && m.expectLabel).toBeTruthy();
+      expect(m.name && m.purpose).toBeTruthy();
       expect(m.fields.length).toBeGreaterThan(0);
       expect(m.pseudocode.length).toBeGreaterThan(1);
     }
+  });
+
+  // One input for every bug kind on every machine.
+  const BUGS: [MachineId, Inputs][] = [
+    ["double", { number: "cat" }],
+    ["double", { number: "" }],
+    ["double", { number: "  " }],
+    ["pizza", { slices: "8", friends: "0" }],
+    ["pizza", { slices: "8", friends: "-2" }],
+    ["pizza", { slices: "7.5", friends: "3" }],
+    ["pizza", { slices: "", friends: "2" }],
+    ["pizza", { slices: "8", friends: "  " }],
+    ["pizza", { slices: "eight", friends: "2" }],
+    ["grade", { score: "90" }],
+    ["grade", { score: "105" }],
+    ["grade", { score: "" }],
+    ["grade", { score: "  " }],
+    ["grade", { score: "ninety" }],
+    ["name", { name: "" }],
+    ["name", { name: "   " }],
+    ["name", { name: "  Bo" }],
+    ["name", { name: "B".repeat(40) }],
+    ["birthday", { month: "10", day: "14" }],
+    ["birthday", { month: "2", day: "30" }],
+  ];
+
+  it.each(BUGS)("%s %j: the right answer is one of three choices", (id, inputs) => {
+    const e = run(id, inputs);
+    expect(e.revealsBug).toBe(true);
+    const { options, correct } = answerChoices(MACHINES[id], inputs, e.buggy.text, e.reference.text);
+    expect(options).toHaveLength(3);
+    expect(new Set(options).size).toBe(3);
+    expect(options[correct]).toBe(e.reference.text);
+    expect(options).toContain(e.buggy.text);
+  });
+
+  it.each(BUGS)("%s %j: the bonus fix has its answer among the choices", (id, inputs) => {
+    const e = run(id, inputs);
+    const fix = MACHINES[id].fixFor(e.bugKind!, inputs);
+    if (fix.type === "wrong_line") {
+      expect(fix.line).toBeGreaterThanOrEqual(1);
+      expect(fix.line).toBeLessThanOrEqual(MACHINES[id].pseudocode.length);
+    } else {
+      expect(fix.options).toHaveLength(3);
+      expect(new Set(fix.options).size).toBe(3);
+      expect(fix.options[fix.answer]).toBeTruthy();
+      expect(fix.after).toBeLessThanOrEqual(MACHINES[id].pseudocode.length);
+    }
+  });
+
+  it("puts the right answer in different spots", () => {
+    const spots = new Set(
+      BUGS.map(([id, inputs]) => {
+        const e = run(id, inputs);
+        return answerChoices(MACHINES[id], inputs, e.buggy.text, e.reference.text).correct;
+      }),
+    );
+    expect(spots.size).toBeGreaterThan(1);
   });
 });

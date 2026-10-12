@@ -74,3 +74,23 @@ export function finalize(cats: Category[]): Category[] {
   const out = order.filter((c) => set.has(c));
   return out.length ? out : ["normal"];
 }
+
+/** How the buggy machines print a number: NaN shows as "???" so middle schoolers can see it broke. */
+export function shown(n: number): string {
+  return Number.isNaN(n) ? "???" : String(n);
+}
+
+/** Small stable hash, so option order varies between questions but never between students. */
+export function stableHash(text: string): number {
+  let h = 0;
+  for (const ch of text) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
+  return h;
+}
+
+/** A missing-line question: the right line plus two that don't fix this bug, in a stable mixed order. */
+export function missingLine(after: number, answer: string, ...others: [string, string]) {
+  const options = [answer, ...others];
+  const shift = stableHash(answer) % 3;
+  const rotated = [...options.slice(shift), ...options.slice(0, shift)];
+  return { type: "missing_line" as const, after, options: rotated, answer: rotated.indexOf(answer) };
+}

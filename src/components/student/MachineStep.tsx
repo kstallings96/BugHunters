@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { blankInputs, MachineCard } from "@/components/MachineCard";
 import { BigButton, Modal, OptionButton } from "@/components/ui";
 import { logEvent } from "@/lib/logger";
-import { CATEGORY_LABEL, evaluate, verdictFor, withArticle, type BustedVerdict, type Category, type Inputs, type Machine } from "@/machines";
+import { answerChoices, CATEGORY_LABEL, evaluate, verdictFor, withArticle, type BustedVerdict, type Category, type Inputs, type Machine } from "@/machines";
 import type { Try } from "./state";
 
 /**
@@ -93,6 +93,7 @@ export function MachineStep({
       n: tries.length + 1,
       inputs,
       output: e.buggy,
+      correct: e.reference.text,
       categories: e.categories,
       revealsBug: e.revealsBug,
       bugKind: e.bugKind,
@@ -207,8 +208,6 @@ export function MachineStep({
 
 // ----------------------------------------------------------- Busted!
 
-type Expect = "value" | "not_allowed" | "other";
-
 function BustedDialog({
   machine,
   tries,
@@ -224,13 +223,15 @@ function BustedDialog({
 }) {
   const [pick, setPick] = useState(tries.length - 1);
   const [choosing, setChoosing] = useState(false);
-  const [expect, setExpect] = useState<Expect | null>(null);
-  const [text, setText] = useState("");
+  // Index into the choices, or "unsure".
+  const [expect, setExpect] = useState<number | "unsure" | null>(null);
   const [result, setResult] = useState<BustedResult | null>(null);
   const t = tries[pick];
+  // Tries saved before answer choices existed have no `correct`; fall back to what it said.
+  const choices = answerChoices(machine, t.inputs, t.output.text, t.correct ?? t.output.text);
 
   function submit() {
-    if (!expect) return;
+    if (expect === null) return;
     const verdict = verdictFor(t);
     const kind = verdict === "real" ? t.bugKind : null;
     const counted = verdict === "real" && kind !== null && isNewKind(kind);
@@ -238,8 +239,10 @@ function BustedDialog({
       input_n: t.n,
       inputs: t.inputs,
       output_shown: t.output.text,
-      expected_type: expect,
-      expected_text: expect === "not_allowed" ? null : text.trim(),
+      expected_options: choices.options,
+      expected_choice: expect === "unsure" ? null : choices.options[expect],
+      expected_unsure: expect === "unsure",
+      expected_correct: expect !== "unsure" && expect === choices.correct,
       verdict,
       bug_kind: kind,
       counted,
@@ -289,6 +292,7 @@ function BustedDialog({
                     selected={i === pick}
                     onClick={() => {
                       setPick(i);
+                      setExpect(null);
                       setChoosing(false);
                     }}
                   >
@@ -314,39 +318,16 @@ function BustedDialog({
 
         <h3 className="text-2xl font-bold">It should say…</h3>
         <div className="flex flex-col gap-2">
-          <OptionButton selected={expect === "value"} onClick={() => setExpect("value")}>
-            {machine.expectLabel}
+          {choices.options.map((o, i) => (
+            <OptionButton key={o} selected={expect === i} onClick={() => setExpect(i)}>
+              <span className="break-all whitespace-pre-wrap">{o}</span>
+            </OptionButton>
+          ))}
+          <OptionButton selected={expect === "unsure"} onClick={() => setExpect("unsure")}>
+            I&apos;m not sure
           </OptionButton>
-          {expect === "value" && (
-            <input
-              autoFocus
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              maxLength={80}
-              placeholder={`Type ${machine.expectLabel} (you can skip this)`}
-              aria-label={`It should say ${machine.expectLabel}`}
-              className="h-14 rounded-2xl border-4 border-line bg-white px-4 text-xl outline-none focus:border-teal"
-            />
-          )}
-          <OptionButton selected={expect === "not_allowed"} onClick={() => setExpect("not_allowed")}>
-            a message saying that&apos;s not allowed
-          </OptionButton>
-          <OptionButton selected={expect === "other"} onClick={() => setExpect("other")}>
-            something else
-          </OptionButton>
-          {expect === "other" && (
-            <input
-              autoFocus
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              maxLength={80}
-              placeholder="What should it say? (you can skip this)"
-              aria-label="It should say something else"
-              className="h-14 rounded-2xl border-4 border-line bg-white px-4 text-xl outline-none focus:border-teal"
-            />
-          )}
         </div>
-        <BigButton variant="danger" onClick={submit} disabled={!expect} className="self-end">
+        <BigButton variant="danger" onClick={submit} disabled={expect === null} className="self-end">
           💥 Busted!
         </BigButton>
       </div>

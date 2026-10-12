@@ -1,5 +1,5 @@
 import { birthday } from "./birthday";
-import { classifyNumberField, classifyTextField, finalize } from "./classify";
+import { classifyNumberField, classifyTextField, finalize, stableHash } from "./classify";
 import { doubleIt } from "./doubleIt";
 import { grade } from "./grade";
 import { nameGreeter } from "./name";
@@ -53,4 +53,16 @@ export function evaluate(machine: Machine, inputs: Inputs, ctx: Context): Evalua
 export function verdictFor(e: Pick<Evaluation, "revealsBug" | "debatable">): BustedVerdict {
   if (e.debatable) return "debatable";
   return e.revealsBug ? "real" : "false_alarm";
+}
+
+/**
+ * Choices for "It should say…": the correct output, what the machine actually
+ * said, and plausible others, three in all, in a stable mixed order.
+ */
+export function answerChoices(machine: Machine, inputs: Inputs, shownText: string, correctText: string): { options: string[]; correct: number } {
+  const pool = [correctText, shownText, ...machine.otherAnswers(inputs)];
+  const unique = [...new Set(pool)].slice(0, 3);
+  const shift = stableHash(JSON.stringify(inputs)) % unique.length;
+  const options = [...unique.slice(shift), ...unique.slice(0, shift)];
+  return { options, correct: options.indexOf(correctText) };
 }

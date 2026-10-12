@@ -9,25 +9,24 @@ import { CATEGORY_LABEL, MACHINES } from "@/machines";
 
 // ------------------------------------------------------------- survey
 
-export function SurveyScreen({ q, when, onAnswer }: { q: SurveyQuestion; when: "pre" | "post"; onAnswer: () => void }) {
+/** A 5-point scale, left to right. */
+export function SurveyScreen({ q, onAnswer }: { q: SurveyQuestion; onAnswer: () => void }) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-5 px-6 py-6">
-      <h1 className="text-3xl leading-snug font-bold">{q.question}</h1>
-      <div className="flex flex-col gap-3">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-8 px-6 py-6">
+      <h1 className="text-center text-3xl leading-snug font-bold">{q.question}</h1>
+      <div className="grid grid-cols-5 gap-3">
         {q.options.map((o) => (
           <button
             key={o.id}
             type="button"
             onClick={() => {
-              logEvent("survey_response", { question: q.id, when, choice: o.id, text: o.text });
+              logEvent("survey_response", { question: q.id, choice: Number(o.id), text: o.text });
               onAnswer();
             }}
-            className="flex min-h-16 items-center gap-4 rounded-2xl border-4 border-line bg-white px-5 py-2 text-left text-xl hover:border-teal"
+            className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl border-4 border-line bg-white px-2 py-3 text-center hover:border-teal"
           >
-            {o.letter && (
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal text-lg font-bold text-white">{o.letter}</span>
-            )}
-            {o.text}
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-teal text-2xl font-bold text-white">{o.id}</span>
+            <span className="text-xl font-bold">{o.text}</span>
           </button>
         ))}
       </div>
@@ -61,6 +60,7 @@ export function EndScreen({
       <h1 className="text-4xl font-bold">
         You busted {busted.length} {busted.length === 1 ? "bug" : "bugs"}!
       </h1>
+      {busted.length > 0 && <p className="text-2xl">The AI said its tools worked perfectly. You proved it wrong.</p>}
       {kinds.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2">
           {kinds.map((k) => (
@@ -85,20 +85,33 @@ export function EndScreen({
 
 // ------------------------------------------------------ guilty line
 
-/** Bonus: for one real bug, which line of the machine's code caused it? */
+/**
+ * Bonus: for one real bug, either pick the line that's wrong, or, when a
+ * check is missing, pick which line fills the gap. Every answer is a choice
+ * on screen.
+ */
 export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () => void; last: boolean }) {
   const machine = MACHINES[bug.machine];
-  const answer = machine.guiltyLine(bug.kind, bug.inputs);
-  const [chosen, setChosen] = useState<number | "missing" | null>(null);
+  const fix = machine.fixFor(bug.kind, bug.inputs);
+  const [chosen, setChosen] = useState<number | null>(null);
+  const answer = fix.type === "wrong_line" ? fix.line : fix.answer;
 
-  function choose(c: number | "missing") {
+  function choose(c: number) {
     if (chosen !== null) return;
     setChosen(c);
-    logEvent("guilty_line_attempt", { bug_machine: bug.machine, bug_kind: bug.kind, inputs: bug.inputs, line_chosen: c, correct_line: answer, correct: c === answer });
+    logEvent("guilty_line_attempt", {
+      bug_machine: bug.machine,
+      bug_kind: bug.kind,
+      inputs: bug.inputs,
+      question: fix.type,
+      chosen: c,
+      chosen_text: fix.type === "wrong_line" ? machine.pseudocode[c - 1] : fix.options[c],
+      answer,
+      correct: c === answer,
+    });
   }
 
-  const shown = machine.fields.map((f) => `${f.label}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${bug.inputs[f.id]}"`}`).join(", ");
-  const line = (c: number | "missing") =>
+  const look = (c: number) =>
     chosen === null
       ? "border-line bg-white hover:border-teal"
       : c === answer
@@ -107,46 +120,74 @@ export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () =
           ? "border-danger bg-danger/10"
           : "border-line bg-white opacity-60";
 
+  const shown = machine.fields.map((f) => `${f.label}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${bug.inputs[f.id]}"`}`).join(", ");
+  const filled = fix.type === "missing_line" && chosen !== null ? fix.options[fix.answer] : null;
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-4 px-6 py-5">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-4 px-6 py-5">
       <h1 className="text-3xl leading-snug font-bold">
-        {machine.icon} Which line made the {CATEGORY_LABEL[bug.kind]} bug in {machine.name}?
+        {machine.icon} {fix.type === "wrong_line" ? "Which line made" : "A line is missing! Which one fixes"} the {CATEGORY_LABEL[bug.kind]} bug in{" "}
+        {machine.name}?
       </h1>
       <p className="text-xl text-ink-soft">You found it with {shown}.</p>
-      <ol className="flex flex-col gap-2">
-        {machine.pseudocode.map((code, i) => (
-          <li key={code}>
-            <button
-              type="button"
-              onClick={() => choose(i + 1)}
-              className={`flex min-h-14 w-full items-center gap-4 rounded-2xl border-4 px-4 text-left font-mono text-xl ${line(i + 1)}`}
-            >
-              <span className="w-6 text-ink-soft">{i + 1}</span>
-              {code}
-            </button>
-          </li>
-        ))}
-        <li>
-          <button type="button" onClick={() => choose("missing")} className={`flex min-h-14 w-full items-center gap-4 rounded-2xl border-4 px-4 text-left text-xl font-bold ${line("missing")}`}>
-            <span className="w-6" aria-hidden="true">
-              ➕
-            </span>
-            A line is missing
-          </button>
-        </li>
-      </ol>
+
+      {fix.type === "wrong_line" ? (
+        <ol className="flex flex-col gap-2">
+          {machine.pseudocode.map((code, i) => (
+            <li key={code}>
+              <button
+                type="button"
+                onClick={() => choose(i + 1)}
+                className={`flex min-h-14 w-full items-center gap-4 rounded-2xl border-4 px-4 text-left font-mono text-xl ${look(i + 1)}`}
+              >
+                <span className="w-6 opacity-60">{i + 1}</span>
+                {code}
+              </button>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <>
+          <ol className="flex flex-col gap-1 rounded-2xl border-2 border-line bg-white p-3 font-mono text-lg">
+            {machine.pseudocode.map((code, i) => (
+              <li key={code} className="flex flex-col gap-1">
+                {i === fix.after && <GapLine filled={filled} />}
+                <span>{code}</span>
+              </li>
+            ))}
+            {fix.after >= machine.pseudocode.length && <GapLine filled={filled} />}
+          </ol>
+          <div className="flex flex-col gap-2">
+            {fix.options.map((o, i) => (
+              <button
+                key={o}
+                type="button"
+                onClick={() => choose(i)}
+                className={`flex min-h-14 w-full items-center rounded-2xl border-4 px-4 text-left font-mono text-lg ${look(i)}`}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       {chosen !== null && (
         <div className="flex items-center gap-4">
           <p className="flex-1 text-2xl font-bold">
-            {chosen === answer
-              ? "🎉 Yes! You found the guilty line."
-              : answer === "missing"
-                ? "Good try! A check is missing. The code never checks for this."
-                : `Good try! It was line ${answer}.`}
+            {chosen === answer ? "🎉 Yes! That's it." : fix.type === "wrong_line" ? `Good try! It was line ${answer}.` : "Good try! The green line fixes it."}
           </p>
           <BigButton onClick={onNext}>{last ? "Done" : "Next bug →"}</BigButton>
         </div>
       )}
     </main>
+  );
+}
+
+function GapLine({ filled }: { filled: string | null }) {
+  return filled ? (
+    <span className="rounded-lg bg-teal/15 px-2 font-bold text-teal">➕ {filled}</span>
+  ) : (
+    <span className="rounded-lg border-2 border-dashed border-amber bg-amber-soft px-2 font-bold">➕ ____________ ?</span>
   );
 }

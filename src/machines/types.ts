@@ -72,6 +72,8 @@ export interface Machine {
   purpose: string;
   /** Optional note from the person who asked for the tool. */
   clientNote?: string;
+  /** Optional nudge toward a kind of input (bonus machine only). */
+  hint?: string;
   fields: Field[];
   /** What students see. */
   buggy: (inputs: Inputs, ctx: Context) => Output;
@@ -86,13 +88,25 @@ export interface Machine {
    * reference rule to name it), e.g. the grade boundaries.
    */
   resultBugKind?: (inputs: Inputs, categories: Category[]) => Category;
-  /** First quick choice under "It should say...". */
-  expectLabel: string;
+  /**
+   * Plausible outputs for "It should say…", offered beside the correct one
+   * (and what the machine actually said).
+   */
+  otherAnswers: (inputs: Inputs) => string[];
   /** Bonus "find the guilty line". */
   pseudocode: string[];
-  /** 1-based line that caused this bug, or "missing" if a check is missing. */
-  guiltyLine: (kind: Category, inputs: Inputs) => number | "missing";
+  /** How to fix this bug: a line that's wrong, or a line that's missing. */
+  fixFor: (kind: Category, inputs: Inputs) => Fix;
 }
+
+/**
+ * Bonus question for one bug. Either one of the code lines is wrong (pick
+ * it), or a check is missing: the code shows a gap after line `after` and
+ * the student picks which of `options` belongs there.
+ */
+export type Fix =
+  | { type: "wrong_line"; line: number }
+  | { type: "missing_line"; after: number; options: string[]; answer: number };
 
 export interface Evaluation {
   categories: Category[];
