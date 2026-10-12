@@ -1,12 +1,17 @@
 "use client";
 
 import { createEventQueue, type EventQueue, type KeyValueStore } from "./eventQueue";
+import type { MachineId } from "@/machines/types";
 import type { ClientSession, Step } from "./types";
 
 /**
  * Browser wiring for the event queue: localStorage for durability, fetch for
  * regular batches, sendBeacon when the page is hidden. Logging failures are
  * swallowed; the game must keep working without a network.
+ *
+ * The current session lives in sessionStorage: a reload resumes it, and
+ * closing the tab on a shared Chromebook forgets it. Queued events stay in
+ * localStorage (no names in them) until the server has them.
  */
 
 const SESSION_KEY = "bh_session";
@@ -18,25 +23,23 @@ export type EventType =
   | "session_end"
   | "step_enter"
   | "step_exit"
-  | "readaloud"
-  | "round_start"
-  | "card_edit"
-  | "card_submit"
-  | "app_interaction"
-  | "app_event"
-  | "ai_check_used"
-  | "ai_check_closed"
-  | "card_run"
-  | "card_feedback"
-  | "test_capped"
-  | "done"
-  | "reveal_view"
-  | "fix_request_submit"
-  | "survey_response";
+  | "survey_response"
+  | "tutorial_step"
+  | "input_submit"
+  | "busted_open"
+  | "busted"
+  | "busted_cancel"
+  | "accept_machine"
+  | "nudge_shown"
+  | "nudge_response"
+  | "facilitator_advance"
+  | "bonus_enter"
+  | "guilty_line_attempt";
 
 let queue: EventQueue | null = null;
 let session: ClientSession | null = null;
 let currentStep: Step = "setup";
+let currentMachine: MachineId | null = null;
 let timer: number | null = null;
 
 function storage(): KeyValueStore {
@@ -97,7 +100,7 @@ export function stopLogger(): void {
 export function savedSession(): ClientSession | null {
   if (session) return session;
   try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
+    const raw = window.sessionStorage.getItem(SESSION_KEY);
     session = raw ? (JSON.parse(raw) as ClientSession) : null;
   } catch {
     session = null;
@@ -110,18 +113,20 @@ export function beginSession(s: ClientSession): void {
   session = s;
   queue?.register(s.id, s.token);
   try {
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
   } catch {}
 }
 
-export function setStep(step: Step): void {
+/** Where the student is; every event is stamped with this step and machine. */
+export function setStep(step: Step, machine: MachineId | null = null): void {
   currentStep = step;
+  currentMachine = machine;
 }
 
-export function logEvent(type: EventType, payload: Record<string, unknown> = {}, step: Step = currentStep): void {
+export function logEvent(type: EventType, payload: Record<string, unknown> = {}): void {
   if (!queue || !session) return;
   try {
-    queue.append(session.id, step, type, payload);
+    queue.append(session.id, currentStep, type, payload, currentMachine);
   } catch {}
 }
 
@@ -133,7 +138,7 @@ export function endSession(payload: Record<string, unknown> = {}): void {
   logEvent("session_end", payload);
   session = null;
   try {
-    window.localStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem(SESSION_KEY);
   } catch {}
   void queue?.flush();
 }

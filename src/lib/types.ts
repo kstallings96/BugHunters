@@ -1,26 +1,40 @@
-export type Form = "A" | "B";
-export type Condition = "ai_checker" | "no_checker";
-export type Assignment = "random" | "url" | "default";
+import type { Category, MachineId } from "@/machines/types";
 
-/** The game's steps, plus the setup screens before step 1. */
+/** Where a student is. Logged as each event's `step`; `machine` is logged alongside. */
 export type Step =
   | "setup"
-  | "survey_pre"
-  | "meet"
-  | "test"
-  | "done"
-  | "reveal"
-  | "fix"
-  | "survey_post"
-  | "end";
+  | "pre_survey"
+  | "tutorial"
+  | "machine"
+  | "post_survey"
+  | "end"
+  | "bonus_machine"
+  | "bonus_guilty";
 
-/** What the browser keeps about the current session. */
+/** A real bug the student busted: one per kind per machine. */
+export interface BustedBug {
+  machine: MachineId;
+  kind: Category;
+  /** The input that showed it, for the bonus "find the guilty line". */
+  inputs: Record<string, string>;
+}
+
+/** Enough to put a returning student back where they were. */
+export interface Progress {
+  step: Step;
+  machineIndex: number;
+  busted: BustedBug[];
+}
+
+/** What the browser keeps about the current session (sessionStorage). */
 export interface ClientSession {
   id: string;
   token: string;
-  form: Form;
-  condition: Condition;
-  huntCapSeconds: number;
-  surveyEnabled: boolean;
+  machineOrder: MachineId[];
+  nudgeSeconds: number;
   firstName: string;
+  lastInitial: string;
+  period: string;
+  /** Present when the student chose "Keep going" on a session from earlier today. */
+  progress: Progress | null;
 }

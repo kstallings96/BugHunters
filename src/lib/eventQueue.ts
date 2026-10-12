@@ -15,6 +15,7 @@ export interface QueuedEvent {
   seq: number;
   client_ts: string;
   step: string;
+  machine: string | null;
   event_type: string;
   payload: Record<string, unknown>;
 }
@@ -75,13 +76,14 @@ export function createEventQueue({ store, send, now = Date.now, batchSize = 25 }
     persist();
   }
 
-  function append(sid: string, step: string, eventType: string, payload: Record<string, unknown> = {}): QueuedEvent {
+  function append(sid: string, step: string, eventType: string, payload: Record<string, unknown> = {}, machine: string | null = null): QueuedEvent {
     seqs[sid] = (seqs[sid] ?? 0) + 1;
     const event: QueuedEvent = {
       sid,
       seq: seqs[sid],
       client_ts: new Date(now()).toISOString(),
       step,
+      machine,
       event_type: eventType,
       payload,
     };
@@ -103,6 +105,7 @@ export function createEventQueue({ store, send, now = Date.now, batchSize = 25 }
       seq: e.seq,
       client_ts: e.client_ts,
       step: e.step,
+      machine: e.machine ?? null,
       event_type: e.event_type,
       payload: e.payload,
     }));

@@ -30,7 +30,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   decimal: "Decimal",
   huge: "Huge number",
   empty: "Empty",
-  spaces_only: "Only spaces",
+  spaces_only: "Spaces only",
   extra_spaces: "Extra spaces",
   wrong_type: "Wrong type",
   special: "Special characters",
@@ -38,6 +38,11 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   boundary: "Boundary",
   out_of_range: "Out of range",
 };
+
+/** "a Zero bug", "an Empty bug". */
+export function withArticle(label: string): string {
+  return `${/^[aeiou]/i.test(label) ? "an" : "a"} ${label}`;
+}
 
 export interface Field {
   id: string;

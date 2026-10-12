@@ -7,6 +7,7 @@ export interface IncomingEvent {
   seq: number;
   client_ts: string;
   step: string;
+  machine: string | null;
   event_type: string;
   payload: Record<string, unknown>;
 }
@@ -27,6 +28,7 @@ function isEvent(e: unknown): e is IncomingEvent {
     !Number.isNaN(Date.parse(v.client_ts)) &&
     typeof v.step === "string" &&
     NAME.test(v.step) &&
+    (v.machine === null || v.machine === undefined || (typeof v.machine === "string" && NAME.test(v.machine))) &&
     typeof v.event_type === "string" &&
     NAME.test(v.event_type) &&
     typeof v.payload === "object" &&

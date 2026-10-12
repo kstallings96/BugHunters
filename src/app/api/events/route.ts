@@ -27,20 +27,19 @@ export async function POST(request: Request) {
     client_ts: e.client_ts,
     server_ts: serverTs,
     step: e.step,
+    machine: e.machine ?? null,
     event_type: e.event_type,
     payload: e.payload,
   }));
   try {
-    // A resent batch repeats (session_id, seq); the store ignores those
-    // rows, which makes every retry safe.
+    // A resent batch repeats (session_id, seq); the store ignores those rows.
     await store.insertEvents(sessionId, rows);
 
-    // Session-level columns derived from events, written only by the server.
-    const end = events.find((e) => e.event_type === "session_end");
+    // Session columns derived from events, written only by the server.
+    const lastEnter = [...rows].reverse().find((r) => r.event_type === "step_enter");
+    if (lastEnter) await store.setPosition(sessionId, lastEnter.step, lastEnter.machine);
+    const end = rows.find((r) => r.event_type === "session_end");
     if (end) await store.markEnded(sessionId, end.client_ts);
-    if (events.some((e) => e.event_type === "done" && e.payload.capped === true)) {
-      await store.markHuntCapped(sessionId);
-    }
   } catch (err) {
     console.error("events store failed", (err as Error).message);
     return Response.json({ error: "store" }, { status: 502 });

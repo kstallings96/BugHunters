@@ -1,39 +1,64 @@
-import type { Form } from "@/lib/types";
+import type { MachineId } from "@/machines/types";
 
 /**
- * Study settings that researchers may change between sessions. Values come
- * from environment variables so they can differ between Vercel environments
- * without a code change; defaults are what the study runs with.
- *
- * Server-side only: assignment happens in /api/session so a student can't
- * influence it except through the documented URL parameters.
+ * Study settings that may change between classes or schools. Values come
+ * from environment variables (see .env.example); defaults are what the
+ * study runs with.
  */
 
-/** Forms that have content and an app. Form B is added in stage 4. */
-export const AVAILABLE_FORMS: readonly Form[] = ["A"];
-
 export interface StudySettings {
-  /** "random", or a fixed form, used when the URL has no ?form=. */
-  defaultForm: "random" | Form;
-  /** Probability a session gets the AI checker when not forced by ?checker=. */
-  aiCheckerRatio: number;
-  /** Seconds before the hunt ends on its own. Not shown to students. */
-  huntCapSeconds: number;
-  /** Show the one-item survey before step 1 and after step 6. */
-  surveyEnabled: boolean;
+  /** Class periods students pick from. */
+  periods: string[];
+  /** Seconds on one machine before "Ready for the next machine?" appears. Never auto-advances. */
+  nudgeSeconds: number;
+  /** Used to decide what "today" means when resuming a session by name. */
+  timeZone: string;
 }
 
 function number(value: string | undefined, fallback: number, min: number, max: number): number {
   const n = Number(value);
-  return Number.isFinite(n) && value !== undefined && value !== "" ? Math.min(max, Math.max(min, n)) : fallback;
+  return value !== undefined && value !== "" && Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 }
 
 export function readStudySettings(env: Record<string, string | undefined> = process.env): StudySettings {
-  const form = env.DEFAULT_FORM?.trim().toUpperCase();
+  const periods = (env.CLASS_PERIODS ?? "1,2,3,4,5,6,7,8")
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   return {
-    defaultForm: form === "A" || form === "B" ? form : "random",
-    aiCheckerRatio: number(env.AI_CHECKER_RATIO, 0.5, 0, 1),
-    huntCapSeconds: number(env.HUNT_CAP_SECONDS, 600, 60, 3600),
-    surveyEnabled: env.SURVEY_ENABLED?.trim().toLowerCase() === "true",
+    periods: periods.length ? periods : ["1"],
+    nudgeSeconds: number(env.NUDGE_SECONDS, 180, 30, 3600),
+    timeZone: env.SCHOOL_TIMEZONE?.trim() || "America/Chicago",
   };
+}
+
+/**
+ * Machine order: one number machine first, the other second (random unless
+ * forced with ?order=pizza or ?order=grade), and the Name Greeter third.
+ */
+export function machineOrder(param: string | null | undefined, random: () => number = Math.random): { order: MachineId[]; assignment: "random" | "url" } {
+  const forced = param?.trim().toLowerCase();
+  if (forced === "pizza" || forced === "grade") {
+    const first = forced as MachineId;
+    return { order: [first, first === "pizza" ? "grade" : "pizza", "name"], assignment: "url" };
+  }
+  return { order: random() < 0.5 ? ["pizza", "grade", "name"] : ["grade", "pizza", "name"], assignment: "random" };
+}
+
+/** Start of "today" in the school's time zone, as an ISO instant. */
+export function startOfToday(timeZone: string, now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)!.value);
+  // Milliseconds already elapsed today in the school's zone.
+  const sinceMidnight = ((get("hour") * 60 + get("minute")) * 60 + get("second")) * 1000 + now.getMilliseconds();
+  return new Date(now.getTime() - sinceMidnight).toISOString();
 }
