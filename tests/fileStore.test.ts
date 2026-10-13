@@ -13,6 +13,8 @@ const session: SessionRow = {
   is_test: false,
   machine_order: ["savings", "sale", "jersey"],
   order_assignment: "random",
+  reveal_condition: "reveal",
+  reveal_assignment: "random",
   app_version: "0.1.0+test",
   config_version: "abc",
   started_at: "2026-10-14T15:00:00.000Z",

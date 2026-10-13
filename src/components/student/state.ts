@@ -8,6 +8,7 @@ export type Screen =
   | "tutorial"
   | "ready"
   | "machine"
+  | "between"
   | "end"
   | "bonus_machine"
   | "bonus_guilty";
@@ -18,6 +19,7 @@ export const STEP_OF: Record<Screen, Step> = {
   tutorial: "tutorial",
   ready: "intro",
   machine: "machine",
+  between: "reveal",
   end: "end",
   bonus_machine: "bonus_machine",
   bonus_guilty: "bonus_guilty",
@@ -69,7 +71,7 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
   const screen: Screen =
     p.step === "tutorial" || p.step === "intro"
       ? "intro"
-      : p.step === "machine"
+      : p.step === "machine" || p.step === "reveal"
         ? "machine"
         : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
             ? "end"

@@ -21,7 +21,7 @@ const input =
 
 function urlParams() {
   const p = new URLSearchParams(window.location.search);
-  return { order: p.get("order"), test: p.get("test") };
+  return { order: p.get("order"), reveal: p.get("reveal"), test: p.get("test") };
 }
 
 function storedCode(): string {
@@ -157,7 +157,7 @@ export function StartFlow({ periods }: { periods: string[] }) {
     beginSession(s);
     setStep("setup");
     if (resume) logEvent("session_resume", { via: "name" });
-    else logEvent("session_start", { machine_order: s.machineOrder, url_params: urlParams() });
+    else logEvent("session_start", { machine_order: s.machineOrder, reveal_condition: s.revealCondition, url_params: urlParams() });
     setSession(s);
     setPhase("game");
   }

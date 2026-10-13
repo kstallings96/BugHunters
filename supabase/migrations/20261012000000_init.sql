@@ -25,6 +25,9 @@ create table public.sessions (
   -- e.g. {sale,savings,jersey}; Jersey Name Printer is always third.
   machine_order     text[] not null,
   order_assignment  text not null check (order_assignment in ('random', 'url')),
+  -- Missed-bug reveal after every app ('reveal') or only at the end ('end_only').
+  reveal_condition  text not null check (reveal_condition in ('reveal', 'end_only')),
+  reveal_assignment text not null check (reveal_assignment in ('random', 'url')),
   app_version       text not null,
   config_version    text not null,
   started_at        timestamptz not null default now(),

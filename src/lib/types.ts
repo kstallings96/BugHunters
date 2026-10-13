@@ -7,6 +7,7 @@ export type Step =
   | "intro"
   | "tutorial"
   | "machine"
+  | "reveal"
   | "post_survey"
   | "end"
   | "bonus_machine"
@@ -32,6 +33,7 @@ export interface ClientSession {
   id: string;
   token: string;
   machineOrder: MachineId[];
+  revealCondition: "reveal" | "end_only";
   nudgeSeconds: number;
   firstName: string;
   lastInitial: string;

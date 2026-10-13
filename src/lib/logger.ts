@@ -31,6 +31,7 @@ export type EventType =
   | "busted"
   | "busted_cancel"
   | "accept_machine"
+  | "reveal_view"
   | "nudge_shown"
   | "nudge_response"
   | "facilitator_advance"

@@ -6,6 +6,7 @@ import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
 import { Intro, Ready } from "./Intro";
+import { FullReveal, MachineReveal, NextApp } from "./Reveal";
 import { MachineStep, type BustedResult } from "./MachineStep";
 
 /** Tries per measured machine. Scarcity makes probes deliberate (as in AlwaysNever). */
@@ -38,7 +39,11 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   );
   const started = useRef(false);
   const machineFor = (g: GameState): MachineId | null =>
-    g.screen === "tutorial" ? "allowance" : g.screen === "machine" ? session.machineOrder[g.machineIndex] : g.screen === "bonus_machine" ? "birthday" : null;
+    g.screen === "tutorial"
+      ? "allowance"
+      : g.screen === "machine" || g.screen === "between"
+        ? session.machineOrder[g.machineIndex]
+        : g.screen === "bonus_machine" ? "birthday" : null;
 
   useEffect(() => {
     if (started.current) return;
@@ -95,6 +100,8 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   }
 
   const isNewKind = (machine: MachineId) => (kind: Category) => isNewBug(game.busted, machine, kind);
+  // Sessions saved before the reveal condition existed get the full reveal at the end.
+  const revealCondition = session.revealCondition ?? "end_only";
   const counter = game.screen === "machine" || game.screen === "bonus_machine";
 
   let body: React.ReactNode;
@@ -114,7 +121,8 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     case "machine": {
       const id = session.machineOrder[game.machineIndex];
       const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
-      const advance = () => (lastMachine ? go("end") : go("machine", { machineIndex: game.machineIndex + 1 }));
+      // Every app is followed by the in-between screen: a reveal or just "Next app".
+      const advance = () => go("between");
       body = (
         <MachineStep
           key={id}
@@ -135,6 +143,20 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
           }}
         />
       );
+      break;
+    }
+    case "between": {
+      const id = session.machineOrder[game.machineIndex];
+      const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
+      const next = () => (lastMachine ? go("end") : go("machine", { machineIndex: game.machineIndex + 1 }));
+      body =
+        revealCondition === "reveal" ? (
+          <MachineReveal key={id} machine={id} busted={game.busted} last={lastMachine} onNext={next} />
+        ) : lastMachine ? (
+          <FullReveal machines={session.machineOrder} busted={game.busted} onNext={next} />
+        ) : (
+          <NextApp key={id} onNext={next} />
+        );
       break;
     }
     case "bonus_machine":

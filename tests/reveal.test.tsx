@@ -1,0 +1,46 @@
+// @vitest-environment jsdom
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { FullReveal, MachineReveal, NextApp } from "@/components/student/Reveal";
+import type { BustedBug } from "@/lib/types";
+
+const logged: { type: string; payload: Record<string, unknown> }[] = [];
+vi.mock("@/lib/logger", () => ({
+  logEvent: (type: string, payload: Record<string, unknown> = {}) => logged.push({ type, payload }),
+}));
+
+const busted: BustedBug[] = [
+  { machine: "savings", kind: "zero", inputs: { price: "20", saved: "0" } },
+  { machine: "jersey", kind: "empty", inputs: { name: "" } },
+];
+
+describe("missed-bug reveal", () => {
+  afterEach(() => {
+    cleanup();
+    logged.length = 0;
+  });
+
+  it("one app: found kinds checked, hiding kinds with an example, and the AI's ordinary tests", () => {
+    render(<MachineReveal machine="savings" busted={busted} last={false} onNext={() => {}} />);
+    expect(screen.getByText(/Zero: you found it!/)).toBeTruthy();
+    expect(screen.getByText(/Try \$10 with \$3 a week/)).toBeTruthy();
+    expect(screen.queryByText(/Leave the name empty/)).toBeNull(); // other apps' bugs aren't shown
+    expect(screen.getByText(/Tests an AI might write \(example\)/)).toBeTruthy();
+    expect(screen.getByText("The AI only tried ordinary inputs.")).toBeTruthy();
+    expect(logged[0]).toMatchObject({ type: "reveal_view", payload: { scope: "machine", reveal_machine: "savings", found: ["zero"] } });
+    expect((logged[0].payload.missed as string[]).length).toBe(5);
+  });
+
+  it("all apps at once: one column per app", () => {
+    render(<FullReveal machines={["sale", "savings", "jersey"]} busted={busted} onNext={() => {}} />);
+    for (const name of ["Sale Price", "Savings Planner", "Jersey Name Printer"]) expect(screen.getByText(new RegExp(name))).toBeTruthy();
+    expect(screen.getAllByText(/you found it!/)).toHaveLength(2);
+    expect(logged[0]).toMatchObject({ type: "reveal_view", payload: { scope: "all" } });
+  });
+
+  it("the no-reveal group just sees Next app", () => {
+    render(<NextApp onNext={() => {}} />);
+    expect(screen.getByRole("button", { name: /Next app/ })).toBeTruthy();
+    expect(screen.queryByText(/hiding/)).toBeNull();
+  });
+});

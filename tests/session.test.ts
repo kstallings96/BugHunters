@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { machineOrder, readStudySettings, startOfToday } from "@/config/study";
+import { machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
 import { parseBatch } from "@/lib/eventBatch";
 import { isTestName, normalizeName, sameName } from "@/lib/identity";
 
@@ -25,6 +25,15 @@ describe("machine order", () => {
     expect(machineOrder("sale")).toEqual({ order: ["sale", "savings", "jersey"], assignment: "url" });
     expect(machineOrder("Savings")).toEqual({ order: ["savings", "sale", "jersey"], assignment: "url" });
     expect(machineOrder("jersey").assignment).toBe("random");
+  });
+});
+
+describe("reveal condition", () => {
+  it("is 50/50 unless forced with ?reveal=on|off", () => {
+    expect(revealCondition(null, () => 0.1)).toEqual({ condition: "reveal", assignment: "random" });
+    expect(revealCondition(null, () => 0.9)).toEqual({ condition: "end_only", assignment: "random" });
+    expect(revealCondition("on")).toEqual({ condition: "reveal", assignment: "url" });
+    expect(revealCondition("OFF")).toEqual({ condition: "end_only", assignment: "url" });
   });
 });
 

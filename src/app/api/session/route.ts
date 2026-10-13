@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { machineOrder, readStudySettings, startOfToday } from "@/config/study";
+import { machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
 import { isTestName, normalizeName, sameName } from "@/lib/identity";
 import { dataStore, progressFrom, type SessionRow, type StudentRow } from "@/lib/server/storage";
 import { accessCodeMatches, issueToken } from "@/lib/server/token";
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       id: session.id,
       token,
       machineOrder: session.machine_order,
+      revealCondition: session.reveal_condition,
       nudgeSeconds: settings.nudgeSeconds,
       firstName: student.first_name,
       lastInitial: student.last_initial,
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const params = typeof body.params === "object" && body.params !== null ? body.params : {};
     const order = machineOrder(params.order);
+    const reveal = revealCondition(params.reveal);
     const student: StudentRow = {
       id: randomUUID(),
       first_name: name.firstName,
@@ -75,6 +77,8 @@ export async function POST(request: Request) {
       is_test: isTestName(name.firstName, params.test),
       machine_order: order.order,
       order_assignment: order.assignment,
+      reveal_condition: reveal.condition,
+      reveal_assignment: reveal.assignment,
       app_version: APP_VERSION,
       config_version: configVersion(settings),
       started_at: now,

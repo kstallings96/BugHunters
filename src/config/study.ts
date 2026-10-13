@@ -45,6 +45,20 @@ export function machineOrder(param: string | null | undefined, random: () => num
   return { order: random() < 0.5 ? ["savings", "sale", "jersey"] : ["sale", "savings", "jersey"], assignment: "random" };
 }
 
+export type RevealCondition = "reveal" | "end_only";
+
+/**
+ * Missed-bug reveal condition, 50/50 per student unless forced with
+ * ?reveal=on or ?reveal=off. "reveal": after every app. "end_only": a full
+ * reveal of all three apps after the last one, so everyone gets the lesson.
+ */
+export function revealCondition(param: string | null | undefined, random: () => number = Math.random): { condition: RevealCondition; assignment: "random" | "url" } {
+  const forced = param?.trim().toLowerCase();
+  if (forced === "on") return { condition: "reveal", assignment: "url" };
+  if (forced === "off") return { condition: "end_only", assignment: "url" };
+  return { condition: random() < 0.5 ? "reveal" : "end_only", assignment: "random" };
+}
+
 /** Start of "today" in the school's time zone, as an ISO instant. */
 export function startOfToday(timeZone: string, now: Date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-US", {
