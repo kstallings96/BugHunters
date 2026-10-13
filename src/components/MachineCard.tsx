@@ -45,11 +45,20 @@ export function MachineCard({
 
       {machine.request && (
         <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">
-          <span className="font-bold">📝 Request:</span> &ldquo;{machine.request}&rdquo;
+          <span className="font-bold">📝 Request:</span> &ldquo;
+          {machine.request}&rdquo;
         </p>
       )}
-      {machine.clientNote && <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">📌 {machine.clientNote}</p>}
-      {machine.hint && <p className="rounded-2xl border-2 border-dashed border-teal bg-teal/5 px-4 py-2 text-lg font-bold">💡 Hint: {machine.hint}</p>}
+      {machine.clientNote && (
+        <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">
+          📌 {machine.clientNote}
+        </p>
+      )}
+      {machine.hint && (
+        <p className="rounded-2xl border-2 border-dashed border-teal bg-teal/5 px-4 py-2 text-lg font-bold">
+          💡 Hint: {machine.hint}
+        </p>
+      )}
 
       <p className="self-start rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">
         ✅ Built and tested by AI.
@@ -62,7 +71,9 @@ export function MachineCard({
             {f.kind === "select" ? (
               <select
                 value={values[f.id] ?? ""}
-                onChange={(e) => onChange({ ...values, [f.id]: e.target.value })}
+                onChange={(e) =>
+                  onChange({ ...values, [f.id]: e.target.value })
+                }
                 className="h-14 min-w-36 rounded-2xl border-4 border-line bg-white px-3 text-xl font-bold outline-none focus:border-teal"
               >
                 {f.options!.map((o) => (
@@ -78,7 +89,9 @@ export function MachineCard({
                 autoComplete="off"
                 spellCheck={false}
                 value={values[f.id] ?? ""}
-                onChange={(e) => onChange({ ...values, [f.id]: e.target.value })}
+                onChange={(e) =>
+                  onChange({ ...values, [f.id]: e.target.value })
+                }
                 className={`h-14 rounded-2xl border-4 bg-white px-4 text-2xl font-bold outline-none focus:border-teal ${
                   f.kind === "number" ? "w-40" : "w-80"
                 } ${highlightField === f.id ? "border-amber ring-4 ring-amber/40" : "border-line"}`}
@@ -95,21 +108,78 @@ export function MachineCard({
         </button>
       </form>
 
-      <div className="flex min-h-20 max-w-[36rem] items-center rounded-2xl border-4 border-dashed border-line bg-paper px-5" aria-live="polite">
-        {output ? (
-          // whitespace-pre keeps every space the machine printed, and a very
-          // long greeting is allowed to run off the edge: both are bugs
-          // students should be able to see.
-          <p className={`text-3xl font-bold whitespace-pre ${output.type === "not_allowed" ? "text-danger" : ""}`}>{output.text}</p>
-        ) : (
-          <p className="text-xl text-ink-soft">The answer shows up here.</p>
-        )}
-      </div>
+      {machine.display === "jersey" && output?.type === "result" ? (
+        <Jersey name={output.text} />
+      ) : (
+        <div
+          className="flex min-h-20 max-w-[36rem] items-center rounded-2xl border-4 border-dashed border-line bg-paper px-5"
+          aria-live="polite"
+        >
+          {output ? (
+            // whitespace-pre keeps every space the machine printed, and a very
+            // long greeting is allowed to run off the edge: both are bugs
+            // students should be able to see.
+            <p
+              className={`text-3xl font-bold whitespace-pre ${output.type === "not_allowed" ? "text-danger" : ""}`}
+            >
+              {output.text}
+            </p>
+          ) : (
+            <p className="text-xl text-ink-soft">The answer shows up here.</p>
+          )}
+        </div>
+      )}
     </section>
   );
 }
 
 /** Starting values for a machine's fields (selects start on their first option). */
 export function blankInputs(machine: Machine): Inputs {
-  return Object.fromEntries(machine.fields.map((f) => [f.id, f.kind === "select" ? f.options![0].value : ""]));
+  return Object.fromEntries(
+    machine.fields.map((f) => [
+      f.id,
+      f.kind === "select" ? f.options![0].value : "",
+    ]),
+  );
+}
+
+/**
+ * The name printed across the back of a jersey. The lettering band is
+ * exactly 12 monospace characters wide (the request's limit), so a 13th
+ * letter visibly runs off the shirt, and printed spaces stay visible.
+ */
+export function Jersey({ name }: { name: string }) {
+  return (
+    <div
+      className="flex justify-center py-1"
+      aria-live="polite"
+      aria-label={name.trim() ? `Jersey reads ${name}` : "Blank jersey"}
+    >
+      <div className="relative h-44 w-72">
+        <svg
+          viewBox="0 0 288 176"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden="true"
+        >
+          <path
+            d="M96 4 L124 4 Q144 22 164 4 L192 4 L276 40 L256 92 L222 78 L222 172 L66 172 L66 78 L32 92 L12 40 Z"
+            fill="#0f766e"
+            stroke="#0b5a54"
+            strokeWidth="4"
+          />
+        </svg>
+        {/* 12 characters span the shirt from sleeve to sleeve (x 12–276 of
+            288), so a 13th character prints past the edge. */}
+        <p className="absolute top-10 left-3 overflow-visible font-mono text-[2.5rem] leading-none font-bold whitespace-pre text-white">
+          {name}
+        </p>
+        <p
+          className="absolute inset-x-0 top-24 text-center font-mono text-5xl font-bold text-white"
+          aria-hidden="true"
+        >
+          10
+        </p>
+      </div>
+    </div>
+  );
 }

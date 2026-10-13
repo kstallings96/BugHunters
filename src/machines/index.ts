@@ -1,30 +1,30 @@
 import { allowance } from "./allowance";
+import { jersey } from "./jersey";
+import { sale } from "./sale";
+import { savings } from "./savings";
 import { birthday } from "./birthday";
 import { classifyNumberField, classifyTextField, finalize, stableHash } from "./classify";
-import { grade } from "./grade";
-import { nameGreeter } from "./name";
-import { pizza } from "./pizza";
 import type { BustedVerdict, Category, Context, Evaluation, Inputs, Machine, MachineId, Output } from "./types";
 
 export * from "./types";
 
 export const MACHINES: Record<MachineId, Machine> = {
   allowance,
-  pizza,
-  grade,
-  name: nameGreeter,
+  savings,
+  sale,
+  jersey,
   birthday,
 };
 
 /** The two number machines; one of them goes first (counterbalanced). */
-export const NUMBER_MACHINES: MachineId[] = ["pizza", "grade"];
+export const NUMBER_MACHINES: MachineId[] = ["savings", "sale"];
 
 export function categorize(machine: Machine, inputs: Inputs, ctx: Context): Category[] {
   const cats: Category[] = [];
   for (const f of machine.fields) {
     const raw = inputs[f.id] ?? "";
     if (f.kind === "number") cats.push(...classifyNumberField(raw));
-    else if (f.kind === "text") cats.push(...classifyTextField(raw));
+    else if (f.kind === "text") cats.push(...classifyTextField(raw, f.longAt));
   }
   cats.push(...(machine.extraCategories?.(inputs, ctx) ?? []));
   return finalize(cats);

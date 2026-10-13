@@ -26,6 +26,10 @@ export const allowance: Machine = {
     return n === null ? ["$0", "$2"] : [`$${n}`, `$${n + 2}`];
   },
   pseudocode: ["allowance = what you typed", 'show "$" + allowance × 2'],
+  bugs: [
+    { kind: "wrong_type", tryThis: "Type a word." },
+    { kind: "empty", tryThis: "Leave it empty." },
+  ],
   fixFor: (kind) =>
     kind === "wrong_type"
       ? missingLine(1, 'if allowance is not a number → say "That\'s not a number."', 'if allowance is 0 → say "Zero!"', "allowance = allowance + 1")

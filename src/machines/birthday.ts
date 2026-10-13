@@ -49,6 +49,10 @@ export const birthday: Machine = {
   icon: "🎂",
   purpose: "Counts the days until your birthday.",
   hint: "Try a date that doesn't exist. Or try today!",
+  bugs: [
+    { kind: "boundary", tryThis: "Pick today's date." },
+    { kind: "out_of_range", tryThis: "Pick a date that doesn't exist, like February 30." },
+  ],
   fields: [
     { id: "month", label: "Month", kind: "select", options: MONTHS.map((label, i) => ({ value: String(i + 1), label })) },
     {

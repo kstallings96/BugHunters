@@ -18,13 +18,13 @@ describe("study settings", () => {
 
 describe("machine order", () => {
   it("random first number machine, the other second, Name Greeter always third", () => {
-    expect(machineOrder(null, () => 0.1)).toEqual({ order: ["pizza", "grade", "name"], assignment: "random" });
-    expect(machineOrder(null, () => 0.9)).toEqual({ order: ["grade", "pizza", "name"], assignment: "random" });
+    expect(machineOrder(null, () => 0.1)).toEqual({ order: ["savings", "sale", "jersey"], assignment: "random" });
+    expect(machineOrder(null, () => 0.9)).toEqual({ order: ["sale", "savings", "jersey"], assignment: "random" });
   });
   it("can be forced with ?order=", () => {
-    expect(machineOrder("grade")).toEqual({ order: ["grade", "pizza", "name"], assignment: "url" });
-    expect(machineOrder("Pizza")).toEqual({ order: ["pizza", "grade", "name"], assignment: "url" });
-    expect(machineOrder("name").assignment).toBe("random");
+    expect(machineOrder("sale")).toEqual({ order: ["sale", "savings", "jersey"], assignment: "url" });
+    expect(machineOrder("Savings")).toEqual({ order: ["savings", "sale", "jersey"], assignment: "url" });
+    expect(machineOrder("jersey").assignment).toBe("random");
   });
 });
 

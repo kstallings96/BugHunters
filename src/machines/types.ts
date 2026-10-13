@@ -4,7 +4,7 @@
  * Everything here is pure, so it can be unit-tested and re-run server-side.
  */
 
-export type MachineId = "allowance" | "pizza" | "grade" | "name" | "birthday";
+export type MachineId = "allowance" | "savings" | "sale" | "jersey" | "birthday";
 
 /** Kinds of input. An input can have several. Also used as bug-kind names. */
 export type Category =
@@ -20,7 +20,9 @@ export type Category =
   | "special"
   | "very_long"
   | "boundary"
-  | "out_of_range";
+  | "out_of_range"
+  /** Bug kind only (never an input category): a typical input, rounded the wrong way. */
+  | "rounding";
 
 /** Student-facing names, e.g. "Busted! You found a Zero bug". */
 export const CATEGORY_LABEL: Record<Category, string> = {
@@ -37,6 +39,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   very_long: "Too long",
   boundary: "Boundary",
   out_of_range: "Out of range",
+  rounding: "Rounding",
 };
 
 /** "a Zero bug", "an Empty bug". */
@@ -49,6 +52,15 @@ export interface Field {
   label: string;
   kind: "number" | "text" | "select";
   options?: { value: string; label: string }[];
+  /** Text fields: more characters than this counts as "very long" (default LONG_TEXT). */
+  longAt?: number;
+}
+
+/** One kind of bug a machine has, with an example for the missed-bug reveal. */
+export interface KnownBug {
+  kind: Category;
+  /** "Try $0 a week." */
+  tryThis: string;
 }
 
 /** Raw text of every field, exactly as typed (never pre-trimmed). */
@@ -76,6 +88,10 @@ export interface Machine {
   clientNote?: string;
   /** Optional nudge toward a kind of input (bonus machine only). */
   hint?: string;
+  /** How the output is drawn: plain text, or printed on a jersey. */
+  display?: "text" | "jersey";
+  /** Every kind of bug this machine has, for the missed-bug reveal. */
+  bugs: KnownBug[];
   fields: Field[];
   /** What students see. */
   buggy: (inputs: Inputs, ctx: Context) => Output;

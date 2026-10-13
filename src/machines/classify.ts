@@ -12,6 +12,16 @@ export const LONG_TEXT = 30;
 
 const NUMBER = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
 
+/** Money: a number, optionally with a leading "$" (people type "$20"). */
+export function parseMoney(raw: string): number | null {
+  return parseNumber(raw.trim().replace(/^\$/, ""));
+}
+
+/** Percent: a number, optionally with a trailing "%". */
+export function parsePercent(raw: string): number | null {
+  return parseNumber(raw.trim().replace(/%$/, ""));
+}
+
 /** Strict number parse: the whole trimmed text must be a number. */
 export function parseNumber(raw: string): number | null {
   const t = raw.trim();
@@ -29,11 +39,14 @@ export function classifyNumberField(raw: string): Category[] {
   const cats = spacing(raw);
   if (cats.includes("empty") || cats.includes("spaces_only")) return cats;
   const t = raw.trim();
-  const n = parseNumber(raw);
+  // "$20" and "25%" are numbers written with a symbol: special, not the wrong type.
+  const symbol = /^\$/.test(t) || /%$/.test(t);
+  if (symbol) cats.push("special");
+  const n = parseNumber(t.replace(/^\$/, "").replace(/%$/, ""));
   if (n === null) {
     cats.push("wrong_type");
     // Anything beyond letters, digits, signs, dots and spaces: "5!", "😀", "<b>"
-    if (/[^\p{L}\d\s.+-]/u.test(t)) cats.push("special");
+    if (!symbol && /[^\p{L}\d\s.+-]/u.test(t)) cats.push("special");
     if (t.length > LONG_TEXT) cats.push("very_long");
     return cats;
   }
@@ -44,13 +57,13 @@ export function classifyNumberField(raw: string): Category[] {
   return cats;
 }
 
-export function classifyTextField(raw: string): Category[] {
+export function classifyTextField(raw: string, longAt: number = LONG_TEXT): Category[] {
   const cats = spacing(raw);
   if (cats.includes("empty") || cats.includes("spaces_only")) return cats;
   const t = raw.trim();
   if (/^\d+$/.test(t)) cats.push("wrong_type");
   else if (/[^\p{L}\p{M}\s'’-]/u.test(t)) cats.push("special");
-  if (t.length > LONG_TEXT) cats.push("very_long");
+  if (Array.from(t).length > longAt) cats.push("very_long");
   return cats;
 }
 

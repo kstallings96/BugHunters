@@ -11,7 +11,7 @@ const session: SessionRow = {
   id: sid,
   student_id: stid,
   is_test: false,
-  machine_order: ["pizza", "grade", "name"],
+  machine_order: ["savings", "sale", "jersey"],
   order_assignment: "random",
   app_version: "0.1.0+test",
   config_version: "abc",
@@ -31,7 +31,7 @@ const ev = (seq: number, over: Partial<EventRow> = {}): EventRow => ({
   client_ts: "2026-10-14T15:00:01.000Z",
   server_ts: "2026-10-14T15:00:02.000Z",
   step: "machine",
-  machine: "pizza",
+  machine: "savings",
   event_type: "input_submit",
   payload: {},
   ...over,
@@ -79,8 +79,8 @@ describe("file store", () => {
     const store = fileStore(dir);
     await store.createStudent(student);
     await store.createSession(session);
-    await store.setPosition(sid, "machine", "grade");
-    expect((await store.getSession(sid))?.session).toMatchObject({ current_step: "machine", current_machine: "grade" });
+    await store.setPosition(sid, "machine", "sale");
+    expect((await store.getSession(sid))?.session).toMatchObject({ current_step: "machine", current_machine: "sale" });
   });
 
   it("rebuilds progress from step_enter and counted busted events", async () => {
@@ -90,13 +90,13 @@ describe("file store", () => {
       ev(2, { event_type: "busted", payload: { verdict: "real", counted: true, bug_kind: "zero", inputs: { slices: "8", friends: "0" } } }),
       ev(3, { event_type: "busted", payload: { verdict: "real", counted: false, bug_kind: "zero" } }),
       ev(4, { event_type: "busted", payload: { verdict: "false_alarm", counted: false } }),
-      ev(5, { step: "machine", machine: "grade", event_type: "step_enter", payload: { machine_index: 1 } }),
+      ev(5, { step: "machine", machine: "sale", event_type: "step_enter", payload: { machine_index: 1 } }),
       ev(6, { step: "tutorial", machine: "allowance", event_type: "busted", payload: { verdict: "real", counted: true, bug_kind: "wrong_type" } }),
     ]);
     expect(progressFrom(await store.progressEvents(sid))).toEqual({
       step: "machine",
       machineIndex: 1,
-      busted: [{ machine: "pizza", kind: "zero", inputs: { slices: "8", friends: "0" } }],
+      busted: [{ machine: "savings", kind: "zero", inputs: { slices: "8", friends: "0" } }],
     });
   });
 

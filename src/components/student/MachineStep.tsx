@@ -176,7 +176,7 @@ export function MachineStep({
                 <li key={t.n} className="rounded-xl bg-paper px-3 py-1 text-base leading-snug">
                   <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
                   <span className="text-ink-soft"> → </span>
-                  <span className="break-all whitespace-pre-wrap">{t.output.text}</span>
+                  <span className="break-all whitespace-pre-wrap">{t.output.text.trim() === "" ? "(blank)" : t.output.text}</span>
                 </li>
               ))}
             </ol>
@@ -333,7 +333,7 @@ function BustedDialog({
         <div className="flex flex-col gap-2">
           {choices.options.map((o, i) => (
             <OptionButton key={o} selected={expect === i} onClick={() => setExpect(i)}>
-              <span className="break-all whitespace-pre-wrap">{o}</span>
+              <span className="break-all whitespace-pre-wrap">{o.trim() === "" ? "(blank)" : o}</span>
             </OptionButton>
           ))}
           <OptionButton selected={expect === "unsure"} onClick={() => setExpect("unsure")}>

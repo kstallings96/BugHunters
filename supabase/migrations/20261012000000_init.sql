@@ -22,7 +22,7 @@ create table public.sessions (
   -- restrict: removing a student must never silently remove their data.
   student_id        uuid not null references public.students (id) on delete restrict,
   is_test           boolean not null default false,
-  -- e.g. {grade,pizza,name}; Name Greeter is always third.
+  -- e.g. {sale,savings,jersey}; Jersey Name Printer is always third.
   machine_order     text[] not null,
   order_assignment  text not null check (order_assignment in ('random', 'url')),
   app_version       text not null,
