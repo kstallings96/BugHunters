@@ -35,7 +35,7 @@ async function post(url: string, body: object): Promise<{ status: number; data: 
   return { status: 0, data: null };
 }
 
-export function StartFlow({ periods }: { periods: string[] }) {
+export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey: string | null }) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [session, setSession] = useState<ClientSession | null>(null);
   const [first, setFirst] = useState("");
@@ -55,6 +55,8 @@ export function StartFlow({ periods }: { periods: string[] }) {
     // What to show depends on browser storage, which only exists here.
     /* eslint-disable react-hooks/set-state-in-effect */
     if (saved) {
+      // A reload keeps the session; the backup continues in a new chunk.
+      beginSession(saved, publicKey);
       setSession(saved);
       setPhase("game");
       setStep("setup");
@@ -63,6 +65,8 @@ export function StartFlow({ periods }: { periods: string[] }) {
       setPhase("name");
     }
     /* eslint-enable react-hooks/set-state-in-effect */
+    // Runs once per page load; publicKey comes from the server and never changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function fail(status: number) {
@@ -116,7 +120,7 @@ export function StartFlow({ periods }: { periods: string[] }) {
     if (status === 409) return start(null); // that session can't be resumed: start fresh
     if (status !== 200 || !data) return fail(status);
     const s = data as unknown as ClientSession;
-    beginSession(s);
+    beginSession(s, publicKey);
     setStep("setup");
     if (resume) logEvent("session_resume", { via: "name" });
     else logEvent("session_start", { machine_order: s.machineOrder, reveal_condition: s.revealCondition, url_params: urlParams() });

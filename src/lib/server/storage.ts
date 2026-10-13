@@ -1,4 +1,5 @@
 import "server-only";
+import { get as blobGet, head as blobHead, list as blobList, put as blobPut } from "@vercel/blob";
 import { appendFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -6,13 +7,16 @@ import type { StudentName } from "@/lib/identity";
 import { sameName } from "@/lib/identity";
 import type { BustedBug, Progress, Step } from "@/lib/types";
 import type { Category, MachineId } from "@/machines/types";
+import { encryptName, nameKey, publicKeyPem } from "./names";
 import { serviceClient } from "./supabase";
 
 /**
  * Where research data goes. Chosen by DATA_STORE, or automatically:
  *   - "supabase" when SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set
+ *   - "blob" when BLOB_READ_WRITE_TOKEN and NAMES_PUBLIC_KEY are set: private
+ *     Vercel Blob storage, names encrypted; npm run pull brings it home
  *   - "file" on a machine with a disk (npm run dev / start)
- *   - "none" on Vercel without Supabase: the game still plays, but events
+ *   - "none" on Vercel without a store: the game still plays, but events
  *     stay queued on the student's device until a store is configured.
  *
  * Names live only in students; everything else refers to student_id.
@@ -24,6 +28,8 @@ export interface StudentRow {
   last_initial: string;
   class_period: string;
   created_at: string;
+  /** Blob store only: keyed fingerprint of name + period (names are encrypted). */
+  name_key?: string;
 }
 
 export interface SessionRow {
@@ -61,9 +67,12 @@ export interface EventRow {
 }
 
 export interface DataStore {
-  kind: "supabase" | "file" | "none";
+  kind: "supabase" | "blob" | "file" | "none";
   createStudent(row: StudentRow): Promise<void>;
-  createSession(row: SessionRow): Promise<void>;
+  /** `student` is the row just created for it (the blob store indexes its name). */
+  createSession(row: SessionRow, student: StudentRow): Promise<void>;
+  /** Is this stored student the person with this name and period? */
+  isStudent(student: StudentRow, name: StudentName, period: string): boolean;
   /** Latest unfinished session today for this name and period, if any. */
   findResumable(name: StudentName, period: string, sinceIso: string): Promise<{ sessionId: string; startedAt: string } | null>;
   getSession(id: string): Promise<{ session: SessionRow; student: StudentRow } | null>;
@@ -108,6 +117,7 @@ function supabaseStore(): DataStore | null {
     async createSession(row) {
       fail("session insert", (await db.from("sessions").insert(row)).error);
     },
+    isStudent: (st, name, period) => st.class_period === period && sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name),
     async findResumable(name, period, sinceIso) {
       const { data, error } = await db
         .from("sessions")
@@ -242,6 +252,7 @@ export function fileStore(dir: string = process.env.LOG_DIR || defaultLogDir()):
       await mkdir(path.join(dir, "sessions"), { recursive: true });
       await writeFile(file("sessions", row.id), JSON.stringify(row, null, 2), { flag: "wx" });
     },
+    isStudent: (st, name, period) => st.class_period === period && sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name),
     async findResumable(name, period, sinceIso) {
       const students = (await readAll<StudentRow>("students")).filter(
         (s) => s.class_period === period && sameName({ firstName: s.first_name, lastInitial: s.last_initial }, name),
@@ -280,12 +291,107 @@ export function fileStore(dir: string = process.env.LOG_DIR || defaultLogDir()):
   };
 }
 
+// -------------------------------------------------------------------- blob
+
+/**
+ * Private Vercel Blob storage. Write-once JSON files (no read-modify-write,
+ * so concurrent requests can't clobber each other):
+ *   students/<id>.json                      names encrypted, plus name_key
+ *   sessions/<id>.json                      the session row
+ *   index/<name_key>/<started_at>__<id>.json  for "Keep going?" by name
+ *   ended/<id>.json                         written at session_end
+ *   events/<id>/<first>-<last>.json         one file per batch; a resent
+ *                                           batch overwrites itself
+ * npm run pull merges it all into the local file store, de-duplicated.
+ */
+function blobStore(): DataStore | null {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const pem = publicKeyPem();
+  // Never store names in the cloud unencrypted: no key, no blob store.
+  if (!token || !pem || !process.env.SESSION_SECRET) return null;
+  const opts = { access: "private" as const, token, addRandomSuffix: false, allowOverwrite: true, contentType: "application/json" };
+  const putJson = (pathname: string, body: unknown) => blobPut(pathname, JSON.stringify(body), opts);
+  const getJson = async <T>(pathname: string): Promise<T | null> => {
+    const r = await blobGet(pathname, { access: "private", token }).catch(() => null);
+    return r && r.statusCode === 200 ? ((await new Response(r.stream).json()) as T) : null;
+  };
+  const listAll = async (prefix: string) => {
+    const out: { pathname: string }[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await blobList({ prefix, token, cursor });
+      out.push(...page.blobs);
+      cursor = page.hasMore ? page.cursor : undefined;
+    } while (cursor);
+    return out;
+  };
+  const exists = async (pathname: string) => !!(await blobHead(pathname, { token }).catch(() => null));
+
+  return {
+    kind: "blob",
+    async createStudent(row) {
+      const name = { firstName: row.first_name, lastInitial: row.last_initial };
+      await putJson(`students/${row.id}.json`, {
+        id: row.id,
+        name_enc: encryptName(name, pem),
+        name_key: nameKey(name, row.class_period),
+        class_period: row.class_period,
+        created_at: row.created_at,
+      });
+    },
+    async createSession(row, student) {
+      await putJson(`sessions/${row.id}.json`, row);
+      const key = nameKey({ firstName: student.first_name, lastInitial: student.last_initial }, student.class_period);
+      await putJson(`index/${key}/${row.started_at.replace(/:/g, "-")}__${row.id}.json`, {});
+    },
+    isStudent: (st, name, period) => st.class_period === period && st.name_key === nameKey(name, period),
+    async findResumable(name, period, sinceIso) {
+      const since = sinceIso.replace(/:/g, "-");
+      const hits = (await listAll(`index/${nameKey(name, period)}/`))
+        .map((b) => b.pathname.split("/").pop()!.replace(/\.json$/, "").split("__"))
+        .filter(([started]) => started >= since)
+        .sort((a, b) => b[0].localeCompare(a[0]));
+      for (const [started, id] of hits) {
+        if (!(await exists(`ended/${id}.json`))) return { sessionId: id, startedAt: started };
+      }
+      return null;
+    },
+    async getSession(id) {
+      if (!UUID.test(id)) return null;
+      const session = await getJson<SessionRow>(`sessions/${id}.json`);
+      if (!session) return null;
+      const student = await getJson<StudentRow>(`students/${session.student_id}.json`);
+      if (!student) return null;
+      const ended = await getJson<{ ended_at: string }>(`ended/${id}.json`);
+      return { session: { ...session, ended_at: ended?.ended_at ?? null }, student: { ...student, first_name: "", last_initial: "" } };
+    },
+    async insertEvents(sessionId, rows) {
+      if (!UUID.test(sessionId)) throw new Error("bad id");
+      const seqs = rows.map((r) => r.seq);
+      const pad = (n: number) => String(n).padStart(6, "0");
+      await putJson(`events/${sessionId}/${pad(Math.min(...seqs))}-${pad(Math.max(...seqs))}.json`, rows);
+    },
+    async markEnded(sessionId, endedAt) {
+      if (!(await exists(`ended/${sessionId}.json`))) await putJson(`ended/${sessionId}.json`, { ended_at: endedAt });
+    },
+    // The facilitator view needs Supabase (staff login), so positions aren't kept here.
+    async setPosition() {},
+    async progressEvents(sessionId) {
+      const files = await listAll(`events/${sessionId}/`);
+      const rows = (await Promise.all(files.map((f) => getJson<EventRow[]>(f.pathname)))).flat().filter((r): r is EventRow => !!r);
+      const bySeq = new Map(rows.map((r) => [r.seq, r]));
+      return [...bySeq.values()].sort((a, b) => a.seq - b.seq).filter((e) => e.event_type === "step_enter" || e.event_type === "busted");
+    },
+  };
+}
+
 // -------------------------------------------------------------------- none
 
 const noStore: DataStore = {
   kind: "none",
   async createStudent() {},
   async createSession() {},
+  isStudent: () => false,
   async findResumable() {
     return null;
   },
@@ -310,8 +416,9 @@ export function dataStore(): DataStore {
   if (chosen) return chosen;
   const wanted = process.env.DATA_STORE?.trim().toLowerCase();
   if (wanted === "supabase") chosen = supabaseStore() ?? noStore;
+  else if (wanted === "blob") chosen = blobStore() ?? noStore;
   else if (wanted === "file") chosen = fileStore();
   else if (wanted === "none") chosen = noStore;
-  else chosen = supabaseStore() ?? (process.env.VERCEL ? noStore : fileStore());
+  else chosen = supabaseStore() ?? blobStore() ?? (process.env.VERCEL ? noStore : fileStore());
   return chosen;
 }

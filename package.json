@@ -12,10 +12,13 @@
     "db:push": "supabase db push",
     "check-data": "node --env-file=.env.local scripts/check-data.mjs",
     "gen": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/generate.ts",
-    "export": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/export.ts"
+    "export": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/export.ts",
+    "keys": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/keys.ts",
+    "pull": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/pull.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
+    "@vercel/blob": "^2.8.1",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

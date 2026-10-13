@@ -51,7 +51,7 @@ describe("file store", () => {
   it("keeps names in students and only the id in sessions", async () => {
     const store = fileStore(dir);
     await store.createStudent(student);
-    await store.createSession(session);
+    await store.createSession(session, student);
     const saved = await readFile(path.join(dir, "sessions", `${sid}.json`), "utf8");
     expect(saved).not.toContain("Jayden");
     expect((await store.getSession(sid))?.student.first_name).toBe("Jayden");
@@ -68,7 +68,7 @@ describe("file store", () => {
   it("finds today's unfinished session by name and period, ignoring case", async () => {
     const store = fileStore(dir);
     await store.createStudent(student);
-    await store.createSession(session);
+    await store.createSession(session, student);
     const since = "2026-10-14T05:00:00.000Z";
     expect(await store.findResumable({ firstName: "jayden", lastInitial: "r" }, "3", since)).toEqual({ sessionId: sid, startedAt: session.started_at });
     expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "4", since)).toBeNull();
@@ -80,7 +80,7 @@ describe("file store", () => {
   it("tracks the current step and machine for the facilitator view", async () => {
     const store = fileStore(dir);
     await store.createStudent(student);
-    await store.createSession(session);
+    await store.createSession(session, student);
     await store.setPosition(sid, "machine", "sale");
     expect((await store.getSession(sid))?.session).toMatchObject({ current_step: "machine", current_machine: "sale" });
   });

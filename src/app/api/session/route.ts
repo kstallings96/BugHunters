@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
-import { isTestName, normalizeName, sameName } from "@/lib/identity";
+import { isTestName, normalizeName } from "@/lib/identity";
 import { dataStore, progressFrom, type SessionRow, type StudentRow } from "@/lib/server/storage";
 import { issueToken } from "@/lib/server/token";
 import { APP_VERSION, configVersion } from "@/lib/server/version";
@@ -24,7 +24,8 @@ export async function POST(request: Request) {
   if (!name || !settings.periods.includes(period)) return Response.json({ error: "name" }, { status: 400 });
 
   const store = dataStore();
-  const reply = (session: SessionRow, student: StudentRow, progress: ClientSession["progress"]) => {
+  // Names come from what the student typed (stored copies may be encrypted).
+  const reply = (session: SessionRow, progress: ClientSession["progress"]) => {
     const token = issueToken(session.id);
     if (!token) return Response.json({ error: "not_configured" }, { status: 503 });
     const out: ClientSession = {
@@ -33,9 +34,9 @@ export async function POST(request: Request) {
       machineOrder: session.machine_order,
       revealCondition: session.reveal_condition,
       nudgeSeconds: settings.nudgeSeconds,
-      firstName: student.first_name,
-      lastInitial: student.last_initial,
-      period: student.class_period,
+      firstName: name.firstName,
+      lastInitial: name.lastInitial,
+      period,
       progress,
     };
     return Response.json(out);
@@ -52,10 +53,9 @@ export async function POST(request: Request) {
         st &&
         !s.ended_at &&
         s.started_at >= startOfToday(settings.timeZone) &&
-        st.class_period === period &&
-        sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name)
+        store.isStudent(st, name, period)
       ) {
-        return reply(s, st, progressFrom(await store.progressEvents(s.id)));
+        return reply(s, progressFrom(await store.progressEvents(s.id)));
       }
       return Response.json({ error: "resume" }, { status: 409 });
     }
@@ -92,8 +92,8 @@ export async function POST(request: Request) {
       viewport_height: int(body.viewport?.height),
     };
     await store.createStudent(student);
-    await store.createSession(session);
-    return reply(session, student, null);
+    await store.createSession(session, student);
+    return reply(session, null);
   } catch (err) {
     console.error("session start failed", (err as Error).message);
     return Response.json({ error: "store" }, { status: 502 });

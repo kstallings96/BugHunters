@@ -1,5 +1,6 @@
 "use client";
 
+import { recordBackup, saveBackup, startBackup } from "./backup";
 import { createEventQueue, type EventQueue, type KeyValueStore } from "./eventQueue";
 import type { MachineId } from "@/machines/types";
 import type { ClientSession, Step } from "./types";
@@ -71,6 +72,7 @@ async function send(token: string, events: unknown[]): Promise<number> {
 
 function onHide(): void {
   if (document.visibilityState !== "hidden" || !queue) return;
+  void saveBackup();
   for (const payload of queue.beaconPayloads()) {
     const body = JSON.stringify(payload);
     // Same-origin, so a JSON beacon is fine (no CORS preflight). If the
@@ -86,7 +88,10 @@ function onHide(): void {
 export function startLogger(): void {
   if (queue || typeof window === "undefined") return;
   queue = createEventQueue({ store: storage(), send });
-  timer = window.setInterval(() => void queue?.flush(), FLUSH_MS);
+  timer = window.setInterval(() => {
+    void queue?.flush();
+    void saveBackup();
+  }, FLUSH_MS);
   document.addEventListener("visibilitychange", onHide);
   window.addEventListener("pagehide", onHide);
   window.addEventListener("online", () => void queue?.flush());
@@ -110,9 +115,18 @@ export function savedSession(): ClientSession | null {
   return session;
 }
 
-export function beginSession(s: ClientSession): void {
+/** Starts logging for a session, with an encrypted device backup when a key is given. */
+export function beginSession(s: ClientSession, publicKey: string | null = null): void {
   startLogger();
   session = s;
+  void startBackup(publicKey, {
+    session_id: s.id,
+    first_name: s.firstName,
+    last_initial: s.lastInitial,
+    class_period: s.period,
+    machine_order: s.machineOrder,
+    reveal_condition: s.revealCondition,
+  });
   queue?.register(s.id, s.token);
   try {
     window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
@@ -130,7 +144,7 @@ export function logEvent(type: EventType, payload: Record<string, unknown> = {})
   try {
     // The bonus is open play: every event in it is marked unmeasured.
     const tagged = currentStep.startsWith("bonus") ? { ...payload, measured: false } : payload;
-    queue.append(session.id, currentStep, type, tagged, currentMachine);
+    recordBackup(queue.append(session.id, currentStep, type, tagged, currentMachine));
   } catch {}
 }
 
@@ -140,6 +154,7 @@ export function logEvent(type: EventType, payload: Record<string, unknown> = {})
  */
 export function endSession(payload: Record<string, unknown> = {}): void {
   logEvent("session_end", payload);
+  void saveBackup();
   session = null;
   try {
     window.sessionStorage.removeItem(SESSION_KEY);
