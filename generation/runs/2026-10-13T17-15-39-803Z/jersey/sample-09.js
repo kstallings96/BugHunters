@@ -1,0 +1,3 @@
+function jerseyName(lastName) {
+  return lastName.toUpperCase().substring(0, 12);
+}

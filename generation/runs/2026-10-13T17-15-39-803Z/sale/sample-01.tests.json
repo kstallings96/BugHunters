@@ -1,0 +1,72 @@
+[
+  {
+    "inputs": {
+      "price": "100",
+      "off": "20"
+    },
+    "expects": "Sale price: $80.00"
+  },
+  {
+    "inputs": {
+      "price": "50",
+      "off": "0"
+    },
+    "expects": "Sale price: $50.00"
+  },
+  {
+    "inputs": {
+      "price": "200",
+      "off": "100"
+    },
+    "expects": "Sale price: $0.00"
+  },
+  {
+    "inputs": {
+      "price": "99.99",
+      "off": "10"
+    },
+    "expects": "Sale price: $89.99"
+  },
+  {
+    "inputs": {
+      "price": "-10",
+      "off": "10"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "off": "-5"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "off": "101"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "abc",
+      "off": "10"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "off": "xyz"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "50",
+      "off": "12.5"
+    },
+    "expects": "Sale price: $43.75"
+  }
+]

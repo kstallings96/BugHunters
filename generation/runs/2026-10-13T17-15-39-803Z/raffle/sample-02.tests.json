@@ -1,0 +1,38 @@
+[
+  {
+    "inputs": {
+      "namesText": "Alice\nBob\nCharlie"
+    },
+    "expects": "Alice, Bob, or Charlie"
+  },
+  {
+    "inputs": {
+      "namesText": ""
+    },
+    "expects": "No names provided."
+  },
+  {
+    "inputs": {
+      "namesText": "   \n\n   "
+    },
+    "expects": "No names provided."
+  },
+  {
+    "inputs": {
+      "namesText": "  Alice  \n  Bob  "
+    },
+    "expects": "Alice or Bob"
+  },
+  {
+    "inputs": {
+      "namesText": "\nAlice\n\nBob\n"
+    },
+    "expects": "Alice or Bob"
+  },
+  {
+    "inputs": {
+      "namesText": "Solo"
+    },
+    "expects": "Solo"
+  }
+]

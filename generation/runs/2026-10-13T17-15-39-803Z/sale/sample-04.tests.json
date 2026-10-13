@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "price": "100",
+      "off": "20"
+    },
+    "expects": "Sale price: $80.00"
+  },
+  {
+    "inputs": {
+      "price": "50.50",
+      "off": "10"
+    },
+    "expects": "Sale price: $45.45"
+  },
+  {
+    "inputs": {
+      "price": "200",
+      "off": "0"
+    },
+    "expects": "Sale price: $200.00"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "off": "100"
+    },
+    "expects": "Sale price: $0.00"
+  },
+  {
+    "inputs": {
+      "price": "19.99",
+      "off": "15"
+    },
+    "expects": "Sale price: $16.99"
+  },
+  {
+    "inputs": {
+      "price": "abc",
+      "off": "10"
+    },
+    "expects": "Sale price: $NaN"
+  }
+]

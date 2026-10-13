@@ -1,0 +1,38 @@
+[
+  {
+    "inputs": {
+      "name": "smith"
+    },
+    "expects": "SMITH"
+  },
+  {
+    "inputs": {
+      "name": "Abcdefghijklm"
+    },
+    "expects": "ABCDEFGHIJKL"
+  },
+  {
+    "inputs": {
+      "name": "Doe"
+    },
+    "expects": "DOE"
+  },
+  {
+    "inputs": {
+      "name": "VAN DER SAR"
+    },
+    "expects": "VAN DER SAR"
+  },
+  {
+    "inputs": {
+      "name": "Schweinstiger"
+    },
+    "expects": "SCHWEINSTIGE"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  }
+]

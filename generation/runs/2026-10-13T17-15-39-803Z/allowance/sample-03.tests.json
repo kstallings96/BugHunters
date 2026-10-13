@@ -1,0 +1,38 @@
+[
+  {
+    "inputs": {
+      "allowance": "$10"
+    },
+    "expects": "$20"
+  },
+  {
+    "inputs": {
+      "allowance": "$5.50"
+    },
+    "expects": "$11"
+  },
+  {
+    "inputs": {
+      "allowance": "100"
+    },
+    "expects": "$200"
+  },
+  {
+    "inputs": {
+      "allowance": "$0"
+    },
+    "expects": "$0"
+  },
+  {
+    "inputs": {
+      "allowance": "abc$20xyz"
+    },
+    "expects": "$40"
+  },
+  {
+    "inputs": {
+      "allowance": "$ 50.25 "
+    },
+    "expects": "$100.5"
+  }
+]

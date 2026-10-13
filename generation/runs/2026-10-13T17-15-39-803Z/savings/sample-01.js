@@ -1,0 +1,11 @@
+function weeksToSave(price, savedPerWeek) {
+  const priceNum = parseFloat(price);
+  const savedNum = parseFloat(savedPerWeek);
+
+  if (isNaN(priceNum) || isNaN(savedNum) || savedNum <= 0 || priceNum < 0) {
+    return "Invalid input";
+  }
+
+  const weeks = Math.ceil(priceNum / savedNum);
+  return weeks === 1 ? "1 week" : weeks + " weeks";
+}

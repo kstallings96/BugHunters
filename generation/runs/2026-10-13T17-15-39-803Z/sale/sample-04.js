@@ -1,0 +1,6 @@
+function salePrice(price, percentOff) {
+  const p = parseFloat(price);
+  const discount = parseFloat(percentOff);
+  const finalPrice = p - (p * (discount / 100));
+  return "Sale price: $" + finalPrice.toFixed(2);
+}

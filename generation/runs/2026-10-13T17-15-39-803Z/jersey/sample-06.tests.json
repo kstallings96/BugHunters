@@ -1,0 +1,50 @@
+[
+  {
+    "inputs": {
+      "name": "smith"
+    },
+    "expects": "SMITH"
+  },
+  {
+    "inputs": {
+      "name": "Johnson"
+    },
+    "expects": "JOHNSON"
+  },
+  {
+    "inputs": {
+      "name": "rodriguez-sanchez"
+    },
+    "expects": "RODRIGUEZ-SA"
+  },
+  {
+    "inputs": {
+      "name": "doe"
+    },
+    "expects": "DOE"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "constantine123"
+    },
+    "expects": "CONSTANTINE1"
+  },
+  {
+    "inputs": {
+      "name": "supercalifragilistic"
+    },
+    "expects": "SUPERCALIFRA"
+  }
+]

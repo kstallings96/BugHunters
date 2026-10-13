@@ -1,0 +1,62 @@
+[
+  {
+    "inputs": {
+      "allowance": "$10"
+    },
+    "expects": "$20"
+  },
+  {
+    "inputs": {
+      "allowance": "50"
+    },
+    "expects": "100"
+  },
+  {
+    "inputs": {
+      "allowance": "$10.50"
+    },
+    "expects": "$21"
+  },
+  {
+    "inputs": {
+      "allowance": "5.5"
+    },
+    "expects": "11"
+  },
+  {
+    "inputs": {
+      "allowance": "$1,000"
+    },
+    "expects": "$2000"
+  },
+  {
+    "inputs": {
+      "allowance": "2000"
+    },
+    "expects": "4000"
+  },
+  {
+    "inputs": {
+      "allowance": "$0"
+    },
+    "expects": "$0"
+  },
+  {
+    "inputs": {
+      "allowance": "abc$10"
+    },
+    "expects": "$20"
+  },
+  {
+    "inputs": {
+      "allowance": "200$"
+    },
+    "expects": "$400"
+  },
+  {
+    "inputs": {
+      "allowance": "0.25"
+    },
+    "expects": "0.5"
+  }
+]

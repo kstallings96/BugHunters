@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "namesText": ""
+    },
+    "expects": "No valid names provided."
+  },
+  {
+    "inputs": {
+      "namesText": "\n\n"
+    },
+    "expects": "No valid names provided."
+  },
+  {
+    "inputs": {
+      "namesText": "Alice"
+    },
+    "expects": "Alice"
+  },
+  {
+    "inputs": {
+      "namesText": "  Alice  "
+    },
+    "expects": "Alice"
+  },
+  {
+    "inputs": {
+      "namesText": "Alice\nBob\nCharlie"
+    },
+    "expects": "One of: Alice, Bob, Charlie"
+  },
+  {
+    "inputs": {
+      "namesText": "Alice\n\nBob\n\n"
+    },
+    "expects": "One of: Alice, Bob"
+  },
+  {
+    "inputs": {
+      "namesText": "Alice\n  \nBob"
+    },
+    "expects": "One of: Alice, Bob"
+  }
+]

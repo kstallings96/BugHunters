@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "smith"
+    },
+    "expects": "SMITH"
+  },
+  {
+    "inputs": {
+      "name": "rodriguez"
+    },
+    "expects": "RODRIGUEZ"
+  },
+  {
+    "inputs": {
+      "name": "constantinople"
+    },
+    "expects": "CONSTANTINOP"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "VAN DER SAR"
+    },
+    "expects": "VAN DER SAR"
+  },
+  {
+    "inputs": {
+      "name": "schweinsteiger"
+    },
+    "expects": "SCHWEINSTEIG"
+  }
+]

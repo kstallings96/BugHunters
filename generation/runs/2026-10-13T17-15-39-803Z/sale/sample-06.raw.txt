@@ -1,0 +1,13 @@
+```js
+function salePrice(price, percentOff) {
+  const originalPrice = parseFloat(price);
+  const discount = parseFloat(percentOff);
+
+  if (isNaN(originalPrice) || isNaN(discount) || originalPrice < 0 || discount < 0 || discount > 100) {
+    return "Invalid input";
+  }
+
+  const finalPrice = originalPrice - (originalPrice * (discount / 100));
+  return "Sale price: $" + finalPrice.toFixed(2);
+}
+```

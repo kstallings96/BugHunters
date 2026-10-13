@@ -1,0 +1,50 @@
+[
+  {
+    "inputs": {
+      "allowance": "$10.00"
+    },
+    "expects": "$20"
+  },
+  {
+    "inputs": {
+      "allowance": "£5"
+    },
+    "expects": "£10"
+  },
+  {
+    "inputs": {
+      "allowance": "€25.50"
+    },
+    "expects": "€51"
+  },
+  {
+    "inputs": {
+      "allowance": "100USD"
+    },
+    "expects": "USD200"
+  },
+  {
+    "inputs": {
+      "allowance": "$0.50"
+    },
+    "expects": "$1"
+  },
+  {
+    "inputs": {
+      "allowance": "¥1000"
+    },
+    "expects": "¥2000"
+  },
+  {
+    "inputs": {
+      "allowance": "A$50"
+    },
+    "expects": "A$100"
+  },
+  {
+    "inputs": {
+      "allowance": "20"
+    },
+    "expects": "40"
+  }
+]

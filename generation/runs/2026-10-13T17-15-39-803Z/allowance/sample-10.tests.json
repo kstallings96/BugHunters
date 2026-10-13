@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "allowance": "$10"
+    },
+    "expects": "$20"
+  },
+  {
+    "inputs": {
+      "allowance": "5.50"
+    },
+    "expects": "$11"
+  },
+  {
+    "inputs": {
+      "allowance": "$100.25"
+    },
+    "expects": "$200.5"
+  },
+  {
+    "inputs": {
+      "allowance": "0"
+    },
+    "expects": "$0"
+  },
+  {
+    "inputs": {
+      "allowance": "invalid"
+    },
+    "expects": "$NaN"
+  },
+  {
+    "inputs": {
+      "allowance": "1,000"
+    },
+    "expects": "$2000"
+  },
+  {
+    "inputs": {
+      "allowance": "$ 50 "
+    },
+    "expects": "$100"
+  }
+]

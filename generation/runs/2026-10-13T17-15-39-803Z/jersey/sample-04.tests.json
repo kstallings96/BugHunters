@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "smith"
+    },
+    "expects": "SMITH"
+  },
+  {
+    "inputs": {
+      "name": "rodriguez"
+    },
+    "expects": "RODRIGUEZ"
+  },
+  {
+    "inputs": {
+      "name": "schwarzenegger"
+    },
+    "expects": "SCHWARZENEGG"
+  },
+  {
+    "inputs": {
+      "name": "doe"
+    },
+    "expects": "DOE"
+  },
+  {
+    "inputs": {
+      "name": "vandenberghe"
+    },
+    "expects": "VANDENBERGHE"
+  },
+  {
+    "inputs": {
+      "name": "longnameexample"
+    },
+    "expects": "LONGNAMEEXAM"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "provider": "OpenRouter",
+  "requested_model": "google/gemini-3.1-flash-lite",
+  "reported_models": [
+    "google/gemini-3.1-flash-lite"
+  ],
+  "date": "2026-10-13T17:15:39.804Z",
+  "settings": {
+    "temperature": 1,
+    "max_tokens": 2000,
+    "reasoning": {
+      "effort": "low"
+    }
+  },
+  "samples_per_machine": 15,
+  "prompts": {
+    "allowance": {
+      "build": "make an app that doubles my allowance\n\nWrite it as ONE plain JavaScript function, no HTML, no imports, no console.log. Every argument is the text the user typed, exactly as typed (a string). The function returns the string to show on the screen. Put the code in a single ```js block. Name it doubleAllowance(allowance). For an answer, return it like \"$20\".",
+      "tests": "Here is a JavaScript function you wrote:\n\n```js\n<the sample's code>\n```\n\nWrite tests for doubleAllowance. Reply with ONLY a JSON array, no other text. Each item: {\"inputs\": {\"allowance\": \"<text typed>\"}, \"expects\": \"<what it should return>\"}."
+    },
+    "savings": {
+      "build": "make an app that tells me how many weeks to save for something. Round up to whole weeks.\n\nWrite it as ONE plain JavaScript function, no HTML, no imports, no console.log. Every argument is the text the user typed, exactly as typed (a string). The function returns the string to show on the screen. Put the code in a single ```js block. Name it weeksToSave(price, savedPerWeek). For an answer, return it like \"4 weeks\" (or \"1 week\").",
+      "tests": "Here is a JavaScript function you wrote:\n\n```js\n<the sample's code>\n```\n\nWrite tests for weeksToSave. Reply with ONLY a JSON array, no other text. Each item: {\"inputs\": {\"price\": \"<text typed>\", \"saved\": \"<text typed>\"}, \"expects\": \"<what it should return>\"}."
+    },
+    "sale": {
+      "build": "make an app that tells me the sale price when something is on sale. Discounts go from 0% to 100%.\n\nWrite it as ONE plain JavaScript function, no HTML, no imports, no console.log. Every argument is the text the user typed, exactly as typed (a string). The function returns the string to show on the screen. Put the code in a single ```js block. Name it salePrice(price, percentOff). For an answer, return it like \"Sale price: $30\" (round to cents).",
+      "tests": "Here is a JavaScript function you wrote:\n\n```js\n<the sample's code>\n```\n\nWrite tests for salePrice. Reply with ONLY a JSON array, no other text. Each item: {\"inputs\": {\"price\": \"<text typed>\", \"off\": \"<text typed>\"}, \"expects\": \"<what it should return>\"}."
+    },
+    "jersey": {
+      "build": "make an app that puts my last name on a jersey. Last names in ALL CAPS, up to 12 letters.\n\nWrite it as ONE plain JavaScript function, no HTML, no imports, no console.log. Every argument is the text the user typed, exactly as typed (a string). The function returns the string to show on the screen. Put the code in a single ```js block. Name it jerseyName(lastName). For an answer, return just the text to print on the jersey.",
+      "tests": "Here is a JavaScript function you wrote:\n\n```js\n<the sample's code>\n```\n\nWrite tests for jerseyName. Reply with ONLY a JSON array, no other text. Each item: {\"inputs\": {\"name\": \"<text typed>\"}, \"expects\": \"<what it should return>\"}."
+    },
+    "raffle": {
+      "build": "make an app that picks a raffle winner from a list of names. Pick one name at random. Everyone gets the same chance.\n\nWrite it as ONE plain JavaScript function, no HTML, no imports, no console.log. Every argument is the text the user typed, exactly as typed (a string). The function returns the string to show on the screen. Put the code in a single ```js block. Name it pickWinner(namesText). namesText is the names the user typed, one per line. Return the winner's name.",
+      "tests": "Here is a JavaScript function you wrote:\n\n```js\n<the sample's code>\n```\n\nWrite tests for pickWinner. Reply with ONLY a JSON array, no other text. Each item: {\"inputs\": {\"namesText\": \"<text typed>\"}, \"expects\": \"<what it should return>\"}."
+    }
+  }
+}

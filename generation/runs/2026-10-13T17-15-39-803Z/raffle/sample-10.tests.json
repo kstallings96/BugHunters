@@ -1,0 +1,32 @@
+[
+  {
+    "inputs": {
+      "namesText": ""
+    },
+    "expects": "No names provided."
+  },
+  {
+    "inputs": {
+      "namesText": "\n  \n"
+    },
+    "expects": "No names provided."
+  },
+  {
+    "inputs": {
+      "namesText": "Alice"
+    },
+    "expects": "Alice"
+  },
+  {
+    "inputs": {
+      "namesText": "Alice\nBob\nCharlie"
+    },
+    "expects": "one of: Alice, Bob, Charlie"
+  },
+  {
+    "inputs": {
+      "namesText": "  Alice  \n\n  Bob  "
+    },
+    "expects": "one of: Alice, Bob"
+  }
+]

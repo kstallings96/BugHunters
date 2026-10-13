@@ -1,0 +1,4 @@
+function doubleAllowance(allowance) {
+  const numericValue = parseFloat(allowance.replace(/[^0-9.]/g, ''));
+  return "$" + (numericValue * 2);
+}

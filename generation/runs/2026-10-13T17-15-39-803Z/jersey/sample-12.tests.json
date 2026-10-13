@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "Smith"
+    },
+    "expects": "SMITH"
+  },
+  {
+    "inputs": {
+      "name": "antetokounmpo"
+    },
+    "expects": "ANTETOKOUNMP"
+  },
+  {
+    "inputs": {
+      "name": "doe"
+    },
+    "expects": "DOE"
+  },
+  {
+    "inputs": {
+      "name": "Schwarzenegger"
+    },
+    "expects": "SCHWARZENEGG"
+  },
+  {
+    "inputs": {
+      "name": "o'neal"
+    },
+    "expects": "O'NEAL"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  }
+]

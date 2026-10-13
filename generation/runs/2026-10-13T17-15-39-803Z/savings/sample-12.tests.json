@@ -1,0 +1,58 @@
+[
+  {
+    "inputs": {
+      "price": "100",
+      "saved": "20"
+    },
+    "expects": "5 weeks"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "saved": "100"
+    },
+    "expects": "1 week"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "saved": "30"
+    },
+    "expects": "4 weeks"
+  },
+  {
+    "inputs": {
+      "price": "abc",
+      "saved": "20"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "saved": "0"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "100",
+      "saved": "-10"
+    },
+    "expects": "Invalid input"
+  },
+  {
+    "inputs": {
+      "price": "10.50",
+      "saved": "2.10"
+    },
+    "expects": "5 weeks"
+  },
+  {
+    "inputs": {
+      "price": "50",
+      "saved": "abc"
+    },
+    "expects": "Invalid input"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "inputs": {
+      "allowance": "$10"
+    },
+    "expects": "$20"
+  },
+  {
+    "inputs": {
+      "allowance": "$5.50"
+    },
+    "expects": "$11"
+  },
+  {
+    "inputs": {
+      "allowance": "100"
+    },
+    "expects": "$200"
+  },
+  {
+    "inputs": {
+      "allowance": "invalid"
+    },
+    "expects": "Please enter a valid number"
+  },
+  {
+    "inputs": {
+      "allowance": ""
+    },
+    "expects": "Please enter a valid number"
+  },
+  {
+    "inputs": {
+      "allowance": "abc 25.00 xyz"
+    },
+    "expects": "$50"
+  },
+  {
+    "inputs": {
+      "allowance": "$ 1,000"
+    },
+    "expects": "$2000"
+  },
+  {
+    "inputs": {
+      "allowance": "0"
+    },
+    "expects": "$0"
+  }
+]

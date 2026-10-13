@@ -1,0 +1,6 @@
+function doubleAllowance(allowance) {
+  const numericPart = parseFloat(allowance.replace(/[^0-9.]/g, ''));
+  const hasDollarSign = allowance.includes('$');
+  const doubledValue = numericPart * 2;
+  return hasDollarSign ? "$" + doubledValue : doubledValue.toString();
+}
