@@ -8,28 +8,19 @@ import { Game } from "./student/Game";
 import { BigButton, Card } from "./ui";
 
 /**
- * Log in: access code (once per device) → first name, last initial, class
- * period → "Is this you?" → "Keep going where you left off?" if this name
- * and period already started today → the game.
+ * Log in: first name, last initial, class period → "Is this you?" → "Keep
+ * going where you left off?" if this name and period already started today
+ * → the game.
  */
 
-type Phase = "loading" | "code" | "name" | "confirm" | "resume" | "game";
+type Phase = "loading" | "name" | "confirm" | "resume" | "game";
 
-const CODE_KEY = "bh_access_code";
 const input =
   "h-16 w-full min-w-0 rounded-2xl border-4 border-line bg-white px-5 text-2xl font-bold text-ink outline-none focus:border-teal";
 
 function urlParams() {
   const p = new URLSearchParams(window.location.search);
   return { order: p.get("order"), reveal: p.get("reveal"), test: p.get("test") };
-}
-
-function storedCode(): string {
-  try {
-    return window.localStorage.getItem(CODE_KEY) ?? "";
-  } catch {
-    return "";
-  }
 }
 
 async function post(url: string, body: object): Promise<{ status: number; data: Record<string, unknown> | null }> {
@@ -47,7 +38,6 @@ async function post(url: string, body: object): Promise<{ status: number; data: 
 export function StartFlow({ periods }: { periods: string[] }) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [session, setSession] = useState<ClientSession | null>(null);
-  const [code, setCode] = useState("");
   const [first, setFirst] = useState("");
   const [initial, setInitial] = useState("");
   const [period, setPeriod] = useState("");
@@ -64,51 +54,24 @@ export function StartFlow({ periods }: { periods: string[] }) {
     const saved = savedSession();
     // What to show depends on browser storage, which only exists here.
     /* eslint-disable react-hooks/set-state-in-effect */
-    // Load the code either way: after a resumed game ends, the next student
-    // on this Chromebook logs in with it.
-    const c = storedCode();
-    setCode(c);
     if (saved) {
       setSession(saved);
       setPhase("game");
       setStep("setup");
       logEvent("session_resume", { via: "reload" });
     } else {
-      setPhase(c ? "name" : "code");
+      setPhase("name");
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   function fail(status: number) {
-    if (status === 401) {
-      try {
-        window.localStorage.removeItem(CODE_KEY);
-      } catch {}
-      setCode("");
-      setPhase("code");
-      setProblem("Please type the class code again.");
-    } else if (status === 400) {
+    if (status === 400) {
       setPhase("name");
       setProblem("Please check your name and period.");
     } else {
       setProblem("We can't connect. Ask your teacher.");
     }
-  }
-
-  async function submitCode(e: FormEvent) {
-    e.preventDefault();
-    if (!code.trim() || busy) return;
-    setBusy(true);
-    setProblem(null);
-    const { status } = await post("/api/access", { code });
-    setBusy(false);
-    if (status === 200) {
-      try {
-        window.localStorage.setItem(CODE_KEY, code.trim());
-      } catch {}
-      setPhase("name");
-    } else if (status === 401) setProblem("That code didn't work. Ask your teacher.");
-    else setProblem("We can't connect. Ask your teacher.");
   }
 
   function submitName(e: FormEvent) {
@@ -125,7 +88,7 @@ export function StartFlow({ periods }: { periods: string[] }) {
     if (!name || busy) return;
     setBusy(true);
     setProblem(null);
-    const { status, data } = await post("/api/login", { code, ...name, period });
+    const { status, data } = await post("/api/login", { ...name, period });
     setBusy(false);
     if (status !== 200) return fail(status);
     const found = (data?.resume as { sessionId: string } | null) ?? null;
@@ -142,7 +105,6 @@ export function StartFlow({ periods }: { periods: string[] }) {
     setBusy(true);
     setProblem(null);
     const { status, data } = await post("/api/session", {
-      code,
       ...name,
       period,
       resume,
@@ -189,27 +151,6 @@ export function StartFlow({ periods }: { periods: string[] }) {
         🔍 bug<span className="text-teal">Hunters</span> 💥
       </p>
 
-      {phase === "code" && (
-        <Card className="w-full">
-          <form onSubmit={submitCode} className="flex flex-col gap-5">
-            <h1 className="text-3xl font-bold">Type the class code.</h1>
-            <input
-              className={input}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              autoFocus
-              aria-label="Class code"
-            />
-            {problem && <p className="text-xl font-bold text-danger">{problem}</p>}
-            <BigButton type="submit" disabled={busy || !code.trim()}>
-              {busy ? "Checking…" : "Go →"}
-            </BigButton>
-          </form>
-        </Card>
-      )}
 
       {phase === "name" && (
         <Card className="w-full">

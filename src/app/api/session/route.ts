@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
 import { isTestName, normalizeName, sameName } from "@/lib/identity";
 import { dataStore, progressFrom, type SessionRow, type StudentRow } from "@/lib/server/storage";
-import { accessCodeMatches, issueToken } from "@/lib/server/token";
+import { issueToken } from "@/lib/server/token";
 import { APP_VERSION, configVersion } from "@/lib/server/version";
 import type { ClientSession } from "@/lib/types";
 
@@ -17,7 +17,7 @@ function int(v: unknown): number | null {
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  if (!body || !accessCodeMatches(body.code)) return Response.json({ error: "access" }, { status: 401 });
+  if (!body) return Response.json({ error: "name" }, { status: 400 });
   const name = normalizeName(body.firstName, body.lastInitial);
   const settings = readStudySettings();
   const period = typeof body.period === "string" ? body.period : "";

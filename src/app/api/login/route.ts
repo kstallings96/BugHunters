@@ -1,7 +1,6 @@
 import { readStudySettings, startOfToday } from "@/config/study";
 import { normalizeName } from "@/lib/identity";
 import { dataStore } from "@/lib/server/storage";
-import { accessCodeMatches } from "@/lib/server/token";
 
 /**
  * After the student confirms their name: is there an unfinished session for
@@ -10,7 +9,7 @@ import { accessCodeMatches } from "@/lib/server/token";
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  if (!body || !accessCodeMatches(body.code)) return Response.json({ error: "access" }, { status: 401 });
+  if (!body) return Response.json({ error: "name" }, { status: 400 });
   const name = normalizeName(body.firstName, body.lastInitial);
   const settings = readStudySettings();
   if (!name || !settings.periods.includes(body.period)) return Response.json({ error: "name" }, { status: 400 });

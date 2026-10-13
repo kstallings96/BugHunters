@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Model-written samples from the generation script, kept verbatim.
+    "generation/**",
   ]),
 ]);
 
