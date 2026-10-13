@@ -4,6 +4,7 @@ import type { Category, MachineId } from "@/machines/types";
 export type Step =
   | "setup"
   | "pre_survey"
+  | "intro"
   | "tutorial"
   | "machine"
   | "post_survey"

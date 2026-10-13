@@ -91,7 +91,7 @@ describe("file store", () => {
       ev(3, { event_type: "busted", payload: { verdict: "real", counted: false, bug_kind: "zero" } }),
       ev(4, { event_type: "busted", payload: { verdict: "false_alarm", counted: false } }),
       ev(5, { step: "machine", machine: "grade", event_type: "step_enter", payload: { machine_index: 1 } }),
-      ev(6, { step: "tutorial", machine: "double", event_type: "busted", payload: { verdict: "real", counted: true, bug_kind: "wrong_type" } }),
+      ev(6, { step: "tutorial", machine: "allowance", event_type: "busted", payload: { verdict: "real", counted: true, bug_kind: "wrong_type" } }),
     ]);
     expect(progressFrom(await store.progressEvents(sid))).toEqual({
       step: "machine",

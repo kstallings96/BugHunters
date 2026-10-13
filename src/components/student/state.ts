@@ -4,7 +4,9 @@ import type { Category, Inputs, MachineId, Output } from "@/machines/types";
 /** Screens in order. Each maps to a logged `step`. */
 export type Screen =
   | "pre_coding"
+  | "intro"
   | "tutorial"
+  | "ready"
   | "machine"
   | "end"
   | "bonus_machine"
@@ -12,7 +14,9 @@ export type Screen =
 
 export const STEP_OF: Record<Screen, Step> = {
   pre_coding: "pre_survey",
+  intro: "intro",
   tutorial: "tutorial",
+  ready: "intro",
   machine: "machine",
   end: "end",
   bonus_machine: "bonus_machine",
@@ -63,8 +67,8 @@ export function newGame(now = Date.now()): GameState {
 /** Rebuilds a game from the server's record when a student chose "Keep going". */
 export function gameFromProgress(p: Progress, now = Date.now()): GameState {
   const screen: Screen =
-    p.step === "tutorial"
-      ? "tutorial"
+    p.step === "tutorial" || p.step === "intro"
+      ? "intro"
       : p.step === "machine"
         ? "machine"
         : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"

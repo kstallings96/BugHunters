@@ -43,11 +43,16 @@ export function MachineCard({
         </div>
       </div>
 
+      {machine.request && (
+        <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">
+          <span className="font-bold">📝 Request:</span> &ldquo;{machine.request}&rdquo;
+        </p>
+      )}
       {machine.clientNote && <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">📌 {machine.clientNote}</p>}
       {machine.hint && <p className="rounded-2xl border-2 border-dashed border-teal bg-teal/5 px-4 py-2 text-lg font-bold">💡 Hint: {machine.hint}</p>}
 
       <p className="self-start rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">
-        ✅ Built by AI. &ldquo;I tested it. It works perfectly!&rdquo;
+        ✅ Built and tested by AI.
       </p>
 
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3">

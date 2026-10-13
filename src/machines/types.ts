@@ -4,7 +4,7 @@
  * Everything here is pure, so it can be unit-tested and re-run server-side.
  */
 
-export type MachineId = "double" | "pizza" | "grade" | "name" | "birthday";
+export type MachineId = "allowance" | "pizza" | "grade" | "name" | "birthday";
 
 /** Kinds of input. An input can have several. Also used as bug-kind names. */
 export type Category =
@@ -70,6 +70,8 @@ export interface Machine {
   icon: string;
   /** One sentence. */
   purpose: string;
+  /** One line: what the person asked the AI for. Defines what's correct. */
+  request?: string;
   /** Optional note from the person who asked for the tool. */
   clientNote?: string;
   /** Optional nudge toward a kind of input (bonus machine only). */

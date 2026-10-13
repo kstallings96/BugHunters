@@ -67,15 +67,15 @@ function table(id: MachineId, cases: Case[]) {
   }
 }
 
-describe("Double It", () => {
-  table("double", [
-    [{ number: "4" }, ["normal"], null],
-    [{ number: "cat" }, ["wrong_type"], "wrong_type"],
-    [{ number: "" }, ["empty"], "empty"],
+describe("Allowance Doubler (tutorial)", () => {
+  table("allowance", [
+    [{ allowance: "10" }, ["normal"], null],
+    [{ allowance: "cat" }, ["wrong_type"], "wrong_type"],
+    [{ allowance: "" }, ["empty"], "empty"],
   ]);
-  it("shows ??? (not NaN) for cat, the tutorial bug", () => {
-    expect(run("double", { number: "cat" }).buggy.text).toBe("Answer: ???");
-    expect(run("double", { number: "4" }).buggy.text).toBe("Answer: 8");
+  it("shows $20 for 10 and $??? (not NaN) for a word", () => {
+    expect(run("allowance", { allowance: "10" }).buggy.text).toBe("$20");
+    expect(run("allowance", { allowance: "cat" }).buggy.text).toBe("$???");
   });
 });
 
@@ -204,9 +204,9 @@ describe("every machine", () => {
 
   // One input for every bug kind on every machine.
   const BUGS: [MachineId, Inputs][] = [
-    ["double", { number: "cat" }],
-    ["double", { number: "" }],
-    ["double", { number: "  " }],
+    ["allowance", { allowance: "cat" }],
+    ["allowance", { allowance: "" }],
+    ["allowance", { allowance: "  " }],
     ["pizza", { slices: "8", friends: "0" }],
     ["pizza", { slices: "8", friends: "-2" }],
     ["pizza", { slices: "7.5", friends: "3" }],

@@ -1,6 +1,6 @@
+import { allowance } from "./allowance";
 import { birthday } from "./birthday";
 import { classifyNumberField, classifyTextField, finalize, stableHash } from "./classify";
-import { doubleIt } from "./doubleIt";
 import { grade } from "./grade";
 import { nameGreeter } from "./name";
 import { pizza } from "./pizza";
@@ -9,7 +9,7 @@ import type { BustedVerdict, Category, Context, Evaluation, Inputs, Machine, Mac
 export * from "./types";
 
 export const MACHINES: Record<MachineId, Machine> = {
-  double: doubleIt,
+  allowance,
   pizza,
   grade,
   name: nameGreeter,

@@ -69,7 +69,7 @@ describe("a machine", () => {
 
   it("shows the AI's confident badge and plain text inputs", () => {
     setup();
-    expect(screen.getByText(/I tested it. It works perfectly!/)).toBeTruthy();
+    expect(screen.getByText("✅ Built and tested by AI.")).toBeTruthy();
     for (const box of screen.getAllByRole("textbox")) {
       expect(box.getAttribute("type")).toBe("text");
       expect(box.getAttribute("inputmode")).toBe("decimal");

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BigButton } from "@/components/ui";
 import { CODING_QUESTION } from "@/config/survey";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
+import { Intro, Ready } from "./Intro";
 import { MachineStep, type BustedResult } from "./MachineStep";
 
 /** Tries per measured machine. Scarcity makes probes deliberate (as in AlwaysNever). */
@@ -38,7 +38,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   );
   const started = useRef(false);
   const machineFor = (g: GameState): MachineId | null =>
-    g.screen === "tutorial" ? "double" : g.screen === "machine" ? session.machineOrder[g.machineIndex] : g.screen === "bonus_machine" ? "birthday" : null;
+    g.screen === "tutorial" ? "allowance" : g.screen === "machine" ? session.machineOrder[g.machineIndex] : g.screen === "bonus_machine" ? "birthday" : null;
 
   useEffect(() => {
     if (started.current) return;
@@ -100,10 +100,16 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   let body: React.ReactNode;
   switch (game.screen) {
     case "pre_coding":
-      body = <SurveyScreen q={CODING_QUESTION} onAnswer={() => go("tutorial")} />;
+      body = <SurveyScreen q={CODING_QUESTION} onAnswer={() => go("intro")} />;
+      break;
+    case "intro":
+      body = <Intro onDone={() => go("tutorial")} />;
       break;
     case "tutorial":
-      body = <Tutorial game={game} onTry={(t) => addTry("double", t)} onStart={() => go("machine", { machineIndex: 0 })} />;
+      body = <Tutorial game={game} onTry={(t) => addTry("allowance", t)} onDone={() => go("ready")} />;
+      break;
+    case "ready":
+      body = <Ready count={session.machineOrder.length} onStart={() => go("machine", { machineIndex: 0 })} />;
       break;
     case "machine": {
       const id = session.machineOrder[game.machineIndex];
@@ -184,13 +190,13 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
 // ----------------------------------------------------------- tutorial
 
 /**
- * Double It, guided: try 4 (it works), try "cat" (NaN), tap Busted!, then
- * start. Each stage is worked out from what the student has done so far.
+ * Intro screen 3: a guided demo on the Allowance Doubler. Type 10 (it
+ * works), type a word ($???), tap Busted! once. Each stage is worked out
+ * from what the student has done so far.
  */
-function Tutorial({ game, onTry, onStart }: { game: GameState; onTry: (t: Try) => void; onStart: () => void }) {
-  const tries = game.tries.double ?? [];
-  const [bustedReal, setBustedReal] = useState(false);
-  const stage = bustedReal ? 4 : tries.some((t) => t.revealsBug) ? 3 : tries.some((t) => !t.revealsBug) ? 2 : 1;
+function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) => void; onDone: () => void }) {
+  const tries = game.tries.allowance ?? [];
+  const stage = tries.some((t) => t.revealsBug) ? 3 : tries.some((t) => !t.revealsBug) ? 2 : 1;
   const logged = useRef(0);
 
   useEffect(() => {
@@ -200,30 +206,27 @@ function Tutorial({ game, onTry, onStart }: { game: GameState; onTry: (t: Try) =
   }, [stage]);
 
   const coach: Record<number, string> = {
-    1: "Let's practice! Type 4, then tap Try it.",
-    2: "It works! Now type cat and tap Try it.",
-    3: "That's not right! Tap Busted!",
-    4: "Your job: find inputs that break the AI's tools.",
+    1: "Type 10, then tap Try it.",
+    2: "That one works. ✅ Now try to break it. Type a word.",
+    3: "That's a bug! The AI didn't plan for words. Tap Busted!",
   };
 
   return (
     <MachineStep
-      machine={MACHINES.double}
+      machine={MACHINES.allowance}
       title="Practice"
       tries={tries}
       onTry={onTry}
       isNewKind={() => true}
-      onBusted={(r) => r.verdict === "real" && setBustedReal(true)}
-      highlightField={stage <= 2 ? "number" : undefined}
+      onBusted={(r) => r.verdict === "real" && onDone()}
+      highlightField={stage <= 2 ? "allowance" : undefined}
       pulseBusted={stage === 3}
-      locked={stage === 4}
       coach={
         <div className="flex items-center gap-4 rounded-2xl border-4 border-teal bg-teal/5 px-5 py-3">
           <span className="text-4xl" aria-hidden="true">
-            {stage === 4 ? "🔨" : "👉"}
+            👉
           </span>
           <p className="flex-1 text-2xl font-bold">{coach[stage]}</p>
-          {stage === 4 && <BigButton onClick={onStart}>Let&apos;s go! →</BigButton>}
         </div>
       }
     />
