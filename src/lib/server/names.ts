@@ -13,7 +13,8 @@ import type { StudentName } from "@/lib/identity";
  */
 
 export function publicKeyPem(): string | null {
-  const b64 = process.env.NAMES_PUBLIC_KEY?.trim();
+  // Tolerate quotes around the value (some env tools add them).
+  const b64 = process.env.NAMES_PUBLIC_KEY?.trim().replace(/^"|"$/g, "");
   return b64 ? `-----BEGIN PUBLIC KEY-----\n${b64.match(/.{1,64}/g)!.join("\n")}\n-----END PUBLIC KEY-----\n` : null;
 }
 
