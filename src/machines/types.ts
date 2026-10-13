@@ -4,7 +4,7 @@
  * Everything here is pure, so it can be unit-tested and re-run server-side.
  */
 
-export type MachineId = "allowance" | "savings" | "sale" | "jersey" | "birthday";
+export type MachineId = "allowance" | "savings" | "sale" | "jersey";
 
 /** Kinds of input. An input can have several. Also used as bug-kind names. */
 export type Category =
@@ -22,7 +22,9 @@ export type Category =
   | "boundary"
   | "out_of_range"
   /** Bug kind only (never an input category): a typical input, rounded the wrong way. */
-  | "rounding";
+  | "rounding"
+  /** Bug kind only: the bonus raffle's last name never wins. */
+  | "off_by_one";
 
 /** Student-facing names, e.g. "Busted! You found a Zero bug". */
 export const CATEGORY_LABEL: Record<Category, string> = {
@@ -40,6 +42,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   boundary: "Limit",
   out_of_range: "Out of range",
   rounding: "Rounding",
+  off_by_one: "Off by one",
 };
 
 /** "a Zero bug", "an Out of range bug". */
@@ -86,8 +89,6 @@ export interface Machine {
   request?: string;
   /** Optional note from the person who asked for the tool. */
   clientNote?: string;
-  /** Optional nudge toward a kind of input (bonus machine only). */
-  hint?: string;
   /** How the output is drawn: plain text, or printed on a jersey. */
   display?: "text" | "jersey";
   /** Every kind of bug this machine has, for the missed-bug reveal. */

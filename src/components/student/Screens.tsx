@@ -5,6 +5,7 @@ import { BigButton } from "@/components/ui";
 import type { SurveyQuestion } from "@/config/survey";
 import { logEvent } from "@/lib/logger";
 import type { BustedBug } from "@/lib/types";
+import { RAFFLE } from "@/bonus/raffle";
 import { CATEGORY_LABEL, MACHINES } from "@/machines";
 
 // ------------------------------------------------------------- intake
@@ -90,7 +91,7 @@ export function EndScreen({
  * on screen.
  */
 export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () => void; last: boolean }) {
-  const machine = MACHINES[bug.machine];
+  const machine = bug.machine === "raffle" ? RAFFLE : MACHINES[bug.machine];
   const fix = machine.fixFor(bug.kind, bug.inputs);
   const [chosen, setChosen] = useState<number | null>(null);
   const answer = fix.type === "wrong_line" ? fix.line : fix.answer;
@@ -128,7 +129,9 @@ export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () =
         {machine.icon} {fix.type === "wrong_line" ? "Which line made" : "A line is missing! Which one fixes"} the {CATEGORY_LABEL[bug.kind]} bug in{" "}
         {machine.name}?
       </h1>
-      <p className="text-xl text-ink-soft">You found it with {shown}.</p>
+      <p className="text-xl text-ink-soft">
+        You found it with {shown}. <span className="text-base">(A simplified view of the AI&apos;s code.)</span>
+      </p>
 
       {fix.type === "wrong_line" ? (
         <ol className="flex flex-col gap-2">

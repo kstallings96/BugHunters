@@ -82,7 +82,7 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
 }
 
 /** Does this real bug add to the counter? Not if the same kind was already busted on this machine. */
-export function isNewBug(busted: BustedBug[], machine: MachineId, kind: Category): boolean {
+export function isNewBug(busted: BustedBug[], machine: MachineId | "raffle", kind: Category): boolean {
   return !busted.some((b) => b.machine === machine && b.kind === kind);
 }
 

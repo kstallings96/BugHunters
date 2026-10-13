@@ -15,7 +15,8 @@ export type Step =
 
 /** A real bug the student busted: one per kind per machine. */
 export interface BustedBug {
-  machine: MachineId;
+  /** A measured machine, or the bonus raffle. */
+  machine: MachineId | "raffle";
   kind: Category;
   /** The input that showed it, for the bonus "find the guilty line". */
   inputs: Record<string, string>;

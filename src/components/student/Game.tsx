@@ -6,6 +6,7 @@ import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
 import { Intro, Ready } from "./Intro";
+import { RaffleStep } from "./RaffleStep";
 import { FullReveal, MachineReveal, NextApp } from "./Reveal";
 import { MachineStep, type BustedResult } from "./MachineStep";
 
@@ -38,12 +39,14 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     () => loadGame(session.id) ?? (session.progress ? gameFromProgress(session.progress) : newGame()),
   );
   const started = useRef(false);
-  const machineFor = (g: GameState): MachineId | null =>
+  const machineFor = (g: GameState): MachineId | "raffle" | null =>
     g.screen === "tutorial"
       ? "allowance"
       : g.screen === "machine" || g.screen === "between"
         ? session.machineOrder[g.machineIndex]
-        : g.screen === "bonus_machine" ? "birthday" : null;
+        : g.screen === "bonus_machine"
+          ? "raffle"
+          : null;
 
   useEffect(() => {
     if (started.current) return;
@@ -164,16 +167,10 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     }
     case "bonus_machine":
       body = (
-        <MachineStep
-          key="birthday"
-          machine={MACHINES.birthday}
-          title="⭐ Bonus machine"
-          tries={game.tries.birthday ?? []}
-          onTry={(t) => addTry("birthday", t)}
-          isNewKind={isNewKind("birthday")}
-          onBusted={(r) => busted("birthday", r, true)}
-          acceptLabel="I'm done with the bonus →"
-          onAccept={(via) => accept("birthday", via, () => (game.busted.length ? go("bonus_guilty", { guiltyIndex: 0 }) : go("end", { bonusDone: true })))}
+        <RaffleStep
+          isNewKind={(kind) => isNewBug(game.busted, "raffle", kind)}
+          onBug={(kind, text) => setGame((g) => ({ ...g, busted: [...g.busted, { machine: "raffle", kind, inputs: { names: text } }] }))}
+          onDone={() => (game.busted.length ? go("bonus_guilty", { guiltyIndex: 0 }) : go("end", { bonusDone: true }))}
         />
       );
       break;

@@ -32,6 +32,7 @@ const MAP: Record<Category, StudentLabel | null> = {
   special: "wrong_kind",
   decimal: "something_else",
   rounding: "something_else",
+  off_by_one: "exact_limit",
   // Below the range reads as negative, above it as too big.
   out_of_range: null,
 };

@@ -41,7 +41,7 @@ export type EventType =
 let queue: EventQueue | null = null;
 let session: ClientSession | null = null;
 let currentStep: Step = "setup";
-let currentMachine: MachineId | null = null;
+let currentMachine: MachineId | "raffle" | null = null;
 let timer: number | null = null;
 
 function storage(): KeyValueStore {
@@ -120,7 +120,7 @@ export function beginSession(s: ClientSession): void {
 }
 
 /** Where the student is; every event is stamped with this step and machine. */
-export function setStep(step: Step, machine: MachineId | null = null): void {
+export function setStep(step: Step, machine: MachineId | "raffle" | null = null): void {
   currentStep = step;
   currentMachine = machine;
 }
@@ -128,7 +128,9 @@ export function setStep(step: Step, machine: MachineId | null = null): void {
 export function logEvent(type: EventType, payload: Record<string, unknown> = {}): void {
   if (!queue || !session) return;
   try {
-    queue.append(session.id, currentStep, type, payload, currentMachine);
+    // The bonus is open play: every event in it is marked unmeasured.
+    const tagged = currentStep.startsWith("bonus") ? { ...payload, measured: false } : payload;
+    queue.append(session.id, currentStep, type, tagged, currentMachine);
   } catch {}
 }
 

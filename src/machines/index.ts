@@ -2,7 +2,6 @@ import { allowance } from "./allowance";
 import { jersey } from "./jersey";
 import { sale } from "./sale";
 import { savings } from "./savings";
-import { birthday } from "./birthday";
 import { classifyNumberField, classifyTextField, finalize, stableHash } from "./classify";
 import type { BustedVerdict, Category, Context, Evaluation, Inputs, Machine, MachineId, Output } from "./types";
 
@@ -14,7 +13,6 @@ export const MACHINES: Record<MachineId, Machine> = {
   savings,
   sale,
   jersey,
-  birthday,
 };
 
 /** The two number machines; one of them goes first (counterbalanced). */

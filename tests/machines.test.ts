@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classifyNumberField, classifyTextField, finalize, HUGE, LONG_TEXT, parseNumber } from "@/machines/classify";
 import { answerChoices, evaluate, labelFor, MACHINES, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
 
-// A fixed "today" so date machines are deterministic: Tuesday 14 Oct 2025 (not a leap year).
+// A fixed "today" for the evaluation context (no machine currently depends on the date).
 const ctx = { today: new Date(2025, 9, 14, 10, 30) };
 const run = (id: MachineId, inputs: Inputs) => evaluate(MACHINES[id], inputs, ctx);
 
@@ -162,21 +162,6 @@ describe("Jersey Name Printer", () => {
   });
 });
 
-describe("Birthday Countdown (today is Oct 14)", () => {
-  table("birthday", [
-    [{ month: "12", day: "25" }, ["normal"], null],
-    [{ month: "10", day: "14" }, ["boundary"], "boundary"],
-    [{ month: "2", day: "30" }, ["out_of_range"], "out_of_range"],
-    [{ month: "4", day: "31" }, ["out_of_range"], "out_of_range"],
-    [{ month: "2", day: "29" }, ["normal"], null, true],
-    [{ month: "10", day: "13" }, ["normal"], null],
-  ]);
-  it("today says 365 days instead of Happy birthday", () => {
-    expect(run("birthday", { month: "10", day: "14" }).buggy.text).toBe("365 days until your birthday!");
-    expect(run("birthday", { month: "10", day: "14" }).reference.text).toBe("Happy birthday! 🎂");
-  });
-});
-
 describe("busted verdicts", () => {
   it("real, false alarm, debatable", () => {
     expect(verdictFor(run("savings", { price: "20", saved: "0" }))).toBe("real");
@@ -206,8 +191,6 @@ const BUGS: [MachineId, Inputs][] = [
   ["jersey", { name: "23" }],
   ["jersey", { name: "Smith😀" }],
   ["jersey", { name: "  Smith" }],
-  ["birthday", { month: "10", day: "14" }],
-  ["birthday", { month: "2", day: "30" }],
 ];
 
 describe("every machine", () => {
@@ -276,7 +259,6 @@ describe("student labels (What kind of input broke it?)", () => {
     expect(label("sale", { price: "40", off: "-20" })).toBe("negative");
     expect(label("sale", { price: "40", off: "150" })).toBe("too_big");
     expect(label("jersey", { name: "Abcdefghijklm" })).toBe("too_big");
-    expect(label("birthday", { month: "10", day: "14" })).toBe("exact_limit");
     expect(label("savings", { price: "twenty", saved: "5" })).toBe("wrong_kind");
     expect(label("savings", { price: "$20", saved: "5" })).toBe("wrong_kind");
     expect(label("savings", { price: "10", saved: "3" })).toBe("something_else");

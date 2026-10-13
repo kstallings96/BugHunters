@@ -54,11 +54,6 @@ export function MachineCard({
           📌 {machine.clientNote}
         </p>
       )}
-      {machine.hint && (
-        <p className="rounded-2xl border-2 border-dashed border-teal bg-teal/5 px-4 py-2 text-lg font-bold">
-          💡 Hint: {machine.hint}
-        </p>
-      )}
 
       <p className="self-start rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">
         ✅ Built and tested by AI.
