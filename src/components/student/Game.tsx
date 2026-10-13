@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CODING_QUESTION } from "@/config/survey";
+import { INTAKE } from "@/config/survey";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
@@ -28,8 +28,8 @@ import {
 } from "./state";
 
 /**
- * One student's session: coding-experience question → tutorial → three
- * machines → end (→ optional bonus). Every screen change logs
+ * One student's session: two intake questions → intro and guided demo →
+ * three apps (each followed by a reveal or "Next app") → end (→ bonus). Every screen change logs
  * step_exit and step_enter; progress is kept in sessionStorage so a reload
  * lands on the same screen.
  */
@@ -106,8 +106,11 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
 
   let body: React.ReactNode;
   switch (game.screen) {
-    case "pre_coding":
-      body = <SurveyScreen q={CODING_QUESTION} onAnswer={() => go("intro")} />;
+    case "intake_coding":
+      body = <SurveyScreen key="coding" q={INTAKE[0]} onAnswer={() => go("intake_ai")} />;
+      break;
+    case "intake_ai":
+      body = <SurveyScreen key="ai" q={INTAKE[1]} onAnswer={() => go("intro")} />;
       break;
     case "intro":
       body = <Intro onDone={() => go("tutorial")} />;

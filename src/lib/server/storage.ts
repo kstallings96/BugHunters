@@ -77,7 +77,7 @@ export interface DataStore {
 
 /** Rebuilds where a student was from their own events. */
 export function progressFrom(events: Pick<EventRow, "step" | "machine" | "event_type" | "payload">[]): Progress {
-  let step: Step = "pre_survey";
+  let step: Step = "intake";
   let machineIndex = 0;
   const busted: BustedBug[] = [];
   for (const e of events) {

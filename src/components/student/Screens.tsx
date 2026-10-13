@@ -7,26 +7,25 @@ import { logEvent } from "@/lib/logger";
 import type { BustedBug } from "@/lib/types";
 import { CATEGORY_LABEL, MACHINES } from "@/machines";
 
-// ------------------------------------------------------------- survey
+// ------------------------------------------------------------- intake
 
-/** A 5-point scale, left to right. */
+/** One intake question; the answer is logged as its 1-based position. */
 export function SurveyScreen({ q, onAnswer }: { q: SurveyQuestion; onAnswer: () => void }) {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-8 px-6 py-6">
-      <h1 className="text-center text-3xl leading-snug font-bold">{q.question}</h1>
-      <div className="grid grid-cols-5 gap-3">
-        {q.options.map((o) => (
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6 py-6">
+      <h1 className="text-3xl leading-snug font-bold">{q.question}</h1>
+      <div className="flex flex-col gap-3">
+        {q.options.map((text, i) => (
           <button
-            key={o.id}
+            key={text}
             type="button"
             onClick={() => {
-              logEvent("survey_response", { question: q.id, choice: Number(o.id), text: o.text });
+              logEvent("survey_response", { question: q.id, choice: i + 1, text });
               onAnswer();
             }}
-            className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl border-4 border-line bg-white px-2 py-3 text-center hover:border-teal"
+            className="flex min-h-16 items-center rounded-2xl border-4 border-line bg-white px-5 py-2 text-left text-xl hover:border-teal"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-teal text-2xl font-bold text-white">{o.id}</span>
-            <span className="text-xl font-bold">{o.text}</span>
+            {text}
           </button>
         ))}
       </div>

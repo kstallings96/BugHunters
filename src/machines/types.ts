@@ -30,19 +30,19 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   zero: "Zero",
   negative: "Negative",
   decimal: "Decimal",
-  huge: "Huge number",
-  empty: "Empty",
+  huge: "Too big",
+  empty: "Blank",
   spaces_only: "Spaces only",
   extra_spaces: "Extra spaces",
-  wrong_type: "Wrong type",
+  wrong_type: "Wrong kind",
   special: "Special characters",
   very_long: "Too long",
-  boundary: "Boundary",
+  boundary: "Limit",
   out_of_range: "Out of range",
   rounding: "Rounding",
 };
 
-/** "a Zero bug", "an Empty bug". */
+/** "a Zero bug", "an Out of range bug". */
 export function withArticle(label: string): string {
   return `${/^[aeiou]/i.test(label) ? "an" : "a"} ${label}`;
 }

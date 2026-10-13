@@ -3,7 +3,8 @@ import type { Category, Inputs, MachineId, Output } from "@/machines/types";
 
 /** Screens in order. Each maps to a logged `step`. */
 export type Screen =
-  | "pre_coding"
+  | "intake_coding"
+  | "intake_ai"
   | "intro"
   | "tutorial"
   | "ready"
@@ -14,7 +15,8 @@ export type Screen =
   | "bonus_guilty";
 
 export const STEP_OF: Record<Screen, Step> = {
-  pre_coding: "pre_survey",
+  intake_coding: "intake",
+  intake_ai: "intake",
   intro: "intro",
   tutorial: "tutorial",
   ready: "intro",
@@ -54,7 +56,7 @@ export interface GameState {
 
 export function newGame(now = Date.now()): GameState {
   return {
-    screen: "pre_coding",
+    screen: "intake_coding",
     screenEnteredAt: now,
     machineIndex: 0,
     machineStartedAt: now,
@@ -75,7 +77,7 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
         ? "machine"
         : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
             ? "end"
-            : "pre_coding";
+            : "intake_coding";
   return { ...newGame(now), screen, machineIndex: Math.min(2, Math.max(0, p.machineIndex)), busted: p.busted };
 }
 

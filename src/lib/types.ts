@@ -3,7 +3,7 @@ import type { Category, MachineId } from "@/machines/types";
 /** Where a student is. Logged as each event's `step`; `machine` is logged alongside. */
 export type Step =
   | "setup"
-  | "pre_survey"
+  | "intake"
   | "intro"
   | "tutorial"
   | "machine"
