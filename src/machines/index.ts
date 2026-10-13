@@ -7,6 +7,7 @@ import { classifyNumberField, classifyTextField, finalize, stableHash } from "./
 import type { BustedVerdict, Category, Context, Evaluation, Inputs, Machine, MachineId, Output } from "./types";
 
 export * from "./types";
+export * from "./labels";
 
 export const MACHINES: Record<MachineId, Machine> = {
   allowance,

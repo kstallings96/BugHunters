@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyNumberField, classifyTextField, finalize, HUGE, LONG_TEXT, parseNumber } from "@/machines/classify";
-import { answerChoices, evaluate, MACHINES, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
+import { answerChoices, evaluate, labelFor, MACHINES, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
 
 // A fixed "today" so date machines are deterministic: Tuesday 14 Oct 2025 (not a leap year).
 const ctx = { today: new Date(2025, 9, 14, 10, 30) };
@@ -260,5 +260,30 @@ describe("every machine", () => {
       }),
     );
     expect(spots.size).toBeGreaterThan(1);
+  });
+});
+
+describe("student labels (What kind of input broke it?)", () => {
+  const label = (id: MachineId, inputs: Inputs) => {
+    const e = run(id, inputs);
+    return labelFor(e.bugKind, e.categories);
+  };
+  it("maps each bug to the label a careful student would pick", () => {
+    expect(label("savings", { price: "20", saved: "0" })).toBe("zero");
+    expect(label("savings", { price: "", saved: "5" })).toBe("blank");
+    expect(label("jersey", { name: "   " })).toBe("blank");
+    expect(label("savings", { price: "-20", saved: "5" })).toBe("negative");
+    expect(label("sale", { price: "40", off: "-20" })).toBe("negative");
+    expect(label("sale", { price: "40", off: "150" })).toBe("too_big");
+    expect(label("jersey", { name: "Abcdefghijklm" })).toBe("too_big");
+    expect(label("birthday", { month: "10", day: "14" })).toBe("exact_limit");
+    expect(label("savings", { price: "twenty", saved: "5" })).toBe("wrong_kind");
+    expect(label("savings", { price: "$20", saved: "5" })).toBe("wrong_kind");
+    expect(label("savings", { price: "10", saved: "3" })).toBe("something_else");
+    expect(label("jersey", { name: "  Smith" })).toBe("something_else");
+  });
+  it("uses the input's kind for non-bugs, and nothing for an ordinary input", () => {
+    expect(label("sale", { price: "40", off: "100" })).toBe("exact_limit");
+    expect(label("savings", { price: "20", saved: "5" })).toBeNull();
   });
 });

@@ -52,10 +52,12 @@ function tryIt(...values: string[]) {
   click(/Try it/);
 }
 
-function bust(expect: RegExp = /not sure/) {
+/** Busted! on the latest try: pick an "It should say" answer, then a label. */
+function bust(expect: RegExp = /not sure/, label = "Something else") {
   click(/^💥 Busted!$/);
   fireEvent.click(screen.getByRole("button", { name: expect }));
-  fireEvent.click(screen.getAllByRole("button", { name: /Busted!/ }).at(-1)!);
+  click(/Next/);
+  fireEvent.click(screen.getByRole("button", { name: label }));
 }
 
 describe("a machine", () => {
@@ -100,13 +102,21 @@ describe("a machine", () => {
   it("a real bug: names the kind and counts it once per kind", () => {
     const t = setup();
     tryIt("20", "0");
-    bust();
-    expect(screen.getByText("Busted! You found a Zero bug 🎉")).toBeTruthy();
-    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "real", bug_kind: "zero", counted: true, expected_unsure: true });
+    bust(/not sure/, "Zero");
+    expect(screen.getByText("Yes, a Zero bug! 🎉")).toBeTruthy();
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({
+      verdict: "real",
+      bug_kind: "zero",
+      counted: true,
+      expected_unsure: true,
+      student_label: "zero",
+      classifier_label: "zero",
+      label_agreement: true,
+    });
     click("Keep testing");
     tryIt("50", "0");
-    bust();
-    expect(screen.getByText("Busted! Another Zero bug.")).toBeTruthy();
+    bust(/not sure/, "Negative");
+    expect(screen.getByText("We'd call that a Zero bug 🎉")).toBeTruthy();
     expect(screen.queryByText(/different kind/)).toBeNull();
     expect(t.busted).toHaveLength(1);
   });
@@ -115,14 +125,15 @@ describe("a machine", () => {
     setup();
     tryIt("20", "5");
     bust(/^4 weeks$/);
-    expect(screen.getByText("Hmm, that one works the way it should. Keep testing!")).toBeTruthy();
+    expect(screen.getByText("That one works the way the request says. Keep testing!")).toBeTruthy();
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "false_alarm", classifier_label: null, label_agreement: null });
   });
 
   it("a debatable case (a hyphenated name on the jersey) is never a bug", () => {
     setup({ machine: "jersey" });
     tryIt("Garcia-Lopez");
     bust(/not sure/);
-    expect(screen.getByText("Good thinking. People might disagree about this one!")).toBeTruthy();
+    expect(screen.getByText("The request doesn't say. Good thinking: what should it do?")).toBeTruthy();
   });
 
   it("the jersey prints the name, and a blank answer reads (blank)", () => {
@@ -141,8 +152,9 @@ describe("a machine", () => {
     click(/Pick another try/);
     fireEvent.click(screen.getByRole("button", { name: /"-5"/ }));
     click(/Money can't be below zero/);
-    fireEvent.click(screen.getAllByRole("button", { name: /Busted!/ }).at(-1)!);
-    expect(screen.getByText("Busted! You found a Negative bug 🎉")).toBeTruthy();
+    click(/Next/);
+    click("Negative");
+    expect(screen.getByText("Yes, a Negative bug! 🎉")).toBeTruthy();
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ input_n: 1, expected_correct: true });
   });
 

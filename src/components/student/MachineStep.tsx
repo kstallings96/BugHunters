@@ -4,7 +4,20 @@ import { useEffect, useState, type ReactNode } from "react";
 import { blankInputs, MachineCard } from "@/components/MachineCard";
 import { BigButton, Modal, OptionButton } from "@/components/ui";
 import { logEvent } from "@/lib/logger";
-import { answerChoices, CATEGORY_LABEL, evaluate, verdictFor, withArticle, type BustedVerdict, type Category, type Inputs, type Machine } from "@/machines";
+import {
+  answerChoices,
+  CATEGORY_LABEL,
+  evaluate,
+  labelFor,
+  STUDENT_LABELS,
+  verdictFor,
+  withArticle,
+  type BustedVerdict,
+  type Category,
+  type Inputs,
+  type Machine,
+  type StudentLabel,
+} from "@/machines";
 import type { Try } from "./state";
 
 /**
@@ -31,6 +44,8 @@ export interface BustedResult {
   inputs: Inputs;
   /** A real bug of a kind not yet busted on this machine. */
   counted: boolean;
+  /** The student's own label matched the classifier's. */
+  labelAgrees: boolean;
 }
 
 export function MachineStep({
@@ -238,16 +253,19 @@ function BustedDialog({
   const [choosing, setChoosing] = useState(false);
   // Index into the choices, or "unsure".
   const [expect, setExpect] = useState<number | "unsure" | null>(null);
+  // Step 2 of 2: "What kind of input broke it?"
+  const [labeling, setLabeling] = useState(false);
   const [result, setResult] = useState<BustedResult | null>(null);
   const t = tries[pick];
   // Tries saved before answer choices existed have no `correct`; fall back to what it said.
   const choices = answerChoices(machine, t.inputs, t.output.text, t.correct ?? t.output.text);
 
-  function submit() {
+  function submit(label: StudentLabel) {
     if (expect === null) return;
     const verdict = verdictFor(t);
     const kind = verdict === "real" ? t.bugKind : null;
     const counted = verdict === "real" && kind !== null && isNewKind(kind);
+    const classifierLabel = labelFor(kind, t.categories);
     logEvent("busted", {
       input_n: t.n,
       inputs: t.inputs,
@@ -256,22 +274,26 @@ function BustedDialog({
       expected_choice: expect === "unsure" ? null : choices.options[expect],
       expected_unsure: expect === "unsure",
       expected_correct: expect !== "unsure" && expect === choices.correct,
+      student_label: label,
+      classifier_label: classifierLabel,
+      label_agreement: classifierLabel === null ? null : label === classifierLabel,
       verdict,
       bug_kind: kind,
       counted,
     });
-    setResult({ verdict, kind, inputs: t.inputs, counted });
+    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: label === classifierLabel });
   }
 
   if (result) {
+    const bug = result.kind ? withArticle(CATEGORY_LABEL[result.kind]) : "";
     const message =
       result.verdict === "real"
-        ? result.counted
-          ? `Busted! You found ${withArticle(CATEGORY_LABEL[result.kind!])} bug 🎉`
-          : `Busted! Another ${CATEGORY_LABEL[result.kind!]} bug.`
+        ? result.labelAgrees
+          ? `Yes, ${bug} bug! 🎉`
+          : `We'd call that ${bug} bug 🎉`
         : result.verdict === "debatable"
-          ? "Good thinking. People might disagree about this one!"
-          : "Hmm, that one works the way it should. Keep testing!";
+          ? "The request doesn't say. Good thinking: what should it do?"
+          : "That one works the way the request says. Keep testing!";
     return (
       <Modal label="Busted result">
         <div className="flex flex-col items-center gap-5 py-2 text-center">
@@ -280,6 +302,31 @@ function BustedDialog({
           </span>
           <p className="text-3xl leading-snug font-bold">{message}</p>
           <BigButton onClick={() => onDone(result)}>Keep testing</BigButton>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (labeling) {
+    return (
+      <Modal label="Busted: what kind">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-2xl font-bold">💥 What kind of input broke it?</h2>
+            <button type="button" onClick={onCancel} className="min-h-12 rounded-full px-4 text-lg font-bold text-ink-soft hover:bg-paper">
+              ✕ Cancel
+            </button>
+          </div>
+          <p className="text-xl">
+            <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {STUDENT_LABELS.map((l) => (
+              <OptionButton key={l.id} onClick={() => submit(l.id)}>
+                {l.text}
+              </OptionButton>
+            ))}
+          </div>
         </div>
       </Modal>
     );
@@ -340,8 +387,8 @@ function BustedDialog({
             I&apos;m not sure
           </OptionButton>
         </div>
-        <BigButton variant="danger" onClick={submit} disabled={expect === null} className="self-end">
-          💥 Busted!
+        <BigButton onClick={() => setLabeling(true)} disabled={expect === null} className="self-end">
+          Next →
         </BigButton>
       </div>
     </Modal>
