@@ -104,6 +104,12 @@ export interface Machine {
   buggy: (inputs: Inputs, ctx: Context) => Output;
   /** What the tool should do. */
   reference: (inputs: Inputs, ctx: Context) => Output;
+  /**
+   * Every rule this input breaks, not just the first one the reference
+   * checks (a name can be too long AND have numbers). Kinds not in `bugs`
+   * are ignored.
+   */
+  rulesBroken?: (inputs: Inputs, ctx: Context) => Category[];
   /** Machine-specific categories (boundary, out of range), added to the generic ones. */
   extraCategories?: (inputs: Inputs, ctx: Context) => Category[];
   /** Inputs people could reasonably disagree about. */
@@ -140,7 +146,13 @@ export interface Evaluation {
   reference: Output;
   /** Buggy and reference differ, and the input isn't debatable. */
   revealsBug: boolean;
+  /** The bug this input shows: the first rule the correct version checks. */
   bugKind: Category | null;
+  /**
+   * Every kind of bug this input shows (bugKind first), when it breaks several
+   * rules at once, like a 16-letter name with numbers in it. Empty if no bug.
+   */
+  bugKinds: Category[];
   debatable: boolean;
 }
 

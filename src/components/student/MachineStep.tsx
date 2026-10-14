@@ -117,6 +117,7 @@ export function MachineStep({
       categories: e.categories,
       revealsBug: e.revealsBug,
       bugKind: e.bugKind,
+      bugKinds: e.bugKinds,
       debatable: e.debatable,
     };
     logEvent("input_submit", {
@@ -127,6 +128,7 @@ export function MachineStep({
       categories: e.categories,
       reveals_bug: e.revealsBug,
       bug_kind: e.bugKind,
+      bug_kinds: e.bugKinds,
       debatable: e.debatable,
     });
     onTry(t);
@@ -264,9 +266,16 @@ function BustedDialog({
   function submit(label: StudentLabel) {
     if (expect === null) return;
     const verdict = verdictFor(t);
-    const kind = verdict === "real" ? t.bugKind : null;
+    // An input can show several bugs at once (too long AND has numbers).
+    // Tries saved before bugKinds existed only have bugKind.
+    const kinds = verdict === "real" ? (t.bugKinds ?? (t.bugKind ? [t.bugKind] : [])) : [];
+    // The bug the student named, if the input really shows it; else the first one.
+    const named = kinds.filter((k) => labelFor(k, t.categories, machine) === label);
+    const kind = named.find(isNewKind) ?? named[0] ?? kinds.find(isNewKind) ?? kinds[0] ?? null;
     const counted = verdict === "real" && kind !== null && isNewKind(kind);
-    const classifierLabel = labelFor(kind, t.categories, machine);
+    const classifierLabel = labelFor(verdict === "real" ? t.bugKind : null, t.categories, machine);
+    const classifierLabels = [...new Set(kinds.map((k) => labelFor(k, t.categories, machine)))];
+    const agrees = kinds.length ? named.length > 0 : label === classifierLabel;
     logEvent("busted", {
       input_n: t.n,
       inputs: t.inputs,
@@ -276,13 +285,17 @@ function BustedDialog({
       expected_unsure: expect === "unsure",
       expected_correct: expect !== "unsure" && expect === choices.correct,
       student_label: label,
+      // The first rule the correct version checks, and every bug the input shows.
       classifier_label: classifierLabel,
-      label_agreement: classifierLabel === null ? null : label === classifierLabel,
+      classifier_labels: classifierLabels,
+      // Agrees if the student named any bug this input really shows.
+      label_agreement: classifierLabel === null ? null : agrees,
       verdict,
       bug_kind: kind,
+      bug_kinds: kinds,
       counted,
     });
-    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: label === classifierLabel });
+    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: agrees });
   }
 
   if (result) {

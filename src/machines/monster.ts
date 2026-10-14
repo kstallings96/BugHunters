@@ -88,6 +88,18 @@ export const monster: Machine = {
     if (length(t) > MONSTER_MAX) return { type: "not_allowed", text: `Up to ${MONSTER_MAX} letters.`, rule: "very_long" };
     return { type: "result", text: t.toUpperCase() };
   },
+  rulesBroken: ({ name }) => {
+    const t = name.trim();
+    if (t === "") return [name === "" ? "empty" : "spaces_only"];
+    const broken: Category[] = [];
+    if (t !== name) broken.push("extra_spaces");
+    if (/\d/.test(t)) broken.push("wrong_type");
+    // Symbols or emoji besides any numbers (those are counted just above).
+    const rest = t.replace(/\d/g, "");
+    if (rest !== "" && !/^[\p{L}\p{M} '’-]*$/u.test(rest)) broken.push("special");
+    if (length(t) > MONSTER_MAX) broken.push("very_long");
+    return broken;
+  },
   extraCategories: ({ name }) => {
     const n = length(name.trim());
     // 12 and 13 are the boundary; 11 is near it.

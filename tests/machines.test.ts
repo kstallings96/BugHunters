@@ -189,6 +189,25 @@ describe("Monster Namer (the AI's code)", () => {
   });
 });
 
+describe("inputs that break more than one rule", () => {
+  const kinds = (id: MachineId, inputs: Inputs) => run(id, inputs).bugKinds;
+  it("keeps every bug the input shows, the first rule first", () => {
+    expect(kinds("monster", { name: "Grizzlemonster22" })).toEqual(["wrong_type", "very_long"]);
+    expect(kinds("monster", { name: "  Grizzle2" })).toEqual(["wrong_type", "extra_spaces"]);
+    expect(kinds("monster", { name: "Fluffernutterbob😀" })).toEqual(["special", "very_long"]);
+    expect(kinds("monster", { name: "Grizzle2😀" })).toEqual(["wrong_type", "special"]);
+    expect(kinds("sale", { price: "-40", off: "150" })).toEqual(["negative", "out_of_range"]);
+    expect(kinds("sale", { price: "$40", off: "150" })).toEqual(["out_of_range", "special"]);
+    expect(kinds("savings", { price: "-20", saved: "0" })).toEqual(["negative", "zero"]);
+  });
+  it("one bug, or none, stays as it was", () => {
+    expect(kinds("monster", { name: "Grizzle2" })).toEqual(["wrong_type"]);
+    expect(kinds("monster", { name: "Grizzle" })).toEqual([]);
+    // The AI refuses this one too ("Invalid input"), so it isn't a bug at all.
+    expect(kinds("savings", { price: "twenty", saved: "0" })).toEqual([]);
+  });
+});
+
 describe("busted verdicts", () => {
   it("real, false alarm, debatable", () => {
     expect(verdictFor(run("savings", { price: "20", saved: "0" }))).toBe("real");

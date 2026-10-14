@@ -39,6 +39,8 @@ export interface Try {
   categories: Category[];
   revealsBug: boolean;
   bugKind: Category | null;
+  /** Every bug this input shows (absent on tries saved before it existed). */
+  bugKinds?: Category[];
   debatable: boolean;
 }
 

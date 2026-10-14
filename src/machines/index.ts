@@ -48,7 +48,10 @@ export function evaluate(machine: Machine, inputs: Inputs, ctx: Context): Evalua
   if (differs && !debatable) {
     bugKind = reference.type === "not_allowed" ? reference.rule : (machine.resultBugKind?.(inputs, categories) ?? categories[0]);
   }
-  return { categories, buggy, reference, revealsBug: differs && !debatable, bugKind, debatable };
+  // An input can break several rules at once; every one the app gets wrong counts.
+  const known = new Set(machine.bugs.map((b) => b.kind));
+  const bugKinds = bugKind ? [...new Set([bugKind, ...(machine.rulesBroken?.(inputs, ctx) ?? []).filter((k) => known.has(k))])] : [];
+  return { categories, buggy, reference, revealsBug: differs && !debatable, bugKind, bugKinds, debatable };
 }
 
 /**

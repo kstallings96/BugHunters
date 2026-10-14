@@ -94,6 +94,18 @@ export const sale: Machine = {
     if (o.n < 0 || o.n > 100) return { type: "not_allowed", text: "Discounts go from 0% to 100%.", rule: "out_of_range" };
     return { type: "result", text: salePrice(p.n, o.n) };
   },
+  rulesBroken: ({ price, off }) => {
+    const broken: Category[] = [];
+    const p = read(price, "price", parseMoney);
+    if (!p.ok) broken.push((p.out as { rule: Category }).rule);
+    else if (p.n < 0) broken.push("negative");
+    // The AI's code can't read a "$" (it shows $???).
+    if (p.ok && /^\s*\$/.test(price)) broken.push("special");
+    const o = read(off, "% off", parsePercent);
+    if (!o.ok) broken.push((o.out as { rule: Category }).rule);
+    else if (o.n < 0 || o.n > 100) broken.push("out_of_range");
+    return broken;
+  },
   extraCategories: ({ off }) => {
     const o = parsePercent(off);
     if (o === null) return [];

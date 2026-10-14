@@ -144,6 +144,33 @@ describe("a machine", () => {
     expect(screen.getByRole("button", { name: "(blank)" })).toBeTruthy();
   });
 
+  it("an input with two bugs credits the one the student names", () => {
+    const t = setup({ machine: "monster" });
+    tryIt("Grizzlemonster22");
+    bust(/not sure/, "Too long");
+    expect(screen.getByText("Yes, a Too long bug! 🎉")).toBeTruthy();
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({
+      bug_kind: "very_long",
+      bug_kinds: ["wrong_type", "very_long"],
+      label_agreement: true,
+      counted: true,
+    });
+    // The numbers bug is still there to find, with this same input.
+    click("Keep testing");
+    bust(/not sure/, "Has numbers");
+    expect(screen.getByText("Yes, a Has numbers bug! 🎉")).toBeTruthy();
+    click("Keep testing");
+    expect(t.busted.map((b) => b.kind)).toEqual(["very_long", "wrong_type"]);
+  });
+
+  it("naming neither bug credits the first one", () => {
+    setup({ machine: "monster" });
+    tryIt("Grizzlemonster22");
+    bust(/not sure/, "Blank");
+    expect(screen.getByText("We'd call that a Has numbers bug 🎉")).toBeTruthy();
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ bug_kind: "wrong_type", label_agreement: false });
+  });
+
   it("Busted! can point at an earlier try", () => {
     setup();
     tryIt("-20", "5");

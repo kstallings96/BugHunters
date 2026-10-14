@@ -89,6 +89,15 @@ export const savings: Machine = {
     if (s.n === 0) return { type: "not_allowed", text: "You have to save more than $0 a week.", rule: "zero" };
     return { type: "result", text: weeks(Math.ceil(p.n / s.n)) };
   },
+  rulesBroken: ({ price, saved }) => {
+    const broken: Category[] = [];
+    for (const [raw, what] of [[price, "price"], [saved, "amount you save each week"]]) {
+      const m = money(raw, what);
+      if (!m.ok) broken.push((m.out as { rule: Category }).rule);
+    }
+    if (parseMoney(saved) === 0) broken.push("zero");
+    return broken;
+  },
   extraCategories: ({ price, saved }) => {
     const p = parseMoney(price);
     const s = parseMoney(saved);
