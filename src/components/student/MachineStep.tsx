@@ -187,7 +187,7 @@ export function MachineStep({
           <p className="mb-1 text-lg font-bold">Your tries</p>
           {outOfTries && <p className="mb-1 rounded-xl bg-amber-soft px-3 py-1 text-base font-bold">That was your last try! Bust a bug, or move on.</p>}
           {tries.length === 0 ? (
-            <p className="text-base text-ink-soft">Nothing yet. Type something and tap Try it.</p>
+            <p className="text-base text-ink-soft">Nothing yet. Try lots of different inputs!</p>
           ) : (
             <ol className="flex min-h-0 flex-col gap-1 overflow-y-auto">
               {[...tries].reverse().map((t) => (

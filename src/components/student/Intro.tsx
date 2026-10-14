@@ -40,10 +40,32 @@ export function Intro({ onDone }: { onDone: () => void }) {
         </>
       ) : (
         <>
-          <h1 className="text-4xl font-bold">Your job: check the AI&apos;s work.</h1>
-          <p className="text-2xl leading-snug">
-            Try different inputs. If the app gives a wrong answer, tap <span className="font-bold text-danger">💥 Busted!</span>
-          </p>
+          <h1 className="text-4xl font-bold">Your job: try to break the AI&apos;s apps.</h1>
+          {/* General on purpose: naming kinds of input (zero, blank...) would give away what the study measures. */}
+          <ol className="flex flex-col gap-3 text-2xl leading-snug">
+            <li className="flex items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 py-3">
+              <span className="text-4xl" aria-hidden="true">
+                🔨
+              </span>
+              <span>
+                Try <b>lots of different inputs</b>, not just one.
+              </span>
+            </li>
+            <li className="flex items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 py-3">
+              <span className="text-4xl" aria-hidden="true">
+                👀
+              </span>
+              <span>Check each answer. Is it what the app should say?</span>
+            </li>
+            <li className="flex items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 py-3">
+              <span className="text-4xl" aria-hidden="true">
+                💥
+              </span>
+              <span>
+                Found a wrong answer? Tap <span className="font-bold text-danger">Busted!</span>
+              </span>
+            </li>
+          </ol>
         </>
       )}
       <BigButton onClick={next} className="self-end">
@@ -94,8 +116,11 @@ export function Briefing({ machine, index, total, onStart }: { machine: Machine;
           <p className="max-w-[80%] rounded-2xl rounded-bl-sm bg-[#e2e8f0] px-5 py-3 text-xl">Done! ✅ I built {machine.name} and tested it. It works perfectly.</p>
         </div>
       </div>
+      <p className="rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-2xl font-bold">
+        🔨 Your job: try lots of different inputs. Can you make it break?
+      </p>
       <BigButton onClick={onStart} className="self-end">
-        Check it →
+        Start testing →
       </BigButton>
     </main>
   );

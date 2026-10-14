@@ -56,9 +56,10 @@ export function MachineCard({
         </p>
       )}
 
-      <p className="self-start rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">
-        ✅ Built and tested by AI.
-      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">✅ Built and tested by AI.</p>
+        <p className="rounded-full border-2 border-amber bg-amber-soft px-4 py-1 text-base font-bold">🔨 Your job: try lots of different inputs to break it.</p>
+      </div>
 
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
         {machine.fields.map((f) => (
