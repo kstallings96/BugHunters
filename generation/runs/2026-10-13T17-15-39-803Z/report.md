@@ -4,48 +4,34 @@
 
 | Bug kind | Samples with it |
 |---|---|
-| wrong_type | 15 of 15 |
-| rejects_valid | 6 of 15 |
-| empty | 4 of 15 |
-| spaces_only | 4 of 15 |
+| negative | 15 of 15 |
+| empty | 10 of 15 |
+| spaces_only | 10 of 15 |
+| wrong_type | 5 of 15 |
 
-Per sample: sample-01 [wrong_type]; sample-02 [wrong_type]; sample-03 [wrong_type, empty, spaces_only]; sample-04 [rejects_valid, wrong_type]; sample-05 [rejects_valid, wrong_type]; sample-06 [wrong_type]; sample-07 [wrong_type]; sample-08 [wrong_type, empty, spaces_only]; sample-09 [rejects_valid, wrong_type]; sample-10 [wrong_type, empty, spaces_only]; sample-11 [rejects_valid, wrong_type]; sample-12 [rejects_valid, wrong_type]; sample-13 [wrong_type]; sample-14 [rejects_valid, wrong_type]; sample-15 [wrong_type, empty, spaces_only]
+Per sample: sample-01 [negative]; sample-02 [negative]; sample-03 [wrong_type, empty, spaces_only, negative]; sample-04 [empty, spaces_only, negative]; sample-05 [empty, spaces_only, negative]; sample-06 [negative]; sample-07 [negative]; sample-08 [wrong_type, empty, spaces_only, negative]; sample-09 [wrong_type, empty, spaces_only, negative]; sample-10 [wrong_type, empty, spaces_only, negative]; sample-11 [empty, spaces_only, negative]; sample-12 [empty, spaces_only, negative]; sample-13 [negative]; sample-14 [empty, spaces_only, negative]; sample-15 [wrong_type, empty, spaces_only, negative]
 
 ## savings (15 samples)
 
 | Bug kind | Samples with it |
 |---|---|
-| rejects_valid | 15 of 15 |
 | wrong_type | 15 of 15 |
 | negative | 7 of 15 |
 
-Per sample: sample-01 [rejects_valid, wrong_type]; sample-02 [rejects_valid, wrong_type]; sample-03 [negative, rejects_valid, wrong_type]; sample-04 [rejects_valid, wrong_type]; sample-05 [negative, rejects_valid, wrong_type]; sample-06 [negative, rejects_valid, wrong_type]; sample-07 [rejects_valid, wrong_type]; sample-08 [rejects_valid, wrong_type]; sample-09 [negative, rejects_valid, wrong_type]; sample-10 [negative, rejects_valid, wrong_type]; sample-11 [negative, rejects_valid, wrong_type]; sample-12 [negative, rejects_valid, wrong_type]; sample-13 [rejects_valid, wrong_type]; sample-14 [rejects_valid, wrong_type]; sample-15 [rejects_valid, wrong_type]
+Per sample: sample-01 [wrong_type]; sample-02 [wrong_type]; sample-03 [negative, wrong_type]; sample-04 [wrong_type]; sample-05 [negative, wrong_type]; sample-06 [negative, wrong_type]; sample-07 [wrong_type]; sample-08 [wrong_type]; sample-09 [negative, wrong_type]; sample-10 [negative, wrong_type]; sample-11 [negative, wrong_type]; sample-12 [negative, wrong_type]; sample-13 [wrong_type]; sample-14 [wrong_type]; sample-15 [wrong_type]
 
 ## sale (15 samples)
 
 | Bug kind | Samples with it |
 |---|---|
-| rejects_valid | 11 of 15 |
 | out_of_range | 4 of 15 |
 | negative | 4 of 15 |
 | empty | 1 of 15 |
+| spaces_only | 1 of 15 |
 | wrong_type | 1 of 15 |
 | special | 1 of 15 |
 
-Per sample: sample-01 [rejects_valid]; sample-02 [out_of_range, negative]; sample-03 [rejects_valid]; sample-04 [out_of_range, negative, empty, wrong_type, special]; sample-05 [out_of_range, negative]; sample-06 [rejects_valid]; sample-07 [rejects_valid]; sample-08 [rejects_valid]; sample-09 [rejects_valid]; sample-10 [rejects_valid]; sample-11 [rejects_valid]; sample-12 [rejects_valid]; sample-13 [rejects_valid]; sample-14 [out_of_range, negative]; sample-15 [rejects_valid]
-
-## jersey (15 samples)
-
-| Bug kind | Samples with it |
-|---|---|
-| very_long | 15 of 15 |
-| empty | 15 of 15 |
-| spaces_only | 15 of 15 |
-| wrong_type | 15 of 15 |
-| special | 15 of 15 |
-| extra_spaces | 14 of 15 |
-
-Per sample: sample-01 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-02 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-03 [very_long, empty, spaces_only, wrong_type, special]; sample-04 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-05 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-06 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-07 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-08 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-09 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-10 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-11 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-12 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-13 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-14 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]; sample-15 [very_long, empty, spaces_only, extra_spaces, wrong_type, special]
+Per sample: sample-01 [none]; sample-02 [out_of_range, negative]; sample-03 [none]; sample-04 [out_of_range, negative, empty, spaces_only, wrong_type, special]; sample-05 [out_of_range, negative]; sample-06 [none]; sample-07 [none]; sample-08 [none]; sample-09 [none]; sample-10 [none]; sample-11 [none]; sample-12 [none]; sample-13 [none]; sample-14 [out_of_range, negative]; sample-15 [none]
 
 ## raffle (15 samples)
 

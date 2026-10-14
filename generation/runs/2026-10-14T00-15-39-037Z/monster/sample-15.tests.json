@@ -1,0 +1,3 @@
+{
+  "unparsed": "[\n  {\"inputs\": {\"name\": \"godzilla\"}, \"expects\": \"GODZILLA\"},\n  {\"inputs\": {\"name\": \"cactuar\"}, \"expects\": \"CACTUAR\"},\n  {\"inputs\": {\"name\": \"extremelylongmonstername\"}, \"expects\": \"EXTREMELYLON\"},\n  {\"inputs\": {\"name\": \"\"}, \"expects\": \"BEAST\"},\n  {\"inputs\": {\"name\": null}, \"expects\": \"BEAST\"},\n  {\"inputs\": {\"name\": undefined}, \"expects\": \"BEAST\"},\n  {\"inputs\": {\"name\": 123}, \"expects\": \"BEAST\"},\n  {\"inputs\": {\"name\": {}}, \"expects\": \"BEAST\"},\n  {\"inputs\": {\"name\": \"alien\"}, \"expects\": \"ALIEN\"}\n]"
+}

@@ -1,0 +1,3 @@
+function monsterName(name) {
+  return name.toUpperCase().slice(0, 12);
+}

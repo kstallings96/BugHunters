@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyNumberField, classifyTextField, finalize, HUGE, LONG_TEXT, parseNumber } from "@/machines/classify";
-import { answerChoices, evaluate, labelFor, MACHINES, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
+import { answerChoices, bugLabel, evaluate, labelFor, MACHINES, studentLabels, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
 
 // A fixed "today" for the evaluation context (no machine currently depends on the date).
 const ctx = { today: new Date(2025, 9, 14, 10, 30) };
@@ -70,49 +70,60 @@ function table(id: MachineId, cases: Case[]) {
   }
 }
 
-describe("Allowance Doubler (tutorial)", () => {
+describe("Allowance Doubler (tutorial, the AI's code)", () => {
   table("allowance", [
     [{ allowance: "10" }, ["normal"], null],
+    [{ allowance: "$10" }, ["special"], null],
+    [{ allowance: "2.5" }, ["decimal"], null],
     [{ allowance: "cat" }, ["wrong_type"], "wrong_type"],
+    [{ allowance: "1.2.3" }, ["wrong_type"], "wrong_type"],
     [{ allowance: "" }, ["empty"], "empty"],
+    [{ allowance: "  " }, ["spaces_only"], "spaces_only"],
+    [{ allowance: "-5" }, ["negative"], "negative"],
   ]);
-  it("shows $20 for 10 and $??? (not NaN) for a word", () => {
+  it("shows $20 for 10, $??? (not NaN) for a word, and drops the minus sign", () => {
     expect(run("allowance", { allowance: "10" }).buggy.text).toBe("$20");
     expect(run("allowance", { allowance: "cat" }).buggy.text).toBe("$???");
+    expect(run("allowance", { allowance: "-5" }).buggy.text).toBe("$10");
   });
 });
 
-describe("Savings Planner", () => {
+describe("Savings Planner (the AI's code, two planted lines)", () => {
   table("savings", [
     [{ price: "20", saved: "5" }, ["normal"], null],
     [{ price: "10", saved: "3" }, ["normal"], "rounding"],
     [{ price: "20", saved: "0" }, ["zero", "boundary"], "zero"],
     [{ price: "-20", saved: "5" }, ["negative"], "negative"],
-    [{ price: "20", saved: "-5" }, ["negative"], "negative"],
-    [{ price: "", saved: "5" }, ["empty"], "empty"],
-    [{ price: "20", saved: "  " }, ["spaces_only"], "spaces_only"],
-    [{ price: "twenty", saved: "5" }, ["wrong_type"], "wrong_type"],
-    [{ price: "$20", saved: "5" }, ["special"], "special"],
     [{ price: "1.2.3", saved: "1" }, ["wrong_type"], "wrong_type"],
+    [{ price: "20abc", saved: "5" }, ["wrong_type"], "wrong_type"],
+    // The AI's "Invalid input" counts as refusing, like the reference.
+    [{ price: "20", saved: "-5" }, ["negative"], null],
+    [{ price: "", saved: "5" }, ["empty"], null],
+    [{ price: "20", saved: "  " }, ["spaces_only"], null],
+    [{ price: "twenty", saved: "5" }, ["wrong_type"], null],
+    // The request doesn't say whether "$20" is OK.
+    [{ price: "$20", saved: "5" }, ["special"], null, true],
     [{ price: "20", saved: "20" }, ["boundary"], null],
     [{ price: "0", saved: "5" }, ["zero", "boundary"], null],
     [{ price: "12.50", saved: "2.50" }, ["decimal"], null],
   ]);
-  it("rounds to the nearest week instead of up", () => {
+  it("rounds to the nearest week instead of up, and divides by zero", () => {
     expect(run("savings", { price: "10", saved: "3" }).buggy.text).toBe("3 weeks");
     expect(run("savings", { price: "10", saved: "3" }).reference.text).toBe("4 weeks");
     expect(run("savings", { price: "20", saved: "0" }).buggy.text).toBe("Infinity weeks");
-    expect(run("savings", { price: "", saved: "5" }).buggy.text).toBe("??? weeks");
+    expect(run("savings", { price: "0", saved: "0" }).buggy.text).toBe("??? weeks");
+    expect(run("savings", { price: "", saved: "5" }).buggy).toEqual({ type: "message", text: "Invalid input" });
     expect(run("savings", { price: "20", saved: "20" }).buggy.text).toBe("1 week");
   });
-  it("bonus: the rounding bug is line 3; a missing $0 check is a gap", () => {
-    expect(MACHINES.savings.fixFor("rounding", {})).toEqual({ type: "wrong_line", line: 3 });
-    const zero = MACHINES.savings.fixFor("zero", {});
-    expect(zero.type === "missing_line" && zero.options[zero.answer]).toMatch(/saved is 0/);
+  it("bonus: the planted lines are lines 3 and 4; 1.2.3 is read by line 1 or 2", () => {
+    expect(MACHINES.savings.fixFor("zero", {})).toEqual({ type: "wrong_line", line: 3 });
+    expect(MACHINES.savings.fixFor("rounding", {})).toEqual({ type: "wrong_line", line: 4 });
+    expect(MACHINES.savings.fixFor("wrong_type", { price: "1.2.3", saved: "1" })).toEqual({ type: "wrong_line", line: 1 });
+    expect(MACHINES.savings.fixFor("wrong_type", { price: "20", saved: "5x" })).toEqual({ type: "wrong_line", line: 2 });
   });
 });
 
-describe("Sale Price", () => {
+describe("Sale Price (the AI's code)", () => {
   table("sale", [
     [{ price: "40", off: "25" }, ["normal"], null],
     [{ price: "40", off: "25%" }, ["special"], null],
@@ -120,45 +131,59 @@ describe("Sale Price", () => {
     [{ price: "40", off: "-20" }, ["negative", "out_of_range"], "out_of_range"],
     [{ price: "-40", off: "25" }, ["negative"], "negative"],
     [{ price: "", off: "25" }, ["empty"], "empty"],
+    [{ price: "40", off: "  " }, ["spaces_only"], "spaces_only"],
     [{ price: "40", off: "half" }, ["wrong_type"], "wrong_type"],
+    [{ price: "1.2.3", off: "10" }, ["wrong_type"], "wrong_type"],
+    // Not debatable here: the app doesn't refuse "$40", it breaks.
     [{ price: "$40", off: "25" }, ["special"], "special"],
     [{ price: "40", off: "0" }, ["zero", "boundary"], null],
     [{ price: "40", off: "100" }, ["boundary"], null],
     [{ price: "19.99", off: "15" }, ["decimal"], null],
   ]);
-  it("shows the planted outputs", () => {
-    expect(run("sale", { price: "40", off: "150" }).buggy.text).toBe("Sale price: $-20");
-    expect(run("sale", { price: "40", off: "-20" }).buggy.text).toBe("Sale price: $48");
+  it("shows the AI's outputs", () => {
+    expect(run("sale", { price: "40", off: "150" }).buggy.text).toBe("Sale price: $-20.00");
+    expect(run("sale", { price: "40", off: "-20" }).buggy.text).toBe("Sale price: $48.00");
     expect(run("sale", { price: "$40", off: "25" }).buggy.text).toBe("Sale price: $???");
     expect(run("sale", { price: "19.99", off: "15" }).reference.text).toBe("Sale price: $16.99");
   });
+  it("bonus: a word needs a missing check; 1.2.3 is a misread line", () => {
+    expect(MACHINES.sale.fixFor("wrong_type", { price: "40", off: "half" }).type).toBe("missing_line");
+    expect(MACHINES.sale.fixFor("wrong_type", { price: "1.2.3", off: "10" })).toEqual({ type: "wrong_line", line: 1 });
+  });
 });
 
-describe("Jersey Name Printer", () => {
-  table("jersey", [
-    [{ name: "Smith" }, ["normal"], null],
-    [{ name: "smith" }, ["normal"], null],
+describe("Monster Namer (the AI's code)", () => {
+  table("monster", [
+    [{ name: "Grizzle" }, ["normal"], null],
+    [{ name: "grizzle" }, ["normal"], null],
+    [{ name: "Big Bob" }, ["normal"], null],
     [{ name: "" }, ["empty"], "empty"],
     [{ name: "    " }, ["spaces_only"], "spaces_only"],
-    [{ name: "  Smith" }, ["extra_spaces"], "extra_spaces"],
+    [{ name: "  Grizzle" }, ["extra_spaces"], "extra_spaces"],
     [{ name: "Abcdefghijk" }, ["boundary"], null],
     [{ name: "Abcdefghijkl" }, ["boundary"], null],
     [{ name: "Abcdefghijklm" }, ["very_long", "boundary"], "very_long"],
-    [{ name: "Montgomeryville" }, ["very_long"], "very_long"],
+    [{ name: "Fluffernutterbob" }, ["very_long"], "very_long"],
     [{ name: "23" }, ["wrong_type"], "wrong_type"],
-    [{ name: "Smith2" }, ["special"], "wrong_type"],
-    [{ name: "Smith😀" }, ["special"], "special"],
-    [{ name: "Garcia-Lopez" }, ["boundary"], null, true],
-    [{ name: "O'Neil" }, ["normal"], null, true],
+    [{ name: "Grizzle2" }, ["special"], "wrong_type"],
+    [{ name: "Grizzle😀" }, ["special"], "special"],
+    [{ name: "Mega-Bob" }, ["normal"], null, true],
+    [{ name: "Grr'ak" }, ["normal"], null, true],
   ]);
-  it("prints in caps, keeps spaces, prints a blank jersey", () => {
-    expect(run("jersey", { name: "smith" }).buggy.text).toBe("SMITH");
-    expect(run("jersey", { name: "  Smith" }).buggy.text).toBe("  SMITH");
-    expect(run("jersey", { name: "" }).buggy.text).toBe("");
-    expect(run("jersey", { name: "  Smith" }).reference.text).toBe("SMITH");
+  it("prints in caps, keeps spaces, cuts long names off at 12", () => {
+    expect(run("monster", { name: "grizzle" }).buggy.text).toBe("GRIZZLE");
+    expect(run("monster", { name: "  Grizzle" }).buggy.text).toBe("  GRIZZLE");
+    expect(run("monster", { name: "" }).buggy.text).toBe("");
+    expect(run("monster", { name: "Fluffernutterbob" }).buggy.text).toBe("FLUFFERNUTTE");
+    expect(run("monster", { name: "  Grizzle" }).reference.text).toBe("GRIZZLE");
   });
   it("never calls a hyphen or apostrophe a bug", () => {
-    for (const name of ["Garcia-Lopez", "O'Neil", "D’Angelo"]) expect(run("jersey", { name }).revealsBug).toBe(false);
+    for (const name of ["Mega-Bob", "Grr'ak", "Zog’mar"]) expect(run("monster", { name }).revealsBug).toBe(false);
+  });
+  it("names its bugs for a name app", () => {
+    expect(bugLabel("monster", "wrong_type")).toBe("Has numbers");
+    expect(bugLabel("savings", "wrong_type")).toBe("Not a number");
+    expect(bugLabel("monster", "very_long")).toBe("Too long");
   });
 });
 
@@ -166,7 +191,8 @@ describe("busted verdicts", () => {
   it("real, false alarm, debatable", () => {
     expect(verdictFor(run("savings", { price: "20", saved: "0" }))).toBe("real");
     expect(verdictFor(run("savings", { price: "20", saved: "5" }))).toBe("false_alarm");
-    expect(verdictFor(run("jersey", { name: "Garcia-Lopez" }))).toBe("debatable");
+    expect(verdictFor(run("monster", { name: "Mega-Bob" }))).toBe("debatable");
+    expect(verdictFor(run("savings", { price: "$20", saved: "5" }))).toBe("debatable");
   });
 });
 
@@ -174,23 +200,24 @@ describe("busted verdicts", () => {
 const BUGS: [MachineId, Inputs][] = [
   ["allowance", { allowance: "cat" }],
   ["allowance", { allowance: "" }],
+  ["allowance", { allowance: "  " }],
+  ["allowance", { allowance: "-5" }],
   ["savings", { price: "20", saved: "0" }],
   ["savings", { price: "-20", saved: "5" }],
-  ["savings", { price: "", saved: "5" }],
-  ["savings", { price: "twenty", saved: "5" }],
-  ["savings", { price: "$20", saved: "5" }],
+  ["savings", { price: "1.2.3", saved: "1" }],
   ["savings", { price: "10", saved: "3" }],
   ["sale", { price: "40", off: "150" }],
   ["sale", { price: "-40", off: "25" }],
   ["sale", { price: "", off: "25" }],
+  ["sale", { price: "40", off: "  " }],
   ["sale", { price: "40", off: "half" }],
   ["sale", { price: "$40", off: "25" }],
-  ["jersey", { name: "" }],
-  ["jersey", { name: "    " }],
-  ["jersey", { name: "Abcdefghijklm" }],
-  ["jersey", { name: "23" }],
-  ["jersey", { name: "Smith😀" }],
-  ["jersey", { name: "  Smith" }],
+  ["monster", { name: "" }],
+  ["monster", { name: "    " }],
+  ["monster", { name: "Abcdefghijklm" }],
+  ["monster", { name: "23" }],
+  ["monster", { name: "Grizzle😀" }],
+  ["monster", { name: "  Grizzle" }],
 ];
 
 describe("every machine", () => {
@@ -201,7 +228,8 @@ describe("every machine", () => {
       expect(m.pseudocode.length).toBeGreaterThan(1);
       expect(m.bugs.length).toBeGreaterThan(0);
     }
-    for (const id of ["savings", "sale", "jersey"] as MachineId[]) expect(MACHINES[id].request).toBeTruthy();
+    for (const id of ["savings", "sale", "monster"] as MachineId[]) expect(MACHINES[id].request).toBeTruthy();
+    for (const m of Object.values(MACHINES)) expect(m.prompt).toMatch(/^make an app/);
   });
 
   it("each bug list matches the bugs the machine really has", () => {
@@ -249,23 +277,29 @@ describe("every machine", () => {
 describe("student labels (What kind of input broke it?)", () => {
   const label = (id: MachineId, inputs: Inputs) => {
     const e = run(id, inputs);
-    return labelFor(e.bugKind, e.categories);
+    return labelFor(e.bugKind, e.categories, MACHINES[id]);
   };
   it("maps each bug to the label a careful student would pick", () => {
     expect(label("savings", { price: "20", saved: "0" })).toBe("zero");
-    expect(label("savings", { price: "", saved: "5" })).toBe("blank");
-    expect(label("jersey", { name: "   " })).toBe("blank");
+    expect(label("sale", { price: "", off: "25" })).toBe("blank");
+    expect(label("monster", { name: "   " })).toBe("blank");
     expect(label("savings", { price: "-20", saved: "5" })).toBe("negative");
     expect(label("sale", { price: "40", off: "-20" })).toBe("negative");
     expect(label("sale", { price: "40", off: "150" })).toBe("too_big");
-    expect(label("jersey", { name: "Abcdefghijklm" })).toBe("too_big");
-    expect(label("savings", { price: "twenty", saved: "5" })).toBe("wrong_kind");
-    expect(label("savings", { price: "$20", saved: "5" })).toBe("wrong_kind");
+    expect(label("monster", { name: "Abcdefghijklm" })).toBe("too_big");
+    expect(label("sale", { price: "40", off: "half" })).toBe("not_a_number");
+    expect(label("sale", { price: "$40", off: "25" })).toBe("not_a_number");
+    expect(label("monster", { name: "Grizzle2" })).toBe("has_numbers");
+    expect(label("monster", { name: "Grizzle😀" })).toBe("symbols");
     expect(label("savings", { price: "10", saved: "3" })).toBe("something_else");
-    expect(label("jersey", { name: "  Smith" })).toBe("something_else");
+    expect(label("monster", { name: "  Grizzle" })).toBe("something_else");
   });
   it("uses the input's kind for non-bugs, and nothing for an ordinary input", () => {
     expect(label("sale", { price: "40", off: "100" })).toBe("exact_limit");
     expect(label("savings", { price: "20", saved: "5" })).toBeNull();
+  });
+  it("offers number labels in number apps and name labels in the Monster Namer", () => {
+    expect(studentLabels(MACHINES.sale).map((l) => l.text)).toContain("Not a number");
+    expect(studentLabels(MACHINES.monster).map((l) => l.text)).toEqual(["Blank", "Too long", "Exactly the limit", "Has numbers", "Symbols or emoji", "Something else"]);
   });
 });

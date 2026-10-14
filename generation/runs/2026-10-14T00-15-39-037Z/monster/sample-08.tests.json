@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "skeleton warrior"
+    },
+    "expects": "SKELETON WAR"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "verylongmonstername"
+    },
+    "expects": "VERYLONGMONS"
+  },
+  {
+    "inputs": {
+      "name": "123456789012"
+    },
+    "expects": "123456789012"
+  },
+  {
+    "inputs": {
+      "name": "  orc  "
+    },
+    "expects": "  ORC  "
+  }
+]

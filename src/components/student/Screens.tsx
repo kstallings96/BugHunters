@@ -6,7 +6,7 @@ import type { SurveyQuestion } from "@/config/survey";
 import { logEvent } from "@/lib/logger";
 import type { BustedBug } from "@/lib/types";
 import { RAFFLE } from "@/bonus/raffle";
-import { CATEGORY_LABEL, MACHINES } from "@/machines";
+import { bugLabel, MACHINES } from "@/machines";
 
 // ------------------------------------------------------------- intake
 
@@ -37,7 +37,7 @@ export function SurveyScreen({ q, onAnswer }: { q: SurveyQuestion; onAnswer: () 
 // ---------------------------------------------------------------- end
 
 export function kindsFound(busted: BustedBug[]): string[] {
-  return [...new Set(busted.map((b) => CATEGORY_LABEL[b.kind]))];
+  return [...new Set(busted.map((b) => bugLabel(b.machine, b.kind)))];
 }
 
 export function EndScreen({
@@ -126,7 +126,7 @@ export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () =
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-4 px-6 py-5">
       <h1 className="text-3xl leading-snug font-bold">
-        {machine.icon} {fix.type === "wrong_line" ? "Which line made" : "A line is missing! Which one fixes"} the {CATEGORY_LABEL[bug.kind]} bug in{" "}
+        {machine.icon} {fix.type === "wrong_line" ? "Which line made" : "A line is missing! Which one fixes"} the {bugLabel(bug.machine, bug.kind)} bug in{" "}
         {machine.name}?
       </h1>
       <p className="text-xl text-ink-soft">

@@ -1,18 +1,22 @@
-import { missingLine, parseMoney, parsePercent, shown } from "./classify";
+import { specFor } from "@/generation/specs";
+import { salePrice as aiSalePrice } from "./ai/sale";
+import { aiOutput, classifyNumberField, missingLine, parseMoney, parsePercent } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
  * Sale Price (number machine A or B). Price minus a percent off.
- * Buggy: no checks, so 150% off gives a negative price, -20% off raises
- * the price, a negative price goes through, blank or words → ???, and
- * "$50" → ??? (the dollar sign). "20%" works (the % is fine).
+ * Buggy: the AI's own code (src/machines/ai/sale.js), unchanged. No checks,
+ * so 150% off gives a negative price, -20% off raises the price, a
+ * negative price goes through, blank or words → $???, "$40" → $??? (the
+ * dollar sign), and parseFloat reads "1.2.3" as 1.2. "20%" works.
  * Reference: money may start with "$", percent may end with "%"; prices
- * can't be below zero; discounts go from 0% to 100% (the request).
+ * can't be below zero; discounts go from 0% to 100% (the request). Same
+ * formula and two decimals as the AI's, so ordinary answers match exactly.
  */
 
-const cents = (n: number) => shown(Math.round(n * 100) / 100);
-const salePrice = (n: number) => `Sale price: $${cents(n)}`;
+const salePrice = (p: number, off: number) => `Sale price: $${(p - p * (off / 100)).toFixed(2)}`;
 
+// Lines: 1 read price, 2 read off, 3 compute, 4 show.
 const FIXES: Partial<Record<Category, Fix>> = {
   out_of_range: missingLine(2, 'if off is below 0% or above 100% → say "Discounts go from 0% to 100%."', 'if off is 50% → say "Half off!"', "sale = price + off"),
   negative: missingLine(2, 'if price is below 0 → say "Prices can\'t be below zero."', 'if off is 50% → say "Half off!"', "sale = off − price"),
@@ -38,15 +42,12 @@ export const sale: Machine = {
   icon: "🏷️",
   purpose: "Tells you the price after a discount.",
   request: "Discounts go from 0% to 100%.",
+  prompt: specFor("sale").kidPrompt,
   fields: [
     { id: "price", label: "Price ($)", kind: "number" },
     { id: "off", label: "% off", kind: "number" },
   ],
-  buggy: ({ price, off }: Inputs): Output => {
-    const p = parseFloat(price);
-    const o = parseFloat(off);
-    return { type: "result", text: salePrice(p - (p * o) / 100) };
-  },
+  buggy: ({ price, off }: Inputs): Output => aiOutput(aiSalePrice(price, off)),
   reference: ({ price, off }: Inputs): Output => {
     const p = read(price, "price", parseMoney);
     if (!p.ok) return p.out;
@@ -54,7 +55,7 @@ export const sale: Machine = {
     const o = read(off, "% off", parsePercent);
     if (!o.ok) return o.out;
     if (o.n < 0 || o.n > 100) return { type: "not_allowed", text: "Discounts go from 0% to 100%.", rule: "out_of_range" };
-    return { type: "result", text: salePrice(p.n - (p.n * o.n) / 100) };
+    return { type: "result", text: salePrice(p.n, o.n) };
   },
   extraCategories: ({ off }) => {
     const o = parsePercent(off);
@@ -62,19 +63,34 @@ export const sale: Machine = {
     if (o === 0 || o === 100) return ["boundary"];
     return o < 0 || o > 100 ? ["out_of_range"] : [];
   },
+  // "$40" is not debatable here: the app doesn't refuse it, it breaks ($???).
   debatable: () => false,
-  // Both versions answer but disagree: the buggy one can't read "$40".
-  resultBugKind: (_inputs, categories) => (categories.includes("special") ? "special" : categories[0]),
+  // Both versions answer but disagree: "$40" ($???) or "1.2.3" read as 1.2.
+  resultBugKind: (_inputs, categories) => (categories.includes("special") ? "special" : categories.includes("wrong_type") ? "wrong_type" : categories[0]),
   otherAnswers: ({ price }) => {
     const p = parseMoney(price);
-    return [salePrice(0), p !== null && p > 0 ? salePrice(p) : "Sale price: $10"];
+    return [salePrice(0, 0), p !== null && p > 0 ? salePrice(p, 0) : "Sale price: $10.00"];
   },
-  pseudocode: ["price = the price", "off = the % off", "sale = price − price × off ÷ 100", 'show "Sale price: $" + sale'],
-  fixFor: (kind) => FIXES[kind] ?? FIXES.wrong_type!,
+  pseudocode: [
+    "price = the number at the start of what you typed",
+    "off = the number at the start of what you typed",
+    "sale = price − price × off ÷ 100",
+    'show "Sale price: $" + sale, with 2 decimals',
+  ],
+  fixFor: (kind, inputs) => {
+    if (kind === "wrong_type") {
+      const box = classifyNumberField(inputs.price ?? "").includes("wrong_type") ? "price" : "off";
+      // "1.2.3" starts like a number and gets read as 1.2: the line that reads it is guilty.
+      // "half" can't be read at all: a check is missing.
+      if (Number.isFinite(parseFloat(inputs[box] ?? ""))) return { type: "wrong_line", line: box === "price" ? 1 : 2 };
+    }
+    return FIXES[kind] ?? FIXES.wrong_type!;
+  },
   bugs: [
     { kind: "out_of_range", tryThis: "Try more than 100% off, like 150%. Or try -20%." },
     { kind: "negative", tryThis: "Try a price below zero." },
     { kind: "empty", tryThis: "Leave a box empty." },
+    { kind: "spaces_only", tryThis: "Type only spaces in a box." },
     { kind: "wrong_type", tryThis: "Type a word instead of a number." },
     { kind: "special", tryThis: "Type the price with a dollar sign, like $50." },
   ],

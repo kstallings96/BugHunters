@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buggyPick, entriesOf } from "@/bonus/raffle";
+import { buggyPick } from "@/bonus/raffle";
 import { findBugs, GEN_SPECS, loadFunction, raffleBugs } from "@/generation/harness";
 import { MACHINES } from "@/machines";
 
@@ -8,7 +8,7 @@ const asFn = (id: (typeof GEN_SPECS)[number], version: "buggy" | "reference") =>
   MACHINES[id.machine][version](Object.fromEntries(id.params.map((p, i) => [p, a[i]])), { today: new Date() }).text;
 
 describe("generation harness", () => {
-  it.each(GEN_SPECS)("$machine: finds every planted bug in the hand-written app", (spec) => {
+  it.each(GEN_SPECS)("$machine: finds every bug in the game app (the AI code, planted lines included)", (spec) => {
     const found = new Set(findBugs(spec, asFn(spec, "buggy")).map((f) => f.bug));
     for (const b of MACHINES[spec.machine].bugs) expect(found).toContain(b.kind);
   });
@@ -25,8 +25,8 @@ describe("generation harness", () => {
     expect(bugs).not.toContain("rounding");
   });
 
-  it("raffle: flags the planted bugs, and not a fair picker", () => {
-    expect(raffleBugs((t: string) => buggyPick(entriesOf(t)))).toMatchObject({ lastNeverWins: true, blankCanWin: true, emptyGivesJunk: true, oneNameWins: true });
+  it("raffle: flags the game raffle bugs, and not a fair picker", () => {
+    expect(raffleBugs((t: string) => buggyPick(t))).toMatchObject({ lastNeverWins: true, blankCanWin: false, emptyGivesJunk: false, oneNameWins: true });
     const fair = (t: string) => {
       const names = t.split("\n").map((s) => s.trim()).filter(Boolean);
       return names.length < 2 ? "Add at least 2 names." : names[Math.floor(Math.random() * names.length)];

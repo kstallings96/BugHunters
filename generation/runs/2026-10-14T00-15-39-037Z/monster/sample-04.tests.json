@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "zombie"
+    },
+    "expects": "KRAK-ZOMBIE"
+  },
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "KRAK-GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "verylongmonstername"
+    },
+    "expects": "KRAK-VERYLON"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "KRAK-A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": "KRAK-"
+  },
+  {
+    "inputs": {
+      "name": "123"
+    },
+    "expects": "KRAK-123"
+  },
+  {
+    "inputs": {
+      "name": "space monster"
+    },
+    "expects": "KRAK-SPACE M"
+  }
+]

@@ -4,7 +4,7 @@
  * Everything here is pure, so it can be unit-tested and re-run server-side.
  */
 
-export type MachineId = "allowance" | "savings" | "sale" | "jersey";
+export type MachineId = "allowance" | "savings" | "sale" | "monster";
 
 /** Kinds of input. An input can have several. Also used as bug-kind names. */
 export type Category =
@@ -36,8 +36,8 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   empty: "Blank",
   spaces_only: "Spaces only",
   extra_spaces: "Extra spaces",
-  wrong_type: "Wrong kind",
-  special: "Special characters",
+  wrong_type: "Not a number",
+  special: "Symbols",
   very_long: "Too long",
   boundary: "Limit",
   out_of_range: "Out of range",
@@ -72,7 +72,9 @@ export type Inputs = Record<string, string>;
 export type Output =
   | { type: "result"; text: string }
   /** The reference refuses the input; `rule` is the kind of input it refused. */
-  | { type: "not_allowed"; text: string; rule: Category };
+  | { type: "not_allowed"; text: string; rule: Category }
+  /** The AI's app refuses the input in its own words ("Invalid input"). Counts as refusing. */
+  | { type: "message"; text: string };
 
 export interface Context {
   /** "Today" for date machines; the client's local date. */
@@ -89,10 +91,14 @@ export interface Machine {
   request?: string;
   /** Optional note from the person who asked for the tool. */
   clientNote?: string;
-  /** How the output is drawn: plain text, or printed on a jersey. */
-  display?: "text" | "jersey";
+  /** How the output is drawn: plain text, or as a name tag on a monster. */
+  display?: "text" | "monster";
+  /** What the student asked the AI for, word for word (the prompt the model got). */
+  prompt: string;
   /** Every kind of bug this machine has, for the missed-bug reveal. */
   bugs: KnownBug[];
+  /** Bug names that read better for this machine ("Has numbers" for a name). */
+  labels?: Partial<Record<Category, string>>;
   fields: Field[];
   /** What students see. */
   buggy: (inputs: Inputs, ctx: Context) => Output;

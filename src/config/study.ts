@@ -34,15 +34,15 @@ export function readStudySettings(env: Record<string, string | undefined> = proc
 
 /**
  * Machine order: one number machine first, the other second (random unless
- * forced with ?order=savings or ?order=sale), and Jersey Name Printer third.
+ * forced with ?order=savings or ?order=sale), and Monster Namer third.
  */
 export function machineOrder(param: string | null | undefined, random: () => number = Math.random): { order: MachineId[]; assignment: "random" | "url" } {
   const forced = param?.trim().toLowerCase();
   if (forced === "savings" || forced === "sale") {
     const first = forced as MachineId;
-    return { order: [first, first === "savings" ? "sale" : "savings", "jersey"], assignment: "url" };
+    return { order: [first, first === "savings" ? "sale" : "savings", "monster"], assignment: "url" };
   }
-  return { order: random() < 0.5 ? ["savings", "sale", "jersey"] : ["sale", "savings", "jersey"], assignment: "random" };
+  return { order: random() < 0.5 ? ["savings", "sale", "monster"] : ["sale", "savings", "monster"], assignment: "random" };
 }
 
 export type RevealCondition = "reveal" | "end_only";

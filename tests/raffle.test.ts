@@ -1,71 +1,59 @@
-import { describe, expect, it } from "vitest";
-import { buggyPick, entriesOf, judgeClaim, RAFFLE, tally, type RaffleTry } from "@/bonus/raffle";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buggyPick, judgeTap, namesOf, RAFFLE, tally, type RaffleTry } from "@/bonus/raffle";
 
-/** Cycles through fixed "random" numbers so picks are repeatable. */
-function seq(values: number[]) {
-  let i = 0;
-  return () => values[i++ % values.length];
-}
+const twenty = (text: string): RaffleTry => ({ n: 1, text, mode: "twenty", winners: Array.from({ length: 20 }, () => buggyPick(text)) });
 
-const twenty = (text: string, random = Math.random): RaffleTry => {
-  const entries = entriesOf(text);
-  return { n: 1, text, mode: "twenty", winners: Array.from({ length: 20 }, () => buggyPick(entries, random)) };
-};
+afterEach(() => vi.restoreAllMocks());
 
-describe("Raffle Picker (bonus)", () => {
-  it("reads every line, blanks included", () => {
-    expect(entriesOf("Sam\n\nJay")).toEqual(["Sam", "", "Jay"]);
-    expect(entriesOf("   ")).toEqual([]);
+describe("Raffle Picker (bonus, the AI's code with one planted line)", () => {
+  it("reads names the way the AI's app does: trimmed, blank lines skipped", () => {
+    expect(namesOf("Sam\n\n  Jay  \n")).toEqual(["Sam", "Jay"]);
+    expect(namesOf("   ")).toEqual([]);
   });
 
-  it("the last name never wins, however many times you pick", () => {
-    const entries = ["Sam", "Jay", "Maria", "Leo"];
-    const winners = Array.from({ length: 2000 }, () => buggyPick(entries));
-    expect(winners).not.toContain("Leo");
-    expect(new Set(winners)).toEqual(new Set(["Sam", "Jay", "Maria"]));
+  it("never picks the last name (planted), even when random is as high as it goes", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.9999);
+    expect(buggyPick("Sam\nJay\nMaria\nLeo")).toBe("Maria");
   });
 
-  it("an empty list picks undefined; one name always wins", () => {
-    expect(buggyPick([], seq([0.5]))).toBeUndefined();
-    expect(buggyPick(["Sam"], seq([0.9]))).toBe("Sam");
+  it("handles an empty list the AI's way, and lets one name win", () => {
+    expect(buggyPick("")).toBe("No names provided");
+    expect(buggyPick("Sam")).toBe("Sam");
   });
 
-  it("checks each claim against what the try showed", () => {
+  it("tapping the last name's empty bar busts the Off by one bug", () => {
     const t = twenty("Sam\nJay\nMaria\nLeo");
-    expect(judgeClaim(t, "last_never_wins")).toMatchObject({ verdict: "real", kind: "off_by_one" });
-    expect(judgeClaim({ ...t, mode: "one", winners: ["Sam"] }, "last_never_wins").verdict).toBe("false_alarm");
-    expect(judgeClaim(t, "wobble").message).toMatch(/Random picks wobble/);
-    expect(judgeClaim(t, "blank_won").verdict).toBe("false_alarm");
-
-    const blank = twenty("Sam\n\nJay", seq([0.6]));
-    expect(blank.winners[0]).toBe("");
-    expect(judgeClaim(blank, "blank_won")).toMatchObject({ verdict: "real", kind: "empty" });
-
-    const empty: RaffleTry = { n: 1, text: "", mode: "one", winners: [buggyPick([], seq([0.5]))] };
-    expect(judgeClaim(empty, "undefined_won")).toMatchObject({ verdict: "real", kind: "zero" });
-
-    const one: RaffleTry = { n: 1, text: "Sam", mode: "one", winners: ["Sam"] };
-    expect(judgeClaim(one, "one_name")).toMatchObject({ verdict: "real", kind: "boundary" });
-
-    expect(judgeClaim(twenty("Sam\nSam\nJay"), "duplicate").verdict).toBe("debatable");
-    expect(judgeClaim(t, "duplicate").verdict).toBe("false_alarm");
+    expect(tally(t.text, t.winners).find((r) => r.name === "Leo")?.wins).toBe(0);
+    expect(judgeTap(t, { type: "row", name: "Leo" })).toMatchObject({ verdict: "real", kind: "off_by_one" });
   });
 
-  it("tallies wins per name in list order, last name at zero", () => {
-    const rows = tally(["Sam", "Jay", "Leo"], ["Sam", "Jay", "Sam"]);
-    expect(rows).toEqual([
-      { name: "Sam", wins: 2 },
-      { name: "Jay", wins: 1 },
-      { name: "Leo", wins: 0 },
-    ]);
+  it("tapping a name that did win is a false alarm", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const t = twenty("Sam\nJay\nLeo");
+    expect(judgeTap(t, { type: "row", name: "Sam" }).verdict).toBe("false_alarm");
+    // Jay got nothing, but Jay isn't last: that could be luck.
+    expect(judgeTap(t, { type: "row", name: "Jay" }).verdict).toBe("false_alarm");
   });
 
-  it("bonus fixes: line 2 for the off-by-one, missing lines for the rest", () => {
-    expect(RAFFLE.fixFor("off_by_one")).toEqual({ type: "wrong_line", line: 2 });
-    for (const kind of ["empty", "zero", "boundary"] as const) {
-      const f = RAFFLE.fixFor(kind);
-      expect(f.type).toBe("missing_line");
-      if (f.type === "missing_line") expect(f.options).toHaveLength(3);
-    }
+  it("one name winning is a Limit bug, whatever the student taps", () => {
+    const one: RaffleTry = { n: 1, text: "Sam", mode: "one", winners: [buggyPick("Sam")] };
+    expect(judgeTap(one, { type: "winner" })).toMatchObject({ verdict: "real", kind: "boundary" });
+  });
+
+  it("a name typed twice is debatable", () => {
+    const t = twenty("Sam\nSam\nJay");
+    expect(judgeTap(t, { type: "row", name: "Sam" }).verdict).toBe("debatable");
+  });
+
+  it("one pick can't show much", () => {
+    const one: RaffleTry = { n: 1, text: "Sam\nJay", mode: "one", winners: ["Sam"] };
+    expect(judgeTap(one, { type: "winner" }).verdict).toBe("false_alarm");
+  });
+
+  it("bonus: the planted line is line 3; the one-name check is missing after line 2", () => {
+    expect(RAFFLE.fixFor("off_by_one")).toEqual({ type: "wrong_line", line: 3 });
+    const fix = RAFFLE.fixFor("boundary");
+    expect(fix.type === "missing_line" && fix.after).toBe(2);
+    expect(fix.type === "missing_line" && fix.options[fix.answer]).toMatch(/only 1 name/);
   });
 });

@@ -45,7 +45,7 @@ describe("names in the cloud", () => {
 
 describe("device backup", () => {
   it("is encrypted on the device and decrypts on the researcher's laptop", async () => {
-    const meta = { session_id: "s-1", first_name: "Maya", last_initial: "T", class_period: "2", machine_order: ["savings", "sale", "jersey"], reveal_condition: "reveal" };
+    const meta = { session_id: "s-1", first_name: "Maya", last_initial: "T", class_period: "2", machine_order: ["savings", "sale", "monster"], reveal_condition: "reveal" };
     const started = startBackup(PUB, meta);
     // An event logged before the keys are ready is still kept.
     recordBackup({ sid: "s-1", seq: 1, event_type: "session_start" });

@@ -50,3 +50,4 @@ supabase/.branches/
 
 # Office lock files
 ~$*
+.scratch/

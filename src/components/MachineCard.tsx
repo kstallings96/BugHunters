@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import { clean } from "@/lib/clean";
 import type { Inputs, Machine, Output } from "@/machines";
 
 /**
@@ -103,8 +104,8 @@ export function MachineCard({
         </button>
       </form>
 
-      {machine.display === "jersey" && output?.type === "result" ? (
-        <Jersey name={output.text} />
+      {machine.display === "monster" && output?.type === "result" ? (
+        <Monster name={output.text} />
       ) : (
         <div
           className="flex min-h-20 max-w-[36rem] items-center rounded-2xl border-4 border-dashed border-line bg-paper px-5"
@@ -115,9 +116,9 @@ export function MachineCard({
             // long greeting is allowed to run off the edge: both are bugs
             // students should be able to see.
             <p
-              className={`text-3xl font-bold whitespace-pre ${output.type === "not_allowed" ? "text-danger" : ""}`}
+              className={`text-3xl font-bold whitespace-pre ${output.type !== "result" ? "text-danger" : ""}`}
             >
-              {output.text}
+              {clean(output.text)}
             </p>
           ) : (
             <p className="text-xl text-ink-soft">The answer shows up here.</p>
@@ -139,42 +140,26 @@ export function blankInputs(machine: Machine): Inputs {
 }
 
 /**
- * The name printed across the back of a jersey. The lettering band is
- * exactly 12 monospace characters wide (the request's limit), so a 13th
- * letter visibly runs off the shirt, and printed spaces stay visible.
+ * The Monster Namer's output: a friendly monster with its name on a tag
+ * underneath. The tag keeps every space the app printed (whitespace-pre),
+ * so stray spaces and a blank name are visible bugs.
  */
-export function Jersey({ name }: { name: string }) {
+export function Monster({ name }: { name: string }) {
+  const shown = clean(name);
   return (
-    <div
-      className="flex justify-center py-1"
-      aria-live="polite"
-      aria-label={name.trim() ? `Jersey reads ${name}` : "Blank jersey"}
-    >
-      <div className="relative h-44 w-72">
-        <svg
-          viewBox="0 0 288 176"
-          className="absolute inset-0 h-full w-full"
-          aria-hidden="true"
-        >
-          <path
-            d="M96 4 L124 4 Q144 22 164 4 L192 4 L276 40 L256 92 L222 78 L222 172 L66 172 L66 78 L32 92 L12 40 Z"
-            fill="#0f766e"
-            stroke="#0b5a54"
-            strokeWidth="4"
-          />
-        </svg>
-        {/* 12 characters span the shirt from sleeve to sleeve (x 12–276 of
-            288), so a 13th character prints past the edge. */}
-        <p className="absolute top-10 left-3 overflow-visible font-mono text-[2.5rem] leading-none font-bold whitespace-pre text-white">
-          {name}
-        </p>
-        <p
-          className="absolute inset-x-0 top-24 text-center font-mono text-5xl font-bold text-white"
-          aria-hidden="true"
-        >
-          10
-        </p>
-      </div>
+    <div className="flex flex-col items-center gap-1 py-1" aria-live="polite" aria-label={name.trim() ? `The monster is named ${shown}` : "A monster with no name"}>
+      <svg viewBox="0 0 160 120" className="h-32 w-44" aria-hidden="true">
+        <path d="M44 30 L36 6 L58 24 Z M116 30 L124 6 L102 24 Z" fill="#f59e0b" />
+        <path d="M24 112 Q14 40 80 22 Q146 40 136 112 Z" fill="#7c3aed" stroke="#5b21b6" strokeWidth="4" />
+        <circle cx="80" cy="58" r="20" fill="#fff" stroke="#5b21b6" strokeWidth="3" />
+        <circle cx="84" cy="61" r="9" fill="#1e1b4b" />
+        <circle cx="87" cy="57" r="3" fill="#fff" />
+        <path d="M50 88 Q80 108 110 88" fill="#1e1b4b" />
+        <path d="M60 92 L64 100 L68 94 Z M92 94 L96 100 L100 92 Z" fill="#fff" />
+      </svg>
+      <p className="min-h-14 min-w-40 rounded-2xl border-4 border-[#5b21b6] bg-[#ede9fe] px-4 py-1 text-center font-mono text-4xl leading-tight font-bold whitespace-pre text-[#3b0764]">
+        {shown}
+      </p>
     </div>
   );
 }

@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "zombie lord"
+    },
+    "expects": "ZOMBIE LORD"
+  },
+  {
+    "inputs": {
+      "name": "verylongmonstername"
+    },
+    "expects": "VERYLONGMONS"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "orc king 123"
+    },
+    "expects": "ORC KING 123"
+  },
+  {
+    "inputs": {
+      "name": "Dragon Slayer"
+    },
+    "expects": "DRAGON SLAYE"
+  }
+]

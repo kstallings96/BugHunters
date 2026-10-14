@@ -3,13 +3,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { blankInputs, MachineCard } from "@/components/MachineCard";
 import { BigButton, Modal, OptionButton } from "@/components/ui";
+import { clean } from "@/lib/clean";
 import { logEvent } from "@/lib/logger";
 import {
   answerChoices,
-  CATEGORY_LABEL,
+  bugLabel,
   evaluate,
   labelFor,
-  STUDENT_LABELS,
+  studentLabels,
   verdictFor,
   withArticle,
   type BustedVerdict,
@@ -31,7 +32,7 @@ const MAX_INPUT = 200;
 function describeInputs(machine: Machine, inputs: Inputs): string {
   return machine.fields
     .map((f) => {
-      const raw = inputs[f.id] ?? "";
+      const raw = clean(inputs[f.id] ?? "");
       const shown = f.kind === "select" ? (f.options!.find((o) => o.value === raw)?.label ?? raw) : raw === "" ? "(empty)" : `"${raw}"`;
       return machine.fields.length > 1 ? `${f.label}: ${shown}` : shown;
     })
@@ -191,7 +192,7 @@ export function MachineStep({
                 <li key={t.n} className="rounded-xl bg-paper px-3 py-1 text-base leading-snug">
                   <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
                   <span className="text-ink-soft"> → </span>
-                  <span className="break-all whitespace-pre-wrap">{t.output.text.trim() === "" ? "(blank)" : t.output.text}</span>
+                  <span className="break-all whitespace-pre-wrap">{t.output.text.trim() === "" ? "(blank)" : clean(t.output.text)}</span>
                 </li>
               ))}
             </ol>
@@ -265,7 +266,7 @@ function BustedDialog({
     const verdict = verdictFor(t);
     const kind = verdict === "real" ? t.bugKind : null;
     const counted = verdict === "real" && kind !== null && isNewKind(kind);
-    const classifierLabel = labelFor(kind, t.categories);
+    const classifierLabel = labelFor(kind, t.categories, machine);
     logEvent("busted", {
       input_n: t.n,
       inputs: t.inputs,
@@ -285,7 +286,7 @@ function BustedDialog({
   }
 
   if (result) {
-    const bug = result.kind ? withArticle(CATEGORY_LABEL[result.kind]) : "";
+    const bug = result.kind ? withArticle(bugLabel(machine, result.kind)) : "";
     const message =
       result.verdict === "real"
         ? result.labelAgrees
@@ -321,7 +322,7 @@ function BustedDialog({
             <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {STUDENT_LABELS.map((l) => (
+            {studentLabels(machine).map((l) => (
               <OptionButton key={l.id} onClick={() => submit(l.id)}>
                 {l.text}
               </OptionButton>
@@ -356,7 +357,7 @@ function BustedDialog({
                       setChoosing(false);
                     }}
                   >
-                    {describeInputs(machine, tr.inputs)} → <span className="break-all whitespace-pre-wrap">{tr.output.text}</span>
+                    {describeInputs(machine, tr.inputs)} → <span className="break-all whitespace-pre-wrap">{clean(tr.output.text)}</span>
                   </OptionButton>
                 </li>
               );
@@ -366,7 +367,7 @@ function BustedDialog({
           <div className="flex items-center gap-3 rounded-2xl border-4 border-danger/40 bg-danger/5 px-4 py-3">
             <p className="flex-1 text-xl">
               <span className="font-bold">{describeInputs(machine, t.inputs)}</span> →{" "}
-              <span className="break-all whitespace-pre-wrap">{t.output.text}</span>
+              <span className="break-all whitespace-pre-wrap">{clean(t.output.text)}</span>
             </p>
             {tries.length > 1 && (
               <button type="button" onClick={() => setChoosing(true)} className="min-h-11 rounded-full px-3 text-base font-bold text-teal underline">
@@ -380,7 +381,7 @@ function BustedDialog({
         <div className="flex flex-col gap-2">
           {choices.options.map((o, i) => (
             <OptionButton key={o} selected={expect === i} onClick={() => setExpect(i)}>
-              <span className="break-all whitespace-pre-wrap">{o.trim() === "" ? "(blank)" : o}</span>
+              <span className="break-all whitespace-pre-wrap">{o.trim() === "" ? "(blank)" : clean(o)}</span>
             </OptionButton>
           ))}
           <OptionButton selected={expect === "unsure"} onClick={() => setExpect("unsure")}>

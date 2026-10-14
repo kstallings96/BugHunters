@@ -32,7 +32,7 @@ export const GEN_SPECS: GenSpec[] = [
     params: ["allowance"],
     kidPrompt: "make an app that doubles my allowance",
     format: `${FORMAT_COMMON} Name it doubleAllowance(allowance). For an answer, return it like "$20".`,
-    battery: [{ allowance: "10" }, { allowance: "2.5" }, { allowance: "cat" }, { allowance: "" }, { allowance: "   " }, { allowance: "$10" }],
+    battery: [{ allowance: "10" }, { allowance: "2.5" }, { allowance: "cat" }, { allowance: "" }, { allowance: "   " }, { allowance: "$10" }, { allowance: "-5" }],
   },
   {
     machine: "savings",
@@ -73,30 +73,31 @@ export const GEN_SPECS: GenSpec[] = [
       { price: "40", off: "-20" },
       { price: "-40", off: "25" },
       { price: "", off: "25" },
+      { price: "40", off: "   " },
       { price: "40", off: "half" },
       { price: "$40", off: "25" },
     ],
   },
   {
-    machine: "jersey",
-    functionName: "jerseyName",
+    machine: "monster",
+    functionName: "monsterName",
     params: ["name"],
-    kidPrompt: "make an app that puts my last name on a jersey. Last names in ALL CAPS, up to 12 letters.",
-    format: `${FORMAT_COMMON} Name it jerseyName(lastName). For an answer, return just the text to print on the jersey.`,
+    kidPrompt: "make an app that names my monster. Monster names in ALL CAPS, up to 12 letters.",
+    format: `${FORMAT_COMMON} Name it monsterName(name). For an answer, return just the name to show with the monster.`,
     battery: [
-      { name: "Smith" },
-      { name: "smith" },
+      { name: "Grizzle" },
+      { name: "grizzle" },
       { name: "Abcdefghijk" },
       { name: "Abcdefghijkl" },
       { name: "Abcdefghijklm" },
-      { name: "Montgomeryville" },
+      { name: "Fluffernutterbob" },
       { name: "" },
       { name: "    " },
-      { name: "  Smith" },
+      { name: "  Grizzle" },
       { name: "23" },
-      { name: "Smith2" },
-      { name: "Smith😀" },
-      { name: "Garcia-Lopez" },
+      { name: "Grizzle2" },
+      { name: "Grizzle😀" },
+      { name: "Mega-Bob" },
     ],
   },
 ];
@@ -113,4 +114,9 @@ export function testsPrompt(code: string, functionName: string, params: string[]
   return `Here is a JavaScript function you wrote:\n\n\`\`\`js\n${code}\n\`\`\`\n\nWrite tests for ${functionName}. Reply with ONLY a JSON array, no other text. Each item: {"inputs": {${params
     .map((p) => `"${p}": "<text typed>"`)
     .join(", ")}}, "expects": "<what it should return>"}.`;
+}
+
+/** The generation spec for one machine (its kidPrompt is shown to students before the machine). */
+export function specFor(machine: MachineId): GenSpec {
+  return GEN_SPECS.find((s) => s.machine === machine)!;
 }

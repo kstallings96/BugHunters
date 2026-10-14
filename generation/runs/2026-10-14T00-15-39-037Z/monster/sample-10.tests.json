@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "godzilla"
+    },
+    "expects": "GODZILLA"
+  },
+  {
+    "inputs": {
+      "name": "frankenstein"
+    },
+    "expects": "FRANKENSTEIN"
+  },
+  {
+    "inputs": {
+      "name": "verylongmonstername"
+    },
+    "expects": "VERYLONGMONS"
+  },
+  {
+    "inputs": {
+      "name": "dracula"
+    },
+    "expects": "DRACULA"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": "1234567890123"
+    },
+    "expects": "123456789012"
+  }
+]

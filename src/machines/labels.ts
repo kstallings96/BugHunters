@@ -1,22 +1,48 @@
-import type { Category } from "./types";
+import type { Category, Machine } from "./types";
 
 /**
  * "What kind of input broke it?": the choices students label a bug with,
  * in the order shown, and how each classifier category maps onto them.
- * label_agreement compares the student's choice with labelFor().
+ * Number apps and the name app get their own lists ("Not a number" vs
+ * "Has numbers"). label_agreement compares the student's choice with labelFor().
  */
 
-export type StudentLabel = "zero" | "blank" | "negative" | "too_big" | "exact_limit" | "wrong_kind" | "something_else";
+export type StudentLabel =
+  | "zero"
+  | "blank"
+  | "negative"
+  | "too_big"
+  | "exact_limit"
+  | "not_a_number"
+  | "has_numbers"
+  | "symbols"
+  | "something_else";
 
-export const STUDENT_LABELS: { id: StudentLabel; text: string }[] = [
+const NUMBER_LABELS: { id: StudentLabel; text: string }[] = [
   { id: "zero", text: "Zero" },
   { id: "blank", text: "Blank" },
   { id: "negative", text: "Negative" },
   { id: "too_big", text: "Too big" },
   { id: "exact_limit", text: "Exactly the limit" },
-  { id: "wrong_kind", text: "Wrong kind" },
+  { id: "not_a_number", text: "Not a number" },
   { id: "something_else", text: "Something else" },
 ];
+
+const TEXT_LABELS: { id: StudentLabel; text: string }[] = [
+  { id: "blank", text: "Blank" },
+  { id: "too_big", text: "Too long" },
+  { id: "exact_limit", text: "Exactly the limit" },
+  { id: "has_numbers", text: "Has numbers" },
+  { id: "symbols", text: "Symbols or emoji" },
+  { id: "something_else", text: "Something else" },
+];
+
+const isText = (machine: Pick<Machine, "fields">) => machine.fields.every((f) => f.kind === "text");
+
+/** The label choices for this machine, in the order shown. */
+export function studentLabels(machine: Pick<Machine, "fields">): { id: StudentLabel; text: string }[] {
+  return isText(machine) ? TEXT_LABELS : NUMBER_LABELS;
+}
 
 const MAP: Record<Category, StudentLabel | null> = {
   normal: null,
@@ -28,8 +54,9 @@ const MAP: Record<Category, StudentLabel | null> = {
   huge: "too_big",
   very_long: "too_big",
   boundary: "exact_limit",
-  wrong_type: "wrong_kind",
-  special: "wrong_kind",
+  wrong_type: "not_a_number",
+  // "$20" in a number box isn't just a number.
+  special: "not_a_number",
   decimal: "something_else",
   rounding: "something_else",
   off_by_one: "exact_limit",
@@ -37,13 +64,17 @@ const MAP: Record<Category, StudentLabel | null> = {
   out_of_range: null,
 };
 
+const TEXT_MAP: Partial<Record<Category, StudentLabel>> = { wrong_type: "has_numbers", special: "symbols" };
+
 /**
  * The label a careful student would pick: from the bug kind when there is
  * one, otherwise from the input's own categories (for false alarms and
  * debatable cases). Null for an ordinary input.
  */
-export function labelFor(kind: Category | null, categories: Category[]): StudentLabel | null {
-  const pick = (c: Category): StudentLabel | null => (c === "out_of_range" ? (categories.includes("negative") ? "negative" : "too_big") : MAP[c]);
+export function labelFor(kind: Category | null, categories: Category[], machine?: Pick<Machine, "fields">): StudentLabel | null {
+  const text = machine ? isText(machine) : false;
+  const pick = (c: Category): StudentLabel | null =>
+    c === "out_of_range" ? (categories.includes("negative") ? "negative" : "too_big") : ((text && TEXT_MAP[c]) || MAP[c]);
   if (kind) return pick(kind);
   for (const c of categories) {
     const l = pick(c);

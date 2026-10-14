@@ -1,0 +1,22 @@
+{
+  "provider": "OpenRouter",
+  "requested_model": "google/gemini-3.1-flash-lite",
+  "reported_models": [
+    "google/gemini-3.1-flash-lite"
+  ],
+  "date": "2026-10-14T00:15:39.038Z",
+  "settings": {
+    "temperature": 1,
+    "max_tokens": 2000,
+    "reasoning": {
+      "effort": "low"
+    }
+  },
+  "samples_per_machine": 15,
+  "prompts": {
+    "monster": {
+      "build": "make an app that names my monster. Monster names in ALL CAPS, up to 12 letters.\n\nWrite it as ONE plain JavaScript function, no HTML, no imports, no console.log. Every argument is the text the user typed, exactly as typed (a string). The function returns the string to show on the screen. Put the code in a single ```js block. Name it monsterName(name). For an answer, return just the name to show with the monster.",
+      "tests": "Here is a JavaScript function you wrote:\n\n```js\n<the sample's code>\n```\n\nWrite tests for monsterName. Reply with ONLY a JSON array, no other text. Each item: {\"inputs\": {\"name\": \"<text typed>\"}, \"expects\": \"<what it should return>\"}."
+    }
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "inputs": {
+      "name": "bob"
+    },
+    "expects": "MONSTRO-BOB"
+  },
+  {
+    "inputs": {
+      "name": "fred"
+    },
+    "expects": "MONSTRO-FRED"
+  },
+  {
+    "inputs": {
+      "name": "z"
+    },
+    "expects": "MONSTRO-Z"
+  },
+  {
+    "inputs": {
+      "name": "verylongnamehere"
+    },
+    "expects": "MONSTRO-VERY"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": "MONSTRO-"
+  },
+  {
+    "inputs": {
+      "name": "123"
+    },
+    "expects": "MONSTRO-123"
+  }
+]

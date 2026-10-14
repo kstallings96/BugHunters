@@ -1,0 +1,6 @@
+function monsterName(name) {
+  if (!name || typeof name !== 'string') {
+    return "BEAST";
+  }
+  return name.toUpperCase().substring(0, 12);
+}

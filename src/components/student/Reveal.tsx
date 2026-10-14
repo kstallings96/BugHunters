@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { BigButton } from "@/components/ui";
-import { AI_TESTS, AI_TESTS_SOURCE } from "@/config/aiTests";
+import { AI_TESTS, AI_TESTS_SOURCE, shownExpectation } from "@/config/aiTests";
 import { logEvent } from "@/lib/logger";
 import type { BustedBug } from "@/lib/types";
-import { categorize, CATEGORY_LABEL, MACHINES, type MachineId } from "@/machines";
+import { bugLabel, categorize, MACHINES, type MachineId } from "@/machines";
 
 /**
  * The missed-bug reveal: kinds the student found ✓, kinds still hiding with
@@ -19,7 +19,8 @@ function split(machine: MachineId, busted: BustedBug[]) {
 }
 
 function describeInputs(machine: MachineId, inputs: Record<string, string>): string {
-  return MACHINES[machine].fields.map((f) => (MACHINES[machine].fields.length > 1 ? `${f.label}: ${inputs[f.id]}` : inputs[f.id])).join(", ");
+  const shown = (raw: string) => (raw === "" ? "(empty)" : raw);
+  return MACHINES[machine].fields.map((f) => (MACHINES[machine].fields.length > 1 ? `${f.label}: ${shown(inputs[f.id])}` : shown(inputs[f.id]))).join(", ");
 }
 
 /** True when every AI test used only ordinary inputs (so we can say so). */
@@ -57,7 +58,7 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
           <ul className="flex flex-col gap-1.5">
             {tests.map((t) => (
               <li key={JSON.stringify(t.inputs)} className="rounded-xl bg-white px-3 py-1.5 text-lg">
-                {describeInputs(machine, t.inputs)} → {t.expects} ✅
+                {describeInputs(machine, t.inputs)} → {shownExpectation(t.expects).trim() === "" ? "(blank)" : shownExpectation(t.expects)} ✅
               </li>
             ))}
           </ul>
@@ -65,7 +66,7 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
         </section>
         <section className="flex flex-col gap-2 rounded-3xl border-2 border-line bg-card p-4">
           <h2 className="text-xl font-bold">🔍 Here&apos;s what you found.</h2>
-          <BugList found={found.map((b) => CATEGORY_LABEL[b.kind])} hiding={hiding.map((b) => ({ label: CATEGORY_LABEL[b.kind], tryThis: b.tryThis }))} />
+          <BugList found={found.map((b) => bugLabel(machine, b.kind))} hiding={hiding.map((b) => ({ label: bugLabel(machine, b.kind), tryThis: b.tryThis }))} />
         </section>
       </div>
       <BigButton onClick={onNext} className="self-end">
@@ -93,11 +94,11 @@ export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]
             <h2 className="text-xl font-bold">
               {MACHINES[p.id].icon} {MACHINES[p.id].name}
             </h2>
-            <BugList compact found={p.found.map((b) => CATEGORY_LABEL[b.kind])} hiding={p.hiding.map((b) => ({ label: CATEGORY_LABEL[b.kind], tryThis: b.tryThis }))} />
+            <BugList compact found={p.found.map((b) => bugLabel(p.id, b.kind))} hiding={p.hiding.map((b) => ({ label: bugLabel(p.id, b.kind), tryThis: b.tryThis }))} />
           </section>
         ))}
       </div>
-      {machines.every(onlyOrdinary) && <p className="text-lg">🤖 The AI&apos;s own tests only tried ordinary inputs, like $20 and SMITH.</p>}
+      {machines.every(onlyOrdinary) && <p className="text-lg">🤖 The AI&apos;s own tests only tried ordinary inputs.</p>}
       <BigButton onClick={onNext} className="self-end">
         Finish →
       </BigButton>

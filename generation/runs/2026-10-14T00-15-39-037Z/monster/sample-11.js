@@ -1,0 +1,5 @@
+function monsterName(name) {
+  var prefix = "MONSTRO-";
+  var combined = (prefix + name).toUpperCase();
+  return combined.substring(0, 12);
+}

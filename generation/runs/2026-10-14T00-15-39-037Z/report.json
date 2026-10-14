@@ -1,0 +1,1191 @@
+{
+  "monster": [
+    {
+      "sample": "sample-01.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-02.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "UNNAMED",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "UNNAMED",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "UNNAMED",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-03.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-04.js",
+      "bugs": [
+        "normal",
+        "boundary",
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "KRAK-GRIZZLE",
+          "bug": "normal"
+        },
+        {
+          "inputs": {
+            "name": "grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "KRAK-GRIZZLE",
+          "bug": "normal"
+        },
+        {
+          "inputs": {
+            "name": "Abcdefghijk"
+          },
+          "expected": "ABCDEFGHIJK",
+          "got": "KRAK-ABCDEFG",
+          "bug": "boundary"
+        },
+        {
+          "inputs": {
+            "name": "Abcdefghijkl"
+          },
+          "expected": "ABCDEFGHIJKL",
+          "got": "KRAK-ABCDEFG",
+          "bug": "boundary"
+        },
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "KRAK-ABCDEFG",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "KRAK-FLUFFER",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "KRAK-",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "KRAK-    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "KRAK-  GRIZZ",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "KRAK-23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "KRAK-GRIZZLE",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "KRAK-GRIZZLE",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-05.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-06.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-07.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-08.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-09.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-10.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-11.js",
+      "bugs": [
+        "normal",
+        "boundary",
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "MONSTRO-GRIZ",
+          "bug": "normal"
+        },
+        {
+          "inputs": {
+            "name": "grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "MONSTRO-GRIZ",
+          "bug": "normal"
+        },
+        {
+          "inputs": {
+            "name": "Abcdefghijk"
+          },
+          "expected": "ABCDEFGHIJK",
+          "got": "MONSTRO-ABCD",
+          "bug": "boundary"
+        },
+        {
+          "inputs": {
+            "name": "Abcdefghijkl"
+          },
+          "expected": "ABCDEFGHIJKL",
+          "got": "MONSTRO-ABCD",
+          "bug": "boundary"
+        },
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "MONSTRO-ABCD",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "MONSTRO-FLUF",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "MONSTRO-",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "MONSTRO-    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "MONSTRO-  GR",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "MONSTRO-23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "MONSTRO-GRIZ",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "MONSTRO-GRIZ",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-12.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-13.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-14.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    },
+    {
+      "sample": "sample-15.js",
+      "bugs": [
+        "very_long",
+        "empty",
+        "spaces_only",
+        "extra_spaces",
+        "wrong_type",
+        "special"
+      ],
+      "findings": [
+        {
+          "inputs": {
+            "name": "Abcdefghijklm"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "ABCDEFGHIJKL",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": "Fluffernutterbob"
+          },
+          "expected": "Up to 12 letters.",
+          "got": "FLUFFERNUTTE",
+          "bug": "very_long"
+        },
+        {
+          "inputs": {
+            "name": ""
+          },
+          "expected": "Please type a monster name.",
+          "got": "BEAST",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "name": "    "
+          },
+          "expected": "Please type a monster name.",
+          "got": "    ",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "name": "  Grizzle"
+          },
+          "expected": "GRIZZLE",
+          "got": "  GRIZZLE",
+          "bug": "extra_spaces"
+        },
+        {
+          "inputs": {
+            "name": "23"
+          },
+          "expected": "Names use letters only.",
+          "got": "23",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle2"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE2",
+          "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "name": "Grizzle😀"
+          },
+          "expected": "Names use letters only.",
+          "got": "GRIZZLE😀",
+          "bug": "special"
+        }
+      ]
+    }
+  ]
+}

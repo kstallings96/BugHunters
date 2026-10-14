@@ -1,5 +1,5 @@
 import { runInNewContext } from "node:vm";
-import { MACHINES, evaluate } from "@/machines";
+import { MACHINES, evaluate, writesDollar } from "@/machines";
 import type { Category, Inputs, MachineId } from "@/machines/types";
 import { GEN_SPECS, RAFFLE_GEN, type GenSpec } from "./specs";
 
@@ -33,7 +33,8 @@ export function loadFunction(code: string, name: string): (...args: string[]) =>
 // "???" is how the hand-written apps display NaN, so it counts as an answer too.
 const NUM = String.raw`(-?[\d.,]+|NaN|\?\?\?|Infinity|-Infinity|undefined)`;
 const ANSWER: Partial<Record<MachineId, RegExp>> = {
-  allowance: new RegExp(String.raw`^\$\s?${NUM}$`),
+  // "20" for "$20" is a format slip, not a refusal.
+  allowance: new RegExp(String.raw`^\$?\s?${NUM}$`),
   savings: new RegExp(String.raw`^${NUM} weeks?$`),
   sale: new RegExp(String.raw`^Sale price: \$\s?${NUM}$`),
 };
@@ -42,7 +43,7 @@ const ANSWER: Partial<Record<MachineId, RegExp>> = {
 export function classifyOutput(machine: MachineId, text: string, refAnswer: string | null): Outcome {
   const pattern = ANSWER[machine];
   if (pattern) return pattern.test(text.trim()) ? { kind: "answer", text: text.trim() } : { kind: "message", text };
-  // Jersey: the printed name is an answer when it looks like a name (or is
+  // Monster Namer: the printed name is an answer when it looks like a name (or is
   // blank / matches the reference); sentences are messages.
   if (refAnswer !== null && text === refAnswer) return { kind: "answer", text };
   return /\s\w+\s|[.!?]$/.test(text.trim()) && text.trim().length > 14 ? { kind: "message", text } : { kind: "answer", text };
@@ -58,9 +59,9 @@ function run(fn: (...a: string[]) => unknown, spec: GenSpec, inputs: Inputs): Ou
 }
 
 // Number answers are compared loosely ("$30.00" = "$30", "1 weeks" = "1 week");
-// printed names exactly, because stray spaces on a jersey are themselves a bug.
+// printed names exactly, because stray spaces in a name are themselves a bug.
 const normalize = (machine: MachineId, s: string) =>
-  machine === "jersey" ? s : s.replace(/weeks?/, "").replace(/[$,\s]/g, "").replace(/\.0+(?=\D|$)/, "");
+  machine === "monster" ? s : s.replace(/weeks?/, "").replace(/[$,\s]/g, "").replace(/\.0+(?=\D|$)/, "");
 
 /** Every bug this function shows on the battery. */
 export function findBugs(spec: GenSpec, fn: (...a: string[]) => unknown): Finding[] {
@@ -70,6 +71,8 @@ export function findBugs(spec: GenSpec, fn: (...a: string[]) => unknown): Findin
     const e = evaluate(machine, inputs, { today: new Date() });
     if (e.debatable) continue;
     const got = run(fn, spec, inputs);
+    // Refusing "$20" is debatable (the request doesn't say); breaking on it is a bug.
+    if (writesDollar(machine, inputs) && got.kind === "message") continue;
     const gotText = got.kind === "crash" ? `crash: ${got.error}` : got.text;
     if (e.reference.type === "not_allowed") {
       // Any refusal message is fine; an answer or a crash is a bug.

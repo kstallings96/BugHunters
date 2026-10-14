@@ -1,8 +1,9 @@
 import { allowance } from "./allowance";
-import { jersey } from "./jersey";
+import { monster } from "./monster";
 import { sale } from "./sale";
 import { savings } from "./savings";
-import { classifyNumberField, classifyTextField, finalize, stableHash } from "./classify";
+import { classifyNumberField, classifyTextField, finalize, parseMoney, stableHash } from "./classify";
+import { CATEGORY_LABEL } from "./types";
 import type { BustedVerdict, Category, Context, Evaluation, Inputs, Machine, MachineId, Output } from "./types";
 
 export * from "./types";
@@ -12,7 +13,7 @@ export const MACHINES: Record<MachineId, Machine> = {
   allowance,
   savings,
   sale,
-  jersey,
+  monster,
 };
 
 /** The two number machines; one of them goes first (counterbalanced). */
@@ -29,7 +30,9 @@ export function categorize(machine: Machine, inputs: Inputs, ctx: Context): Cate
   return finalize(cats);
 }
 
-const same = (a: Output, b: Output) => a.type === b.type && a.text === b.text;
+/** Same answer, or both refuse (in any words: the app's "Invalid input" counts). */
+const refuses = (o: Output) => o.type !== "result";
+const same = (a: Output, b: Output) => (refuses(a) && refuses(b)) || (a.type === b.type && a.text === b.text);
 
 /**
  * Ground truth for one input: run it through the buggy and reference
@@ -39,13 +42,22 @@ export function evaluate(machine: Machine, inputs: Inputs, ctx: Context): Evalua
   const categories = categorize(machine, inputs, ctx);
   const buggy = machine.buggy(inputs, ctx);
   const reference = machine.reference(inputs, ctx);
-  const debatable = machine.debatable(inputs, ctx);
+  const debatable = machine.debatable(inputs, ctx) || (writesDollar(machine, inputs) && buggy.type !== "result");
   const differs = !same(buggy, reference);
   let bugKind: Category | null = null;
   if (differs && !debatable) {
     bugKind = reference.type === "not_allowed" ? reference.rule : (machine.resultBugKind?.(inputs, categories) ?? categories[0]);
   }
   return { categories, buggy, reference, revealsBug: differs && !debatable, bugKind, debatable };
+}
+
+/**
+ * Money typed with a dollar sign ("$20") that the app REFUSES: the request
+ * doesn't say whether "$" is OK, so refusing it is debatable, never a bug.
+ * (An app that breaks on it, showing "$???", still has a bug.)
+ */
+export function writesDollar(machine: Machine, inputs: Inputs): boolean {
+  return machine.fields.some((f) => f.kind === "number" && /^\s*\$/.test(inputs[f.id] ?? "") && parseMoney(inputs[f.id]) !== null);
 }
 
 /** What a Busted! on this input means. */
@@ -64,4 +76,10 @@ export function answerChoices(machine: Machine, inputs: Inputs, shownText: strin
   const shift = stableHash(JSON.stringify(inputs)) % unique.length;
   const options = [...unique.slice(shift), ...unique.slice(0, shift)];
   return { options, correct: options.indexOf(correctText) };
+}
+
+/** What students call this kind of bug on this machine ("Has numbers" on the Monster Namer). */
+export function bugLabel(machine: Machine | MachineId | "raffle", kind: Category): string {
+  const m = typeof machine === "string" ? (machine === "raffle" ? null : MACHINES[machine]) : machine;
+  return m?.labels?.[kind] ?? CATEGORY_LABEL[kind];
 }

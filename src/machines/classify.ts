@@ -1,4 +1,4 @@
-import type { Category } from "./types";
+import type { Category, Output } from "./types";
 
 /**
  * Generic input categories for one field. Machines add their own boundary
@@ -91,6 +91,16 @@ export function finalize(cats: Category[]): Category[] {
 /** How the buggy machines print a number: NaN shows as "???" so middle schoolers can see it broke. */
 export function shown(n: number): string {
   return Number.isNaN(n) ? "???" : String(n);
+}
+
+/**
+ * The display layer around an AI-written function: "NaN" anywhere in what
+ * it returns shows as "???" (recorded in generation/DISCLOSURE.md), and its
+ * own refusal messages count as refusing.
+ */
+export function aiOutput(returned: unknown, refusals: string[] = []): Output {
+  const text = String(returned).replace(/NaN/g, "???");
+  return refusals.includes(text) ? { type: "message", text } : { type: "result", text };
 }
 
 /** Small stable hash, so option order varies between questions but never between students. */

@@ -54,7 +54,7 @@ export interface MetricRow {
   label_agreement: number | null;
   /** Share of "It should say" answers that were right (null if no Busted!). */
   expected_correct: number | null;
-  /** Jersey row only: categories used here that the student first used on a number app. */
+  /** Monster row only: categories used here that the student first used on a number app. */
   transfer_categories: string | null;
   transfer_count: number | null;
   nudge_shown: boolean;
@@ -90,7 +90,7 @@ export function computeMetrics(session: MetricSession, events: MetricEvent[]): M
     const firstDiag = diagnostic[0];
 
     let transfer: string[] | null = null;
-    if (machine === "jersey") transfer = [...tried].filter((c) => triedOnNumbers.has(c)).sort();
+    if (machine === "monster") transfer = [...tried].filter((c) => triedOnNumbers.has(c)).sort();
     else for (const c of tried) triedOnNumbers.add(c);
 
     rows.push({

@@ -1,0 +1,50 @@
+[
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "Super Dragon 9000"
+    },
+    "expects": "SUPERDRAGON"
+  },
+  {
+    "inputs": {
+      "name": "a-very-long-monster-name-indeed"
+    },
+    "expects": "AVERYLONGMON"
+  },
+  {
+    "inputs": {
+      "name": "12345"
+    },
+    "expects": "UNNAMED"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": "UNNAMED"
+  },
+  {
+    "inputs": {
+      "name": "!!! ??"
+    },
+    "expects": "UNNAMED"
+  },
+  {
+    "inputs": {
+      "name": "  Orc  "
+    },
+    "expects": "ORC"
+  },
+  {
+    "inputs": {
+      "name": "ShadowStalkerExtraLongName"
+    },
+    "expects": "SHADOWSTALKE"
+  }
+]

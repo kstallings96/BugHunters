@@ -1,0 +1,44 @@
+[
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "Fire Breathing Dragon"
+    },
+    "expects": "FIRE BREATHI"
+  },
+  {
+    "inputs": {
+      "name": "orc"
+    },
+    "expects": "ORC"
+  },
+  {
+    "inputs": {
+      "name": "verylongmonstername"
+    },
+    "expects": "VERYLONGMONS"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "A"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": "1234567890123"
+    },
+    "expects": "123456789012"
+  }
+]

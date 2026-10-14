@@ -7,7 +7,7 @@
  */
 export type Disclosure = "handwritten" | "generated_with_planted" | "generated";
 
-export const DISCLOSURE: Disclosure = "handwritten";
+export const DISCLOSURE: Disclosure = "generated_with_planted";
 
 export const DISCLOSURE_LINE: Record<Disclosure, string | null> = {
   handwritten: "Practice version: people wrote these apps to act like AI-built ones.",

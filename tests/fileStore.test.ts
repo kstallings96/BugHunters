@@ -11,7 +11,7 @@ const session: SessionRow = {
   id: sid,
   student_id: stid,
   is_test: false,
-  machine_order: ["savings", "sale", "jersey"],
+  machine_order: ["savings", "sale", "monster"],
   order_assignment: "random",
   reveal_condition: "reveal",
   reveal_assignment: "random",

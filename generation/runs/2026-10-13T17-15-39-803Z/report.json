@@ -3,32 +3,32 @@
     {
       "sample": "sample-01.js",
       "bugs": [
-        "wrong_type"
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-02.js",
       "bugs": [
-        "wrong_type"
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
@@ -37,7 +37,8 @@
       "bugs": [
         "wrong_type",
         "empty",
-        "spaces_only"
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
@@ -66,109 +67,111 @@
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-04.js",
       "bugs": [
-        "rejects_valid",
-        "wrong_type"
+        "empty",
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "10"
+            "allowance": ""
           },
-          "expected": "$20",
-          "got": "20",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "empty"
         },
         {
           "inputs": {
-            "allowance": "2.5"
+            "allowance": "   "
           },
-          "expected": "$5",
-          "got": "5",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "spaces_only"
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "-10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-05.js",
       "bugs": [
-        "rejects_valid",
-        "wrong_type"
+        "empty",
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "10"
+            "allowance": ""
           },
-          "expected": "$20",
-          "got": "20",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "empty"
         },
         {
           "inputs": {
-            "allowance": "2.5"
+            "allowance": "   "
           },
-          "expected": "$5",
-          "got": "5",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "spaces_only"
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "-10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-06.js",
       "bugs": [
-        "wrong_type"
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-07.js",
       "bugs": [
-        "wrong_type"
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
@@ -177,7 +180,8 @@
       "bugs": [
         "wrong_type",
         "empty",
-        "spaces_only"
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
@@ -206,44 +210,54 @@
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-09.js",
       "bugs": [
-        "rejects_valid",
-        "wrong_type"
+        "wrong_type",
+        "empty",
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "10"
-          },
-          "expected": "$20",
-          "got": "20",
-          "bug": "rejects_valid"
-        },
-        {
-          "inputs": {
-            "allowance": "2.5"
-          },
-          "expected": "$5",
-          "got": "5",
-          "bug": "rejects_valid"
-        },
-        {
-          "inputs": {
-            "allowance": "$10"
+            "allowance": "cat"
           },
           "expected": "That's not a number.",
-          "got": "$20",
+          "got": "NaN",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "allowance": ""
+          },
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "empty"
+        },
+        {
+          "inputs": {
+            "allowance": "   "
+          },
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "allowance": "-5"
+          },
+          "expected": "Allowance can't be below zero.",
+          "got": "10",
+          "bug": "negative"
         }
       ]
     },
@@ -252,7 +266,8 @@
       "bugs": [
         "wrong_type",
         "empty",
-        "spaces_only"
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
@@ -281,126 +296,129 @@
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-11.js",
       "bugs": [
-        "rejects_valid",
-        "wrong_type"
+        "empty",
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "10"
+            "allowance": ""
           },
-          "expected": "$20",
-          "got": "20",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "empty"
         },
         {
           "inputs": {
-            "allowance": "2.5"
+            "allowance": "   "
           },
-          "expected": "$5",
-          "got": "5",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "spaces_only"
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "-10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-12.js",
       "bugs": [
-        "rejects_valid",
-        "wrong_type"
+        "empty",
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "10"
+            "allowance": ""
           },
-          "expected": "$20",
-          "got": "20",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "empty"
         },
         {
           "inputs": {
-            "allowance": "2.5"
+            "allowance": "   "
           },
-          "expected": "$5",
-          "got": "5",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "spaces_only"
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "-10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-13.js",
       "bugs": [
-        "wrong_type"
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     },
     {
       "sample": "sample-14.js",
       "bugs": [
-        "rejects_valid",
-        "wrong_type"
+        "empty",
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
           "inputs": {
-            "allowance": "10"
+            "allowance": ""
           },
-          "expected": "$20",
-          "got": "20",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "empty"
         },
         {
           "inputs": {
-            "allowance": "2.5"
+            "allowance": "   "
           },
-          "expected": "$5",
-          "got": "5",
-          "bug": "rejects_valid"
+          "expected": "Please type a number.",
+          "got": "NaN",
+          "bug": "spaces_only"
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "-10",
+          "bug": "negative"
         }
       ]
     },
@@ -409,7 +427,8 @@
       "bugs": [
         "wrong_type",
         "empty",
-        "spaces_only"
+        "spaces_only",
+        "negative"
       ],
       "findings": [
         {
@@ -438,11 +457,11 @@
         },
         {
           "inputs": {
-            "allowance": "$10"
+            "allowance": "-5"
           },
-          "expected": "That's not a number.",
-          "got": "$20",
-          "bug": "wrong_type"
+          "expected": "Allowance can't be below zero.",
+          "got": "$10",
+          "bug": "negative"
         }
       ]
     }
@@ -451,19 +470,9 @@
     {
       "sample": "sample-01.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -478,19 +487,9 @@
     {
       "sample": "sample-02.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -506,7 +505,6 @@
       "sample": "sample-03.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -518,15 +516,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -542,19 +531,9 @@
     {
       "sample": "sample-04.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -570,7 +549,6 @@
       "sample": "sample-05.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -582,15 +560,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -607,7 +576,6 @@
       "sample": "sample-06.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -619,15 +587,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -643,19 +602,9 @@
     {
       "sample": "sample-07.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -670,19 +619,9 @@
     {
       "sample": "sample-08.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -698,7 +637,6 @@
       "sample": "sample-09.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -710,15 +648,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -735,7 +664,6 @@
       "sample": "sample-10.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -747,15 +675,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -772,7 +691,6 @@
       "sample": "sample-11.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -784,15 +702,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -809,7 +718,6 @@
       "sample": "sample-12.js",
       "bugs": [
         "negative",
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
@@ -821,15 +729,6 @@
           "expected": "Money can't be below zero.",
           "got": "-4 weeks",
           "bug": "negative"
-        },
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
         },
         {
           "inputs": {
@@ -845,19 +744,9 @@
     {
       "sample": "sample-13.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -872,19 +761,9 @@
     {
       "sample": "sample-14.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -899,19 +778,9 @@
     {
       "sample": "sample-15.js",
       "bugs": [
-        "rejects_valid",
         "wrong_type"
       ],
       "findings": [
-        {
-          "inputs": {
-            "price": "$20",
-            "saved": "5"
-          },
-          "expected": "4 weeks",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        },
         {
           "inputs": {
             "price": "1.2.3",
@@ -927,20 +796,8 @@
   "sale": [
     {
       "sample": "sample-01.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-02.js",
@@ -971,20 +828,8 @@
     },
     {
       "sample": "sample-03.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-04.js",
@@ -992,6 +837,7 @@
         "out_of_range",
         "negative",
         "empty",
+        "spaces_only",
         "wrong_type",
         "special"
       ],
@@ -1035,6 +881,15 @@
         {
           "inputs": {
             "price": "40",
+            "off": "   "
+          },
+          "expected": "Please type the % off.",
+          "got": "Sale price: $NaN",
+          "bug": "spaces_only"
+        },
+        {
+          "inputs": {
+            "price": "40",
             "off": "half"
           },
           "expected": "That's not a number.",
@@ -1046,7 +901,7 @@
             "price": "$40",
             "off": "25"
           },
-          "expected": "Sale price: $30",
+          "expected": "Sale price: $30.00",
           "got": "Sale price: $NaN",
           "bug": "special"
         }
@@ -1090,139 +945,43 @@
     },
     {
       "sample": "sample-06.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-07.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-08.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-09.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-10.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-11.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-12.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-13.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     },
     {
       "sample": "sample-14.js",
@@ -1262,1168 +1021,8 @@
     },
     {
       "sample": "sample-15.js",
-      "bugs": [
-        "rejects_valid"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "price": "$40",
-            "off": "25"
-          },
-          "expected": "Sale price: $30",
-          "got": "Invalid input",
-          "bug": "rejects_valid"
-        }
-      ]
-    }
-  ],
-  "jersey": [
-    {
-      "sample": "sample-01.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-02.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-03.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-04.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-05.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-06.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-07.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-08.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-09.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-10.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-11.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-12.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-13.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-14.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
-    },
-    {
-      "sample": "sample-15.js",
-      "bugs": [
-        "very_long",
-        "empty",
-        "spaces_only",
-        "extra_spaces",
-        "wrong_type",
-        "special"
-      ],
-      "findings": [
-        {
-          "inputs": {
-            "name": "Abcdefghijklm"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "ABCDEFGHIJKL",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": "Montgomeryville"
-          },
-          "expected": "Up to 12 letters.",
-          "got": "MONTGOMERYVI",
-          "bug": "very_long"
-        },
-        {
-          "inputs": {
-            "name": ""
-          },
-          "expected": "Please type a last name.",
-          "got": "",
-          "bug": "empty"
-        },
-        {
-          "inputs": {
-            "name": "    "
-          },
-          "expected": "Please type a last name.",
-          "got": "    ",
-          "bug": "spaces_only"
-        },
-        {
-          "inputs": {
-            "name": "  Smith"
-          },
-          "expected": "SMITH",
-          "got": "  SMITH",
-          "bug": "extra_spaces"
-        },
-        {
-          "inputs": {
-            "name": "23"
-          },
-          "expected": "Names use letters only.",
-          "got": "23",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith2"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH2",
-          "bug": "wrong_type"
-        },
-        {
-          "inputs": {
-            "name": "Smith😀"
-          },
-          "expected": "Names use letters only.",
-          "got": "SMITH😀",
-          "bug": "special"
-        }
-      ]
+      "bugs": [],
+      "findings": []
     }
   ],
   "raffle": [

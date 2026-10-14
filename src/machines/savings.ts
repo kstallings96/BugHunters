@@ -1,13 +1,21 @@
-import { missingLine, parseMoney, shown } from "./classify";
+import { specFor } from "@/generation/specs";
+import { weeksToSave } from "./ai/savings";
+import { aiOutput, classifyNumberField, missingLine, parseMoney } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
  * Savings Planner (number machine A or B). How many weeks to save up?
- * Buggy: price ÷ saved, rounded to the NEAREST week (not up), no checks:
- * $0/week → Infinity, negatives go through, blank or words → ???, "$20"
- * → ??? (the dollar sign), "1.2.3" → read as 1.2.
+ * Buggy: the AI's own code (src/machines/ai/savings.js) with two lines
+ * planted by the research team (it handled both correctly):
+ *   zero      saving $0 a week → "Infinity weeks"           (planted)
+ *   rounding  rounds to the NEAREST week, not up            (planted)
+ * and the AI's own bugs: a negative price goes through, and parseFloat
+ * reads "1.2.3" as 1.2 and "20abc" as 20. Blank, words, negative savings
+ * and "$20" get its "Invalid input" message.
  * Reference: money may start with "$"; nothing below zero; saving $0 a
  * week can't work; weeks always round UP (the request says so).
+ * Debatable: "$20", which it refuses. The request doesn't say whether a
+ * dollar sign is OK.
  */
 
 const weeks = (n: number | string) => (Number(n) === 1 ? "1 week" : `${n} weeks`);
@@ -24,15 +32,11 @@ function money(raw: string, what: string): Money {
   return { ok: true, n };
 }
 
-// Missing checks go after line 2, before the division.
+// Lines: 1 read price, 2 read saved, 3 the check, 4 divide and round, 5 show.
 const FIXES: Partial<Record<Category, Fix>> = {
-  rounding: { type: "wrong_line", line: 3 },
-  zero: missingLine(2, 'if saved is 0 → say "You have to save more than $0 a week."', 'if price is 0 → say "It\'s free!"', "weeks = price × saved"),
-  negative: missingLine(2, 'if price or saved is below 0 → say "Money can\'t be below zero."', 'if price is over $100 → say "That\'s a lot!"', "weeks = saved ÷ price"),
-  empty: missingLine(2, 'if price or saved is blank → say "Please type a number."', 'if saved is 1 → say "Slow and steady!"', "weeks = price − saved"),
-  spaces_only: missingLine(2, 'if price or saved is blank → say "Please type a number."', 'if price is 0 → say "It\'s free!"', "weeks = price + saved"),
-  wrong_type: missingLine(2, 'if price or saved is not a number → say "That\'s not a number."', 'if saved is 1 → say "Slow and steady!"', "weeks = price × 2"),
-  special: missingLine(0, 'price = price without the "$" sign', 'price = price + "$"', 'show "$" + price'),
+  zero: { type: "wrong_line", line: 3 },
+  rounding: { type: "wrong_line", line: 4 },
+  negative: missingLine(3, 'if price is below 0 → say "Invalid input"', 'if price is over $100 → say "That\'s a lot!"', "weeks = saved ÷ price"),
 };
 
 export const savings: Machine = {
@@ -41,14 +45,12 @@ export const savings: Machine = {
   icon: "🐷",
   purpose: "Tells you how many weeks to save for something.",
   request: "How many weeks to save up? Round up to whole weeks.",
+  prompt: specFor("savings").kidPrompt,
   fields: [
     { id: "price", label: "Price ($)", kind: "number" },
     { id: "saved", label: "Saved per week ($)", kind: "number" },
   ],
-  buggy: ({ price, saved }: Inputs): Output => ({
-    type: "result",
-    text: weeks(shown(Math.round(parseFloat(price) / parseFloat(saved)))),
-  }),
+  buggy: ({ price, saved }: Inputs): Output => aiOutput(weeksToSave(price, saved), ["Invalid input"]),
   reference: ({ price, saved }: Inputs): Output => {
     const p = money(price, "price");
     if (!p.ok) return p.out;
@@ -63,24 +65,32 @@ export const savings: Machine = {
     // Boundaries: $0 a week, saving exactly the price, a $0 price.
     return s === 0 || p === 0 || (p !== null && s !== null && p === s) ? ["boundary"] : [];
   },
+  // "$20" is debatable because this app refuses it (see writesDollar in index.ts).
   debatable: () => false,
-  // Both versions answer but disagree: "$20" (the buggy one can't read the
-  // dollar sign) or the nearest-week rounding.
-  resultBugKind: (_inputs, categories) => (categories.includes("special") ? "special" : "rounding"),
+  // Both versions answer but disagree: the nearest-week rounding.
+  resultBugKind: (_inputs, categories) => (categories.includes("wrong_type") ? "wrong_type" : "rounding"),
   otherAnswers: ({ price, saved }) => {
     const p = parseMoney(price);
     const s = parseMoney(saved);
     if (p !== null && s !== null && s > 0 && p >= 0) return [weeks(Math.floor(p / s)), weeks(Math.ceil(p / s) + 1)];
     return [weeks(0), weeks(1)];
   },
-  pseudocode: ["price = the price", "saved = saved per week", "weeks = price ÷ saved, rounded to the nearest week", 'show weeks + " weeks"'],
-  fixFor: (kind) => FIXES[kind] ?? FIXES.wrong_type!,
+  pseudocode: [
+    "price = the number at the start of what you typed",
+    "saved = the number at the start of what you typed",
+    'if price or saved is not a number, or saved is below 0 → say "Invalid input"',
+    "weeks = price ÷ saved, rounded to the nearest week",
+    'show weeks + " weeks"',
+  ],
+  fixFor: (kind, inputs) => {
+    // "1.2.3" gets read as 1.2: the guilty line reads that box.
+    if (kind === "wrong_type") return { type: "wrong_line", line: classifyNumberField(inputs.price ?? "").includes("wrong_type") ? 1 : 2 };
+    return FIXES[kind] ?? FIXES.negative!;
+  },
   bugs: [
     { kind: "zero", tryThis: "Try saving $0 a week." },
     { kind: "negative", tryThis: "Try a price below zero." },
-    { kind: "empty", tryThis: "Leave a box empty." },
-    { kind: "wrong_type", tryThis: "Type a word instead of a number." },
-    { kind: "special", tryThis: "Type the price with a dollar sign, like $20." },
+    { kind: "wrong_type", tryThis: "Try a price that isn't quite a number, like 1.2.3 or 20abc." },
     { kind: "rounding", tryThis: "Try $10 with $3 a week. That needs 4 weeks." },
   ],
 };

@@ -1,0 +1,50 @@
+[
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "  orc  "
+    },
+    "expects": "ORC"
+  },
+  {
+    "inputs": {
+      "name": "superlongmonsternamethatneedstruncating"
+    },
+    "expects": "SUPERLONGMON"
+  },
+  {
+    "inputs": {
+      "name": "dragon rider"
+    },
+    "expects": "DRAGON RIDER"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "   "
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "skeletonking"
+    },
+    "expects": "SKELETONKING"
+  },
+  {
+    "inputs": {
+      "name": "123456789012345"
+    },
+    "expects": "123456789012"
+  }
+]

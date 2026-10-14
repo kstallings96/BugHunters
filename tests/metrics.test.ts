@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeMetrics, type MetricEvent, type MetricSession } from "@/lib/metrics";
 
-const session: MetricSession = { id: "s1", is_test: true, machine_order: ["savings", "sale", "jersey"], reveal_condition: "reveal" };
+const session: MetricSession = { id: "s1", is_test: true, machine_order: ["savings", "sale", "monster"], reveal_condition: "reveal" };
 
 let seq = 0;
 const at = (s: number) => new Date(Date.UTC(2026, 9, 14, 15, 0, s)).toISOString();
@@ -25,25 +25,25 @@ const events: MetricEvent[] = [
   e("machine", "sale", "input_submit", { categories: ["normal"] }, 41),
   e("machine", "sale", "nudge_shown", {}, 220),
   e("machine", "sale", "accept_machine", { via: "nudge" }, 221),
-  // Jersey: blank (tried before on savings? no) and a "special" + zero transfer.
-  e("machine", "jersey", "step_enter", {}, 230),
-  e("machine", "jersey", "input_submit", { categories: ["empty"] }, 235),
-  e("machine", "jersey", "input_submit", { categories: ["special"] }, 240),
-  e("machine", "jersey", "busted", { verdict: "real", bug_kind: "empty", label_agreement: false, expected_correct: true }, 241),
-  e("machine", "jersey", "accept_machine", { via: "button" }, 250),
+  // Monster: blank (tried before on savings? no) and a "special" + zero transfer.
+  e("machine", "monster", "step_enter", {}, 230),
+  e("machine", "monster", "input_submit", { categories: ["empty"] }, 235),
+  e("machine", "monster", "input_submit", { categories: ["special"] }, 240),
+  e("machine", "monster", "busted", { verdict: "real", bug_kind: "empty", label_agreement: false, expected_correct: true }, 241),
+  e("machine", "monster", "accept_machine", { via: "button" }, 250),
 ];
 
 describe("metrics", () => {
   const rows = computeMetrics(session, events);
-  const [savings, sale, jersey] = rows;
+  const [savings, sale, monster] = rows;
 
   it("one row per app, in order, with condition, order and intake on every row", () => {
     expect(rows.map((r) => [r.machine, r.machine_position])).toEqual([
       ["savings", 1],
       ["sale", 2],
-      ["jersey", 3],
+      ["monster", 3],
     ]);
-    for (const r of rows) expect(r).toMatchObject({ reveal_condition: "reveal", machine_order: "savings>sale>jersey", coding_experience: 2, ai_confidence: 3 });
+    for (const r of rows) expect(r).toMatchObject({ reveal_condition: "reveal", machine_order: "savings>sale>monster", coding_experience: 2, ai_confidence: 3 });
   });
 
   it("confirming vs diagnostic, time to first diagnostic, distinct categories", () => {
@@ -59,13 +59,13 @@ describe("metrics", () => {
 
   it("bugs, false alarms, label agreement, right answers", () => {
     expect(savings).toMatchObject({ real_bugs: 1, bug_kinds: "zero", false_alarm: 1, label_agreement: 1, expected_correct: 0.5 });
-    expect(jersey).toMatchObject({ real_bugs: 1, label_agreement: 0 });
+    expect(monster).toMatchObject({ real_bugs: 1, label_agreement: 0 });
   });
 
-  it("transfer: only on the jersey row, categories first used on a number app", () => {
+  it("transfer: only on the monster row, categories first used on a number app", () => {
     expect(savings.transfer_categories).toBeNull();
-    // Savings tried zero and boundary; the jersey tried empty and special: no overlap.
-    expect(jersey).toMatchObject({ transfer_categories: "", transfer_count: 0 });
+    // Savings tried zero and boundary; the monster tried empty and special: no overlap.
+    expect(monster).toMatchObject({ transfer_categories: "", transfer_count: 0 });
     const withOverlap = computeMetrics(session, [
       ...events,
       e("machine", "savings", "input_submit", { categories: ["empty"] }, 25),

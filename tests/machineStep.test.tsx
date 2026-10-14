@@ -129,28 +129,28 @@ describe("a machine", () => {
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "false_alarm", classifier_label: null, label_agreement: null });
   });
 
-  it("a debatable case (a hyphenated name on the jersey) is never a bug", () => {
-    setup({ machine: "jersey" });
-    tryIt("Garcia-Lopez");
+  it("a debatable case (a hyphenated monster name) is never a bug", () => {
+    setup({ machine: "monster" });
+    tryIt("Mega-Bob");
     bust(/not sure/);
     expect(screen.getByText("The request doesn't say. Good thinking: what should it do?")).toBeTruthy();
   });
 
-  it("the jersey prints the name, and a blank answer reads (blank)", () => {
-    setup({ machine: "jersey" });
+  it("the monster shows its name, and a blank answer reads (blank)", () => {
+    setup({ machine: "monster" });
     tryIt("");
-    expect(screen.getByLabelText("Blank jersey")).toBeTruthy();
+    expect(screen.getByLabelText("A monster with no name")).toBeTruthy();
     click(/^💥 Busted!$/);
     expect(screen.getByRole("button", { name: "(blank)" })).toBeTruthy();
   });
 
   it("Busted! can point at an earlier try", () => {
     setup();
-    tryIt("20", "-5");
+    tryIt("-20", "5");
     tryIt("20", "5");
     click(/^💥 Busted!$/);
     click(/Pick another try/);
-    fireEvent.click(screen.getByRole("button", { name: /"-5"/ }));
+    fireEvent.click(screen.getByRole("button", { name: /"-20"/ }));
     click(/Money can't be below zero/);
     click(/Next/);
     click("Negative");

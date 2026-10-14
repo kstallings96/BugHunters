@@ -1,0 +1,38 @@
+[
+  {
+    "inputs": {
+      "name": "goblin"
+    },
+    "expects": "GOBLIN"
+  },
+  {
+    "inputs": {
+      "name": "skeletonking"
+    },
+    "expects": "SKELETONKING"
+  },
+  {
+    "inputs": {
+      "name": "abominable snowman"
+    },
+    "expects": "ABOMINABLE SN"
+  },
+  {
+    "inputs": {
+      "name": "a"
+    },
+    "expects": "A"
+  },
+  {
+    "inputs": {
+      "name": ""
+    },
+    "expects": ""
+  },
+  {
+    "inputs": {
+      "name": "VERYLONGMONSTERNAME"
+    },
+    "expects": "VERYLONGMONS"
+  }
+]

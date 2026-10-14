@@ -12,7 +12,7 @@
  */
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { buggyPick, entriesOf } from "@/bonus/raffle";
+import { buggyPick } from "@/bonus/raffle";
 import { findBugs, GEN_SPECS, loadFunction, RAFFLE_GEN, raffleBugs, type Finding } from "@/generation/harness";
 import { testsPrompt, type GenSpec } from "@/generation/specs";
 import { MACHINES } from "@/machines";
@@ -149,7 +149,7 @@ function toMarkdown(report: Record<string, Row[]>): string {
 
 // ------------------------------------------------------------------ selftest
 
-/** The harness must find every planted bug in the hand-written apps. */
+/** The harness must find every bug in the game's apps (the AI's code, with the planted lines). */
 async function selftest() {
   let ok = true;
   for (const spec of GEN_SPECS) {
@@ -168,9 +168,10 @@ async function selftest() {
       console.log(`  FALSE POSITIVES on the reference: ${JSON.stringify(wrongly.map((w) => w.inputs))}`);
     }
   }
-  const r = raffleBugs((text: string) => buggyPick(entriesOf(text)));
+  // The game's raffle: the AI's code with the planted off-by-one.
+  const r = raffleBugs((text: string) => buggyPick(text));
   console.log(`raffle: ${JSON.stringify(r)}`);
-  if (!r.lastNeverWins || !r.blankCanWin || !r.emptyGivesJunk || !r.oneNameWins) ok = false;
+  if (!r.lastNeverWins || !r.oneNameWins) ok = false;
   const fair = raffleBugs((text: string) => {
     const names = text.split("\n").map((s) => s.trim()).filter(Boolean);
     if (names.length < 2) return "Add at least 2 names.";
@@ -180,7 +181,7 @@ async function selftest() {
     ok = false;
     console.log(`  FALSE POSITIVES on a fair raffle: ${JSON.stringify(fair)}`);
   }
-  console.log(ok ? "\nSelf-test passed: the harness finds every planted bug." : "\nSelf-test FAILED.");
+  console.log(ok ? "\nSelf-test passed: the harness finds every bug in the game's apps." : "\nSelf-test FAILED.");
   process.exitCode = ok ? 0 : 1;
 }
 
