@@ -34,10 +34,10 @@ export const allowance: Machine = {
   },
   pseudocode: ["allowance = what you typed, keeping only digits and dots", 'show "$" + allowance × 2'],
   bugs: [
-    { kind: "wrong_type", tryThis: "Type a word." },
-    { kind: "empty", tryThis: "Leave it empty." },
-    { kind: "spaces_only", tryThis: "Type only spaces." },
-    { kind: "negative", tryThis: "Try a number below zero, like -5." },
+    { kind: "wrong_type", example: { allowance: "cat" }, tryThis: "Type a word." },
+    { kind: "empty", example: { allowance: "" }, tryThis: "Leave it empty." },
+    { kind: "spaces_only", example: { allowance: "  " }, tryThis: "Type only spaces." },
+    { kind: "negative", example: { allowance: "-5" }, tryThis: "Try a number below zero, like -5." },
   ],
   // The practice app never reaches the bonus code questions; these keep it complete.
   fixFor: (kind) =>
@@ -47,13 +47,11 @@ export const allowance: Machine = {
           'if what you typed is below 0 → say "Allowance can\'t be below zero."',
           "allowance = what you typed, keeping only digits",
           "allowance = what you typed, keeping digits, dots and minus signs",
-          "allowance = what you typed, times −1",
         )
       : missingLine(
           1,
           'if allowance is blank or not a number → say "That\'s not a number."',
           'if allowance is blank → say "That\'s not a number."',
           'if allowance is 0 → say "That\'s not a number."',
-          "if allowance is not a number → allowance = 0",
         ),
 };

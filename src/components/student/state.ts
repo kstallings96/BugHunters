@@ -1,4 +1,5 @@
 import type { BustedBug, Progress, Step } from "@/lib/types";
+import { MACHINES } from "@/machines";
 import type { Category, Inputs, MachineId, Output } from "@/machines/types";
 
 /** Screens in order. Each maps to a logged `step`. */
@@ -93,10 +94,29 @@ export function isNewBug(busted: BustedBug[], machine: MachineId | "raffle", kin
 /** The bonus asks about a few bugs at most, one per app first, so it never drags on. */
 export const MAX_CODE_QUESTIONS = 3;
 
-export function codeQuestions(busted: BustedBug[]): BustedBug[] {
+export interface CodeQuestion {
+  bug: BustedBug;
+  /** Did the student find this bug, or is it one they missed? */
+  found: boolean;
+}
+
+/**
+ * Bugs the student found come first (one per app, then the rest); if that's
+ * fewer than three, bugs they missed fill in, one per app in the order they
+ * played, using each bug's example input. So everyone who opts in gets
+ * questions, even with no bugs found.
+ */
+export function codeQuestions(busted: BustedBug[], machineOrder: MachineId[]): CodeQuestion[] {
   const firstPerApp = busted.filter((b, i) => busted.findIndex((o) => o.machine === b.machine) === i);
   const rest = busted.filter((b) => !firstPerApp.includes(b));
-  return [...firstPerApp, ...rest].slice(0, MAX_CODE_QUESTIONS);
+  const found = [...firstPerApp, ...rest].map((bug) => ({ bug, found: true }));
+  const missedByApp = machineOrder.map((id) =>
+    MACHINES[id].bugs.filter((k) => !busted.some((b) => b.machine === id && b.kind === k.kind)).map((k) => ({ machine: id, kind: k.kind, inputs: k.example })),
+  );
+  const missed: CodeQuestion[] = [];
+  for (let round = 0; missedByApp.some((list) => list.length > round); round++)
+    for (const list of missedByApp) if (list[round]) missed.push({ bug: list[round], found: false });
+  return [...found, ...missed].slice(0, MAX_CODE_QUESTIONS);
 }
 
 /** Bugs busted in the three measured apps (the bonus doesn't count): the leaderboard score. */

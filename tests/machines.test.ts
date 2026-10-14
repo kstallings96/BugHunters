@@ -273,9 +273,9 @@ describe("every machine", () => {
   it.each(BUGS)("%s %j: the bonus fix has its answer among the choices", (id, inputs) => {
     const e = run(id, inputs);
     const fix = MACHINES[id].fixFor(e.bugKind!, inputs);
-    // Four fixes to pick from: the right one and three near misses.
-    expect(fix.options).toHaveLength(4);
-    expect(new Set(fix.options).size).toBe(4);
+    // Three fixes to pick from: the right one and two near misses.
+    expect(fix.options).toHaveLength(3);
+    expect(new Set(fix.options).size).toBe(3);
     expect(fix.options[fix.answer]).toBeTruthy();
     if (fix.type === "wrong_line") {
       expect(fix.line).toBeGreaterThanOrEqual(1);

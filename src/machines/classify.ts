@@ -110,8 +110,8 @@ export function stableHash(text: string): number {
   return h;
 }
 
-/** The right fix plus three near misses, in a stable mixed order. */
-function mix(answer: string, others: [string, string, string]) {
+/** The right fix plus two near misses, in a stable mixed order. */
+function mix(answer: string, others: [string, string]) {
   const options = [answer, ...others];
   const shift = stableHash(answer) % options.length;
   const rotated = [...options.slice(shift), ...options.slice(0, shift)];
@@ -119,11 +119,11 @@ function mix(answer: string, others: [string, string, string]) {
 }
 
 /** Line `line` is wrong: the student finds it, then picks what it should say. */
-export function wrongLine(line: number, answer: string, ...nearMisses: [string, string, string]) {
+export function wrongLine(line: number, answer: string, ...nearMisses: [string, string]) {
   return { type: "wrong_line" as const, line, ...mix(answer, nearMisses) };
 }
 
 /** A check is missing after line `after`: the student spots that, then picks the check. */
-export function missingLine(after: number, answer: string, ...nearMisses: [string, string, string]) {
+export function missingLine(after: number, answer: string, ...nearMisses: [string, string]) {
   return { type: "missing_line" as const, after, ...mix(answer, nearMisses) };
 }

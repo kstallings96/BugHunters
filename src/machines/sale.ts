@@ -22,7 +22,6 @@ const FIXES: Partial<Record<Category, Fix>> = {
   out_of_range: missingLine(
     2,
     'if off is below 0% or above 100% → say "Discounts go from 0% to 100%."',
-    'if off is below 0% and above 100% → say "Discounts go from 0% to 100%."',
     'if off is above 0% or below 100% → say "Discounts go from 0% to 100%."',
     'if price is below 0 or above 100 → say "Discounts go from 0% to 100%."',
   ),
@@ -31,12 +30,10 @@ const FIXES: Partial<Record<Category, Fix>> = {
     'if price is below 0 → say "Prices can\'t be below zero."',
     'if off is below 0 → say "Prices can\'t be below zero."',
     'if price is 0 → say "Prices can\'t be below zero."',
-    "if price is below 0 → price = price × −1",
   ),
   empty: missingLine(
     2,
     'if price or off is blank → say "Please type a number."',
-    'if price and off are both blank → say "Please type a number."',
     'if price or off is 0 → say "Please type a number."',
     "if price or off is blank → sale = 0",
   ),
@@ -45,21 +42,18 @@ const FIXES: Partial<Record<Category, Fix>> = {
     'if price or off is blank or only spaces → say "Please type a number."',
     'if price or off is blank → say "Please type a number."',
     'if price or off has a space in it → say "Please type a number."',
-    "if price or off is only spaces → sale = 0",
   ),
   wrong_type: missingLine(
     2,
     'if price or off is not a number → say "That\'s not a number."',
-    'if price and off are both not numbers → say "That\'s not a number."',
     'if price or off is a number → say "That\'s not a number."',
     'if price or off is a word → say "That\'s not a number."',
   ),
   special: wrongLine(
     1,
     'price = the number in what you typed, after a "$" if there is one',
-    'price = "$" + the number at the start of what you typed',
+    'price = "$" + the first number in what you typed',
     "price = what you typed, without any numbers",
-    'off = the number in what you typed, before a "%" if there is one',
   ),
 };
 
@@ -121,8 +115,8 @@ export const sale: Machine = {
     return [salePrice(0, 0), p !== null && p > 0 ? salePrice(p, 0) : "Sale price: $10.00"];
   },
   pseudocode: [
-    "price = the number at the start of what you typed",
-    "off = the number at the start of what you typed",
+    "price = the first number in what you typed",
+    "off = the first number in what you typed",
     "sale = price − price × off ÷ 100",
     'show "Sale price: $" + sale, with 2 decimals',
   ],
@@ -135,19 +129,18 @@ export const sale: Machine = {
         return wrongLine(
           box === "price" ? 1 : 2,
           `${box} = what you typed, only if ALL of it is a number`,
-          `${box} = the number at the end of what you typed`,
-          `${box} = what you typed, without the dots`,
+          `${box} = the last number in what you typed`,
           `${box} = the first digit of what you typed`,
         );
     }
     return FIXES[kind] ?? FIXES.wrong_type!;
   },
   bugs: [
-    { kind: "out_of_range", tryThis: "Try more than 100% off, like 150%. Or try -20%." },
-    { kind: "negative", tryThis: "Try a price below zero." },
-    { kind: "empty", tryThis: "Leave a box empty." },
-    { kind: "spaces_only", tryThis: "Type only spaces in a box." },
-    { kind: "wrong_type", tryThis: "Type a word instead of a number." },
-    { kind: "special", tryThis: "Type the price with a dollar sign, like $50." },
+    { kind: "out_of_range", example: { price: "40", off: "150" }, tryThis: "Try more than 100% off, like 150%. Or try -20%." },
+    { kind: "negative", example: { price: "-40", off: "25" }, tryThis: "Try a price below zero." },
+    { kind: "empty", example: { price: "", off: "25" }, tryThis: "Leave a box empty." },
+    { kind: "spaces_only", example: { price: "40", off: "  " }, tryThis: "Type only spaces in a box." },
+    { kind: "wrong_type", example: { price: "40", off: "half" }, tryThis: "Type a word instead of a number." },
+    { kind: "special", example: { price: "$50", off: "20" }, tryThis: "Type the price with a dollar sign, like $50." },
   ],
 };

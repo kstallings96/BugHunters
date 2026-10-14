@@ -10,16 +10,36 @@ import { normalizeName } from "@/lib/identity";
 import { nicknameFor } from "@/lib/nickname";
 import { fileStore, type ScoreRow } from "@/lib/server/storage";
 import type { BustedBug } from "@/lib/types";
+import { evaluate, MACHINES, type MachineId } from "@/machines";
 
 const bug = (machine: BustedBug["machine"], kind: BustedBug["kind"]): BustedBug => ({ machine, kind, inputs: {} });
 
 describe("code questions (bonus)", () => {
-  it("asks about at most 3 bugs, one per app first", () => {
+  const order: MachineId[] = ["savings", "sale", "monster"];
+  it("asks about at most 3 bugs: found ones first, one per app", () => {
     const busted = [bug("savings", "zero"), bug("savings", "negative"), bug("sale", "empty"), bug("monster", "empty"), bug("raffle", "off_by_one")];
-    const qs = codeQuestions(busted);
+    const qs = codeQuestions(busted, order);
     expect(qs).toHaveLength(MAX_CODE_QUESTIONS);
-    expect(qs.map((b) => b.machine)).toEqual(["savings", "sale", "monster"]);
-    expect(codeQuestions([bug("savings", "zero"), bug("savings", "rounding")])).toHaveLength(2);
+    expect(qs.map((q) => q.bug.machine)).toEqual(["savings", "sale", "monster"]);
+    expect(qs.every((q) => q.found)).toBe(true);
+  });
+  it("fills in with bugs the student missed, using their example inputs", () => {
+    const qs = codeQuestions([bug("sale", "empty")], order);
+    expect(qs.map((q) => [q.bug.machine, q.found])).toEqual([
+      ["sale", true],
+      ["savings", false],
+      ["sale", false],
+    ]);
+    expect(qs[1].bug.inputs).toEqual(MACHINES.savings.bugs[0].example);
+  });
+  it("still has questions when no bugs were found", () => {
+    const qs = codeQuestions([], order);
+    expect(qs).toHaveLength(3);
+    expect(qs.every((q) => !q.found)).toBe(true);
+  });
+  it("every known bug's example really shows that bug", () => {
+    for (const m of Object.values(MACHINES))
+      for (const b of m.bugs) expect(evaluate(m, b.example, { today: new Date() }).bugKinds).toContain(b.kind);
   });
   it("the leaderboard counts only the three apps", () => {
     expect(measuredBugs([bug("savings", "zero"), bug("raffle", "off_by_one")])).toBe(1);

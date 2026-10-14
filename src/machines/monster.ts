@@ -29,34 +29,29 @@ const FIXES: Partial<Record<Category, Fix>> = {
     `if name is longer than ${MONSTER_MAX} letters → say "Up to ${MONSTER_MAX} letters."`,
     `name = the first ${MONSTER_MAX + 1} letters of name`,
     `name = the last ${MONSTER_MAX} letters of name`,
-    `if name is ${MONSTER_MAX} letters or longer → say "Up to ${MONSTER_MAX} letters."`,
   ),
   empty: missingLine(
     1,
     'if name is blank → say "Please type a monster name."',
     'if name has a space in it → say "Please type a monster name."',
     'if name is longer than 0 letters → say "Please type a monster name."',
-    'if name is blank → name = " "',
   ),
   spaces_only: missingLine(
     1,
     'if name is blank or only spaces → say "Please type a monster name."',
     'if name is blank → say "Please type a monster name."',
     'if name has a space in it → say "Please type a monster name."',
-    "name = name without any spaces",
   ),
   extra_spaces: missingLine(
     1,
     "name = name without spaces at the start and end",
     "name = name without any spaces",
-    'if name has a space in it → say "No spaces, please."',
     "name = name with one space at the start",
   ),
   wrong_type: missingLine(
     1,
     'if name has numbers or symbols → say "Names use letters only."',
     'if name is ALL numbers → say "Names use letters only."',
-    'if name starts with a number → say "Names use letters only."',
     'if name has letters → say "Names use letters only."',
   ),
   special: missingLine(
@@ -64,7 +59,6 @@ const FIXES: Partial<Record<Category, Fix>> = {
     'if name has numbers or symbols → say "Names use letters only."',
     'if name has numbers → say "Names use letters only."',
     'if name has letters → say "Names use letters only."',
-    "name = name in ALL CAPS",
   ),
 };
 
@@ -115,11 +109,11 @@ export const monster: Machine = {
   pseudocode: ["name = what you typed", "name = name in ALL CAPS", `name = the first ${MONSTER_MAX} letters of name`, "show name with the monster"],
   fixFor: (kind) => FIXES[kind] ?? FIXES.empty!,
   bugs: [
-    { kind: "empty", tryThis: "Leave the name empty." },
-    { kind: "spaces_only", tryThis: "Type only spaces." },
-    { kind: "very_long", tryThis: `Try a name with ${MONSTER_MAX + 1} letters or more. It gets cut off.` },
-    { kind: "wrong_type", tryThis: "Try a name with numbers, like GRIZZLE2." },
-    { kind: "special", tryThis: "Try an emoji or a symbol." },
-    { kind: "extra_spaces", tryThis: "Put spaces before the name." },
+    { kind: "empty", example: { name: "" }, tryThis: "Leave the name empty." },
+    { kind: "spaces_only", example: { name: "   " }, tryThis: "Type only spaces." },
+    { kind: "very_long", example: { name: "Fluffernutterbob" }, tryThis: `Try a name with ${MONSTER_MAX + 1} letters or more. It gets cut off.` },
+    { kind: "wrong_type", example: { name: "Grizzle2" }, tryThis: "Try a name with numbers, like GRIZZLE2." },
+    { kind: "special", example: { name: "Grizzle😀" }, tryThis: "Try an emoji or a symbol." },
+    { kind: "extra_spaces", example: { name: "  Grizzle" }, tryThis: "Put spaces before the name." },
   ],
 };

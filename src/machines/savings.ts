@@ -39,21 +39,18 @@ const FIXES: Partial<Record<Category, Fix>> = {
     3,
     'if price or saved is not a number, or saved is 0 or below → say "Invalid input"',
     'if price or saved is not a number, or price is 0 or below → say "Invalid input"',
-    'if price or saved is not a number, or saved is below 1 → say "Invalid input"',
     'if price or saved is not a number, or saved is above 0 → say "Invalid input"',
   ),
   rounding: wrongLine(
     4,
     "weeks = price ÷ saved, rounded UP to a whole week",
     "weeks = price ÷ saved, rounded DOWN to a whole week",
-    "weeks = price ÷ saved, rounded to the nearest week, plus 1",
     "weeks = saved ÷ price, rounded UP to a whole week",
   ),
   negative: missingLine(
     3,
     'if price is below 0 → say "Invalid input"',
     'if saved is below 0 → say "Invalid input"',
-    'if price is 0 → say "Invalid input"',
     'if price is above 0 → say "Invalid input"',
   ),
 };
@@ -63,8 +60,7 @@ function misread(line: number, box: string): Fix {
   return wrongLine(
     line,
     `${box} = what you typed, only if ALL of it is a number`,
-    `${box} = the number at the end of what you typed`,
-    `${box} = what you typed, without the dots`,
+    `${box} = the last number in what you typed`,
     `${box} = the first digit of what you typed`,
   );
 }
@@ -115,9 +111,9 @@ export const savings: Machine = {
     return [weeks(0), weeks(1)];
   },
   pseudocode: [
-    "price = the number at the start of what you typed",
-    "saved = the number at the start of what you typed",
-    'if price or saved is not a number, or saved is below 0 → say "Invalid input"',
+    "price = the first number in what you typed",
+    "saved = the first number in what you typed",
+    'if a box has no number, or saved is below 0 → say "Invalid input"',
     "weeks = price ÷ saved, rounded to the nearest week",
     'show weeks + " weeks"',
   ],
@@ -127,9 +123,9 @@ export const savings: Machine = {
     return FIXES[kind] ?? FIXES.negative!;
   },
   bugs: [
-    { kind: "zero", tryThis: "Try saving $0 a week." },
-    { kind: "negative", tryThis: "Try a price below zero." },
-    { kind: "wrong_type", tryThis: "Try a price that isn't quite a number, like 1.2.3 or 20abc." },
-    { kind: "rounding", tryThis: "Try $10 with $3 a week. That needs 4 weeks." },
+    { kind: "zero", example: { price: "20", saved: "0" }, tryThis: "Try saving $0 a week." },
+    { kind: "negative", example: { price: "-20", saved: "5" }, tryThis: "Try a price below zero." },
+    { kind: "wrong_type", example: { price: "1.2.3", saved: "1" }, tryThis: "Try a price that isn't quite a number, like 1.2.3 or 20abc." },
+    { kind: "rounding", example: { price: "10", saved: "3" }, tryThis: "Try $10 with $3 a week. That needs 4 weeks." },
   ],
 };

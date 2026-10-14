@@ -181,19 +181,21 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         <RaffleStep
           isNewKind={(kind) => isNewBug(game.busted, "raffle", kind)}
           onBug={(kind, text) => setGame((g) => ({ ...g, busted: [...g.busted, { machine: "raffle", kind, inputs: { names: text } }] }))}
-          onDone={() => (game.busted.length ? go("bonus_guilty", { guiltyIndex: 0 }) : go("end", { bonusDone: true }))}
+          // Code questions follow for everyone (bugs they missed fill in).
+          onDone={() => go("bonus_guilty", { guiltyIndex: 0 })}
         />
       );
       break;
     case "bonus_guilty": {
       // A few code questions at most, and the student can leave any time.
-      const questions = codeQuestions(game.busted);
-      const bug = questions[game.guiltyIndex];
+      const questions = codeQuestions(game.busted, session.machineOrder);
+      const q = questions[game.guiltyIndex];
       const last = game.guiltyIndex >= questions.length - 1;
-      body = bug ? (
+      body = q ? (
         <GuiltyLine
           key={game.guiltyIndex}
-          bug={bug}
+          bug={q.bug}
+          found={q.found}
           index={game.guiltyIndex}
           total={questions.length}
           onNext={() => (last ? go("end", { bonusDone: true }) : setGame((g) => ({ ...g, guiltyIndex: g.guiltyIndex + 1 })))}

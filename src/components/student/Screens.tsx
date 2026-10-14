@@ -7,7 +7,7 @@ import { clean } from "@/lib/clean";
 import { logEvent } from "@/lib/logger";
 import type { BustedBug } from "@/lib/types";
 import { RAFFLE } from "@/bonus/raffle";
-import { bugLabel, MACHINES } from "@/machines";
+import { bugLabel, evaluate, MACHINES } from "@/machines";
 
 // ------------------------------------------------------------- intake
 
@@ -104,12 +104,15 @@ export function EndScreen({
  */
 export function GuiltyLine({
   bug,
+  found: studentFound,
   onNext,
   onSkip,
   index,
   total,
 }: {
   bug: BustedBug;
+  /** A bug the student found, or one they missed (shown with its example input). */
+  found: boolean;
   onNext: () => void;
   /** Leave the code questions now. */
   onSkip: () => void;
@@ -138,6 +141,8 @@ export function GuiltyLine({
       bug_kind: bug.kind,
       inputs: bug.inputs,
       question: fix.type,
+      // A bug the student found, or one they missed (code questions fill in with those).
+      bug_found: studentFound,
       find_choice: found === 0 ? "missing" : found,
       find_answer: target === 0 ? "missing" : target,
       find_correct: foundRight,
@@ -151,7 +156,8 @@ export function GuiltyLine({
     });
   }
 
-  const shown = machine.fields.map((f) => `${f.label}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${clean(bug.inputs[f.id])}"`}`).join(", ");
+  const shown = machine.fields.map((f) => `${f.label.replace(/\s*\(.*\)$/, "")}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${clean(bug.inputs[f.id])}"`}`).join(", ");
+  const example = exampleOf(bug);
   const lineLook = (n: number) =>
     found === null
       ? "border-line bg-white hover:border-teal"
@@ -187,16 +193,25 @@ export function GuiltyLine({
         </button>
       </div>
       <h1 className="text-3xl leading-snug font-bold">
-        {machine.icon} What caused the {bugLabel(bug.machine, bug.kind)} bug in {machine.name}?
+        {machine.icon} A bug you {studentFound ? "found" : "didn't find"} in {machine.name}: {bugLabel(bug.machine, bug.kind)}
       </h1>
+      <div className="rounded-2xl border-2 border-line bg-card px-4 py-2 text-lg leading-snug">
+        {example ? (
+          <>
+            You type <b>{shown}</b>. It says <b className="text-danger">{example.said}</b>. It should say <b className="text-teal">{example.should}</b>.
+          </>
+        ) : (
+          raffleExample(bug)
+        )}
+      </div>
       <p className="text-lg text-ink-soft">
-        You found it with {shown}. Here&apos;s the AI&apos;s code, in plain words.
-        {bug.machine === "raffle" && " (Spots count from 0: names[0] is the first name.)"}
+        Below is the AI&apos;s code, in plain words.
+        {bug.machine === "raffle" && " Spots count from 0: names[0] is the first name."}
       </p>
 
       <div className="grid grid-cols-[1.1fr_1fr] gap-5">
         <section className="flex flex-col gap-2">
-          <h2 className="text-xl font-bold">1. Find it: which line is wrong?</h2>
+          <h2 className="text-xl font-bold">1. Which line made that happen?</h2>
           <ol className="flex flex-col gap-1.5">
             {machine.pseudocode.map((code, i) => (
               <li key={code} className="flex flex-col gap-1.5">
@@ -219,15 +234,15 @@ export function GuiltyLine({
             onClick={() => find(0)}
             className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border-4 border-dashed px-3 text-left text-lg ${lineLook(0)}`}
           >
-            + No line is wrong. A check is missing.
+            + None of them. A check is missing.
           </button>
           {found !== null && (
             <p className="text-lg font-bold">
               {foundRight
                 ? "Yes!"
                 : fix.type === "wrong_line"
-                  ? `Not quite: line ${fix.line} is the problem.`
-                  : `Not quite: every line does its job. A check is missing after line ${fix.after}.`}
+                  ? `Not quite. It's line ${fix.line}.`
+                  : `Not quite. Every line does its job, but the code never checks for this.`}
             </p>
           )}
         </section>
@@ -235,7 +250,7 @@ export function GuiltyLine({
         <section className={`flex flex-col gap-2 ${found === null ? "opacity-40" : ""}`}>
           <h2 className="text-xl font-bold">
             {/* Naming the line before part 1 is answered would give it away. */}
-            2. Fix it{found === null ? "" : fix.type === "wrong_line" ? `: line ${fix.line} should say…` : `: add which check after line ${fix.after}?`}
+            2. {found === null ? "Fix it" : fix.type === "wrong_line" ? `Pick the fixed line ${fix.line}:` : `Which check should go after line ${fix.after}?`}
           </h2>
           {/* The choices stay hidden until part 1 is answered: their shape (four "if" checks, or four versions of one line) would give it away. */}
           {found === null && <p className="text-base text-ink-soft">Find it first.</p>}
@@ -254,7 +269,7 @@ export function GuiltyLine({
           </div>
           {fixed !== null && (
             <div className="flex flex-col gap-2 pt-1">
-              <p className="text-xl font-bold">{fixed === fix.answer ? "Yes! That fixes it." : "Close! The green one fixes it for every input, not just yours."}</p>
+              <p className="text-xl font-bold">{fixed === fix.answer ? "Yes! That fixes it." : "Not that one. The green one fixes it."}</p>
               <BigButton onClick={onNext} className="self-end">
                 {last ? "Done" : "Next bug →"}
               </BigButton>
@@ -265,4 +280,18 @@ export function GuiltyLine({
 
     </main>
   );
+}
+
+/** What the app said and should say for this bug's input (the three apps; the raffle is random). */
+function exampleOf(bug: BustedBug): { said: string; should: string } | null {
+  if (bug.machine === "raffle") return null;
+  const e = evaluate(MACHINES[bug.machine], bug.inputs, { today: new Date() });
+  const text = (t: string) => (t.trim() === "" ? "(blank)" : clean(t));
+  return { said: text(e.buggy.text), should: text(e.reference.text) };
+}
+
+function raffleExample(bug: BustedBug): string {
+  const names = (bug.inputs.names ?? "").split("\n").map((n) => n.trim()).filter(Boolean);
+  if (bug.kind === "off_by_one") return `You picked 20 times from ${names.join(", ")}. ${names.at(-1) ?? "The last name"} never won.`;
+  return "With only one name, it still picked a winner. A raffle needs at least 2.";
 }

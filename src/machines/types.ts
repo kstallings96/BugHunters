@@ -62,6 +62,8 @@ export interface Field {
 /** One kind of bug a machine has, with an example for the missed-bug reveal. */
 export interface KnownBug {
   kind: Category;
+  /** An input that shows it (for code questions about bugs the student missed). */
+  example: Inputs;
   /** "Try $0 a week." */
   tryThis: string;
 }
