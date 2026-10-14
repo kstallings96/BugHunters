@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { weeksToSave } from "./ai/savings";
-import { aiOutput, classifyNumberField, missingLine, parseMoney } from "./classify";
+import { aiOutput, classifyNumberField, missingLine, parseMoney, wrongLine } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
@@ -33,11 +33,41 @@ function money(raw: string, what: string): Money {
 }
 
 // Lines: 1 read price, 2 read saved, 3 the check, 4 divide and round, 5 show.
+// Near misses: the wrong box, a boundary one off, rounding the other way.
 const FIXES: Partial<Record<Category, Fix>> = {
-  zero: { type: "wrong_line", line: 3 },
-  rounding: { type: "wrong_line", line: 4 },
-  negative: missingLine(3, 'if price is below 0 → say "Invalid input"', 'if price is over $100 → say "That\'s a lot!"', "weeks = saved ÷ price"),
+  zero: wrongLine(
+    3,
+    'if price or saved is not a number, or saved is 0 or below → say "Invalid input"',
+    'if price or saved is not a number, or price is 0 or below → say "Invalid input"',
+    'if price or saved is not a number, or saved is below 1 → say "Invalid input"',
+    'if price or saved is not a number, or saved is above 0 → say "Invalid input"',
+  ),
+  rounding: wrongLine(
+    4,
+    "weeks = price ÷ saved, rounded UP to a whole week",
+    "weeks = price ÷ saved, rounded DOWN to a whole week",
+    "weeks = price ÷ saved, rounded to the nearest week, plus 1",
+    "weeks = saved ÷ price, rounded UP to a whole week",
+  ),
+  negative: missingLine(
+    3,
+    'if price is below 0 → say "Invalid input"',
+    'if saved is below 0 → say "Invalid input"',
+    'if price is 0 → say "Invalid input"',
+    'if price is above 0 → say "Invalid input"',
+  ),
 };
+
+/** "1.2.3" gets read as 1.2: the line that reads that box should take the number only if it's ALL a number. */
+function misread(line: number, box: string): Fix {
+  return wrongLine(
+    line,
+    `${box} = what you typed, only if ALL of it is a number`,
+    `${box} = the number at the end of what you typed`,
+    `${box} = what you typed, without the dots`,
+    `${box} = the first digit of what you typed`,
+  );
+}
 
 export const savings: Machine = {
   id: "savings",
@@ -84,7 +114,7 @@ export const savings: Machine = {
   ],
   fixFor: (kind, inputs) => {
     // "1.2.3" gets read as 1.2: the guilty line reads that box.
-    if (kind === "wrong_type") return { type: "wrong_line", line: classifyNumberField(inputs.price ?? "").includes("wrong_type") ? 1 : 2 };
+    if (kind === "wrong_type") return classifyNumberField(inputs.price ?? "").includes("wrong_type") ? misread(1, "price") : misread(2, "saved");
     return FIXES[kind] ?? FIXES.negative!;
   },
   bugs: [

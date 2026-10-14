@@ -10,13 +10,15 @@ const MAX_BUGS = [...NUMBER_MACHINES, "monster" as const].reduce((n, id) => n + 
 export interface LeaderboardRow {
   rank: number;
   nickname: string;
+  /** Class period, shown beside the nickname. */
+  period: string;
   bugs: number;
   you: boolean;
 }
 
 /**
- * Class leaderboard for today: nicknames and bugs busted, never names or
- * ids. POST { token, bugs } saves this session's score and returns the
+ * Today's leaderboard, every class period together: nicknames, periods and
+ * bugs busted, never names or ids. POST { token, bugs } saves this session's score and returns the
  * board; POST { token } only reads it. Test sessions see a board of test
  * sessions, so trying the site never shows up in a real class.
  */
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
       await store.putScore({ session_id: sessionId, nickname, bugs, class_period: period, day, is_test: isTest, updated_at: new Date().toISOString() });
     }
 
-    const scores = (await store.listScores(period, day))
+    const scores = (await store.listScores(day))
       .filter((s) => s.is_test === isTest)
       // Most bugs first; ties go to whoever got there first.
       .sort((a, b) => b.bugs - a.bugs || a.updated_at.localeCompare(b.updated_at));
@@ -49,13 +51,13 @@ export async function POST(request: Request) {
     let rank = 0;
     scores.forEach((s, i) => {
       if (i === 0 || s.bugs !== scores[i - 1].bugs) rank = i + 1;
-      rows.push({ rank, nickname: s.nickname, bugs: s.bugs, you: s.session_id === sessionId });
+      rows.push({ rank, nickname: s.nickname, period: s.class_period, bugs: s.bugs, you: s.session_id === sessionId });
     });
     // The top 10, plus your own row if you're further down.
     const top = rows.slice(0, 10);
     const mine = rows.find((r) => r.you);
     if (mine && !top.includes(mine)) top.push(mine);
-    return Response.json({ period, nickname, rows: top, players: rows.length });
+    return Response.json({ nickname, rows: top, players: rows.length });
   } catch (err) {
     console.error("leaderboard failed", (err as Error).message);
     return Response.json({ error: "store" }, { status: 502 });

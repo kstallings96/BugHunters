@@ -216,8 +216,12 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         </span>
         <ProgressBar stage={progressStage(game.screen, game.machineIndex)} />
         {counter && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">💥 {game.busted.length} busted</span>}
-        <span className="shrink-0 text-base text-ink-soft">
-          {session.firstName} {session.lastInitial}.
+        {/* The bug-hunter nickname, the same one the leaderboard shows; the real name stays small, for the teacher. */}
+        <span className="flex shrink-0 flex-col items-end leading-tight">
+          <span className="text-base font-bold text-teal">🐞 {nicknameFor(session.id)}</span>
+          <span className="text-xs text-ink-soft">
+            {session.firstName} {session.lastInitial}.
+          </span>
         </span>
       </header>
       {body}

@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { monsterName } from "./ai/monster";
-import { aiOutput, missingLine } from "./classify";
+import { aiOutput, missingLine, wrongLine } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
@@ -20,13 +20,52 @@ export const MONSTER_MAX = 12;
 const length = (t: string) => Array.from(t).length;
 
 // Lines: 1 read, 2 caps, 3 cut to 12, 4 show. Missing checks go after line 1.
+// Near misses: a check that only covers this one input ("blank" but not
+// "only spaces", "numbers" but not emoji), one that would also block good
+// names ("BIG BOB"), a limit off by one.
 const FIXES: Partial<Record<Category, Fix>> = {
-  very_long: { type: "wrong_line", line: 3 },
-  empty: missingLine(1, 'if name is blank → say "Please type a monster name."', "name = name backwards", 'if name is short → show "MONSTER"'),
-  spaces_only: missingLine(1, 'if name is only spaces → say "Please type a monster name."', "name = name + name", 'if name has an A → show "BEAST"'),
-  extra_spaces: missingLine(1, "name = name without spaces at the start and end", "name = name backwards", "name = name in small letters"),
-  wrong_type: missingLine(1, 'if name has numbers or symbols → say "Names use letters only."', "name = name in small letters", "name = name + name"),
-  special: missingLine(1, 'if name has numbers or symbols → say "Names use letters only."', "name = name backwards", 'if name has an A → show "BEAST"'),
+  very_long: wrongLine(
+    3,
+    `if name is longer than ${MONSTER_MAX} letters → say "Up to ${MONSTER_MAX} letters."`,
+    `name = the first ${MONSTER_MAX + 1} letters of name`,
+    `name = the last ${MONSTER_MAX} letters of name`,
+    `if name is ${MONSTER_MAX} letters or longer → say "Up to ${MONSTER_MAX} letters."`,
+  ),
+  empty: missingLine(
+    1,
+    'if name is blank → say "Please type a monster name."',
+    'if name has a space in it → say "Please type a monster name."',
+    'if name is longer than 0 letters → say "Please type a monster name."',
+    'if name is blank → name = " "',
+  ),
+  spaces_only: missingLine(
+    1,
+    'if name is blank or only spaces → say "Please type a monster name."',
+    'if name is blank → say "Please type a monster name."',
+    'if name has a space in it → say "Please type a monster name."',
+    "name = name without any spaces",
+  ),
+  extra_spaces: missingLine(
+    1,
+    "name = name without spaces at the start and end",
+    "name = name without any spaces",
+    'if name has a space in it → say "No spaces, please."',
+    "name = name with one space at the start",
+  ),
+  wrong_type: missingLine(
+    1,
+    'if name has numbers or symbols → say "Names use letters only."',
+    'if name is ALL numbers → say "Names use letters only."',
+    'if name starts with a number → say "Names use letters only."',
+    'if name has letters → say "Names use letters only."',
+  ),
+  special: missingLine(
+    1,
+    'if name has numbers or symbols → say "Names use letters only."',
+    'if name has numbers → say "Names use letters only."',
+    'if name has letters → say "Names use letters only."',
+    "name = name in ALL CAPS",
+  ),
 };
 
 export const monster: Machine = {

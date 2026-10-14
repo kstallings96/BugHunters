@@ -125,12 +125,13 @@ export interface Machine {
 }
 
 /**
- * Bonus question for one bug. Either one of the code lines is wrong (pick
- * it), or a check is missing: the code shows a gap after line `after` and
- * the student picks which of `options` belongs there.
+ * Bonus code question for one bug, in two parts. Find it: which line is
+ * wrong, or is a check missing? Fix it: pick the right line from `options`,
+ * where the wrong ones are near misses (the wrong variable, "and" for "or",
+ * a boundary off by one, a fix that only works for this one input).
  */
 export type Fix =
-  | { type: "wrong_line"; line: number }
+  | { type: "wrong_line"; line: number; options: string[]; answer: number }
   | { type: "missing_line"; after: number; options: string[]; answer: number };
 
 export interface Evaluation {

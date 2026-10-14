@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { codeQuestions, MAX_CODE_QUESTIONS, measuredBugs, progressStage } from "@/components/student/state";
 import { dayKey } from "@/config/study";
-import { INTAKE, LIKERT } from "@/config/survey";
+import { INTAKE } from "@/config/survey";
 import { hasBadWords } from "@/lib/clean";
 import { normalizeName } from "@/lib/identity";
 import { nicknameFor } from "@/lib/nickname";
@@ -38,12 +38,12 @@ describe("progress bar", () => {
 });
 
 describe("intake", () => {
-  it("is two 5-point Likert statements with examples", () => {
+  it("is two 5-point items with a label and an example on every choice", () => {
     for (const q of INTAKE) {
-      expect(q.options).toEqual(LIKERT);
-      expect(q.examples).toMatch(/^For example:/);
+      expect(q.choices).toHaveLength(5);
+      for (const c of q.choices) expect(c.label && c.example).toBeTruthy();
     }
-    expect(LIKERT).toHaveLength(5);
+    expect(INTAKE[0].choices[0].label).toBe("Never");
   });
 });
 
@@ -63,7 +63,7 @@ describe("nicknames and names", () => {
 });
 
 describe("leaderboard scores (file store)", () => {
-  it("keeps one score per session, per class per day", async () => {
+  it("keeps one score per session, all periods together, per day", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "bh-scores-"));
     try {
       const store = fileStore(dir);
@@ -83,12 +83,12 @@ describe("leaderboard scores (file store)", () => {
       await store.putScore(row(a, 3));
       await store.putScore(row(a, 5));
       await store.putScore(row(b, 2, "4"));
-      const p3 = await store.listScores("3", day);
-      expect(p3).toHaveLength(1);
-      expect(p3[0].bugs).toBe(5);
-      expect(await store.listScores("4", day)).toHaveLength(1);
-      expect(await store.listScores("3", "2026-10-15")).toEqual([]);
-      await expect(store.listScores("../x", day)).rejects.toThrow();
+      const today = await store.listScores(day);
+      expect(today).toHaveLength(2);
+      expect(today.find((s) => s.session_id === a)?.bugs).toBe(5);
+      expect(today.map((s) => s.class_period).sort()).toEqual(["3", "4"]);
+      expect(await store.listScores("2026-10-15")).toEqual([]);
+      await expect(store.listScores("../x")).rejects.toThrow();
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

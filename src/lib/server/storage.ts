@@ -99,8 +99,8 @@ export interface DataStore {
   progressEvents(sessionId: string): Promise<Pick<EventRow, "step" | "machine" | "event_type" | "payload">[]>;
   /** Leaderboard: saves this session's score (the latest one wins). */
   putScore(row: ScoreRow): Promise<void>;
-  /** Leaderboard: every score for one class period on one day. */
-  listScores(period: string, day: string): Promise<ScoreRow[]>;
+  /** Leaderboard: every score on one day, all class periods together. */
+  listScores(day: string): Promise<ScoreRow[]>;
 }
 
 /** Rebuilds where a student was from their own events. */
@@ -180,8 +180,8 @@ function supabaseStore(): DataStore | null {
     async putScore(row) {
       fail("score upsert", (await db.from("scores").upsert(row, { onConflict: "session_id" })).error);
     },
-    async listScores(period, day) {
-      const { data, error } = await db.from("scores").select("*").eq("class_period", period).eq("day", day);
+    async listScores(day) {
+      const { data, error } = await db.from("scores").select("*").eq("day", day);
       fail("scores lookup", error);
       return (data ?? []) as ScoreRow[];
     },
@@ -316,12 +316,12 @@ export function fileStore(dir: string = process.env.LOG_DIR || defaultLogDir()):
       return (await readEvents(sessionId)).filter((e) => e.event_type === "step_enter" || e.event_type === "busted");
     },
     async putScore(row) {
-      const d = scoreDir(dir, row.day, row.class_period);
+      const d = scoreDir(dir, row.day);
       await mkdir(d, { recursive: true });
       await writeFile(path.join(d, `${safeId(row.session_id)}.json`), JSON.stringify(row, null, 2));
     },
-    async listScores(period, day) {
-      const d = scoreDir(dir, day, period);
+    async listScores(day) {
+      const d = scoreDir(dir, day);
       let names: string[] = [];
       try {
         names = (await readdir(d)).filter((n) => n.endsWith(".json"));
@@ -333,10 +333,10 @@ export function fileStore(dir: string = process.env.LOG_DIR || defaultLogDir()):
   };
 }
 
-/** scores/<day>/<period>/: day and period are checked so they can't leave the folder. */
-function scoreDir(dir: string, day: string, period: string): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^[\w-]{1,20}$/.test(period)) throw new Error("bad score key");
-  return path.join(dir, "scores", day, period);
+/** scores/<day>/: the day is checked so it can't leave the folder. */
+function scoreDir(dir: string, day: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("bad score key");
+  return path.join(dir, "scores", day);
 }
 
 // -------------------------------------------------------------------- blob
@@ -432,10 +432,12 @@ function blobStore(): DataStore | null {
     },
     async putScore(row) {
       if (!UUID.test(row.session_id)) throw new Error("bad id");
-      await putJson(`scores/${row.day}/${encodeURIComponent(row.class_period)}/${row.session_id}.json`, row);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.day)) throw new Error("bad score key");
+      await putJson(`scores/${row.day}/${row.session_id}.json`, row);
     },
-    async listScores(period, day) {
-      const files = await listAll(`scores/${day}/${encodeURIComponent(period)}/`);
+    async listScores(day) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("bad score key");
+      const files = await listAll(`scores/${day}/`);
       return (await Promise.all(files.map((f) => getJson<ScoreRow>(f.pathname)))).filter((r): r is ScoreRow => !!r);
     },
   };

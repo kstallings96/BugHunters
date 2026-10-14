@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { doubleAllowance } from "./ai/allowance";
-import { aiOutput, missingLine, parseMoney } from "./classify";
+import { aiOutput, missingLine, parseMoney, wrongLine } from "./classify";
 import type { Inputs, Machine, Output } from "./types";
 
 /**
@@ -39,10 +39,21 @@ export const allowance: Machine = {
     { kind: "spaces_only", tryThis: "Type only spaces." },
     { kind: "negative", tryThis: "Try a number below zero, like -5." },
   ],
+  // The practice app never reaches the bonus code questions; these keep it complete.
   fixFor: (kind) =>
     kind === "negative"
-      ? { type: "wrong_line", line: 1 }
-      : kind === "wrong_type"
-        ? missingLine(1, 'if allowance is not a number → say "That\'s not a number."', 'if allowance is 0 → say "Zero!"', "allowance = allowance + 1")
-        : missingLine(1, 'if allowance is blank → say "Please type a number."', 'if allowance is big → say "Wow!"', "allowance = allowance × 3"),
+      ? wrongLine(
+          1,
+          'if what you typed is below 0 → say "Allowance can\'t be below zero."',
+          "allowance = what you typed, keeping only digits",
+          "allowance = what you typed, keeping digits, dots and minus signs",
+          "allowance = what you typed, times −1",
+        )
+      : missingLine(
+          1,
+          'if allowance is blank or not a number → say "That\'s not a number."',
+          'if allowance is blank → say "That\'s not a number."',
+          'if allowance is 0 → say "That\'s not a number."',
+          "if allowance is not a number → allowance = 0",
+        ),
 };

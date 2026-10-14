@@ -110,10 +110,20 @@ export function stableHash(text: string): number {
   return h;
 }
 
-/** A missing-line question: the right line plus two that don't fix this bug, in a stable mixed order. */
-export function missingLine(after: number, answer: string, ...others: [string, string]) {
+/** The right fix plus three near misses, in a stable mixed order. */
+function mix(answer: string, others: [string, string, string]) {
   const options = [answer, ...others];
-  const shift = stableHash(answer) % 3;
+  const shift = stableHash(answer) % options.length;
   const rotated = [...options.slice(shift), ...options.slice(0, shift)];
-  return { type: "missing_line" as const, after, options: rotated, answer: rotated.indexOf(answer) };
+  return { options: rotated, answer: rotated.indexOf(answer) };
+}
+
+/** Line `line` is wrong: the student finds it, then picks what it should say. */
+export function wrongLine(line: number, answer: string, ...nearMisses: [string, string, string]) {
+  return { type: "wrong_line" as const, line, ...mix(answer, nearMisses) };
+}
+
+/** A check is missing after line `after`: the student spots that, then picks the check. */
+export function missingLine(after: number, answer: string, ...nearMisses: [string, string, string]) {
+  return { type: "missing_line" as const, after, ...mix(answer, nearMisses) };
 }

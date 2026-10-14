@@ -116,10 +116,12 @@ describe("Savings Planner (the AI's code, two planted lines)", () => {
     expect(run("savings", { price: "20", saved: "20" }).buggy.text).toBe("1 week");
   });
   it("bonus: the planted lines are lines 3 and 4; 1.2.3 is read by line 1 or 2", () => {
-    expect(MACHINES.savings.fixFor("zero", {})).toEqual({ type: "wrong_line", line: 3 });
-    expect(MACHINES.savings.fixFor("rounding", {})).toEqual({ type: "wrong_line", line: 4 });
-    expect(MACHINES.savings.fixFor("wrong_type", { price: "1.2.3", saved: "1" })).toEqual({ type: "wrong_line", line: 1 });
-    expect(MACHINES.savings.fixFor("wrong_type", { price: "20", saved: "5x" })).toEqual({ type: "wrong_line", line: 2 });
+    expect(MACHINES.savings.fixFor("zero", {})).toMatchObject({ type: "wrong_line", line: 3 });
+    expect(MACHINES.savings.fixFor("rounding", {})).toMatchObject({ type: "wrong_line", line: 4 });
+    expect(MACHINES.savings.fixFor("wrong_type", { price: "1.2.3", saved: "1" })).toMatchObject({ type: "wrong_line", line: 1 });
+    expect(MACHINES.savings.fixFor("wrong_type", { price: "20", saved: "5x" })).toMatchObject({ type: "wrong_line", line: 2 });
+    const rounding = MACHINES.savings.fixFor("rounding", {});
+    expect(rounding.options[rounding.answer]).toMatch(/rounded UP/);
   });
 });
 
@@ -148,7 +150,7 @@ describe("Sale Price (the AI's code)", () => {
   });
   it("bonus: a word needs a missing check; 1.2.3 is a misread line", () => {
     expect(MACHINES.sale.fixFor("wrong_type", { price: "40", off: "half" }).type).toBe("missing_line");
-    expect(MACHINES.sale.fixFor("wrong_type", { price: "1.2.3", off: "10" })).toEqual({ type: "wrong_line", line: 1 });
+    expect(MACHINES.sale.fixFor("wrong_type", { price: "1.2.3", off: "10" })).toMatchObject({ type: "wrong_line", line: 1 });
   });
 });
 
@@ -252,13 +254,14 @@ describe("every machine", () => {
   it.each(BUGS)("%s %j: the bonus fix has its answer among the choices", (id, inputs) => {
     const e = run(id, inputs);
     const fix = MACHINES[id].fixFor(e.bugKind!, inputs);
+    // Four fixes to pick from: the right one and three near misses.
+    expect(fix.options).toHaveLength(4);
+    expect(new Set(fix.options).size).toBe(4);
+    expect(fix.options[fix.answer]).toBeTruthy();
     if (fix.type === "wrong_line") {
       expect(fix.line).toBeGreaterThanOrEqual(1);
       expect(fix.line).toBeLessThanOrEqual(MACHINES[id].pseudocode.length);
     } else {
-      expect(fix.options).toHaveLength(3);
-      expect(new Set(fix.options).size).toBe(3);
-      expect(fix.options[fix.answer]).toBeTruthy();
       expect(fix.after).toBeLessThanOrEqual(MACHINES[id].pseudocode.length);
     }
   });

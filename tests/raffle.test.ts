@@ -51,9 +51,11 @@ describe("Raffle Picker (bonus, the AI's code with one planted line)", () => {
   });
 
   it("bonus: the planted line is line 3; the one-name check is missing after line 2", () => {
-    expect(RAFFLE.fixFor("off_by_one")).toEqual({ type: "wrong_line", line: 3 });
+    const off = RAFFLE.fixFor("off_by_one");
+    expect(off).toMatchObject({ type: "wrong_line", line: 3 });
+    expect(off.options[off.answer]).toBe("spot = a random number from 0 to (count − 1)");
     const fix = RAFFLE.fixFor("boundary");
     expect(fix.type === "missing_line" && fix.after).toBe(2);
-    expect(fix.type === "missing_line" && fix.options[fix.answer]).toMatch(/only 1 name/);
+    expect(fix.type === "missing_line" && fix.options[fix.answer]).toMatch(/fewer than 2 names/);
   });
 });

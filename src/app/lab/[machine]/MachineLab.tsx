@@ -61,7 +61,7 @@ export function MachineLab({ id }: { id: MachineId }) {
                   return (
                     <p>
                       <b>Bonus fix:</b>{" "}
-                      {fix.type === "wrong_line" ? `line ${fix.line} is wrong` : `missing after line ${fix.after}: ${fix.options[fix.answer]}`}
+                      {fix.type === "wrong_line" ? `line ${fix.line} should be: ${fix.options[fix.answer]}` : `missing after line ${fix.after}: ${fix.options[fix.answer]}`}
                     </p>
                   );
                 })()}

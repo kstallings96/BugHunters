@@ -1,4 +1,4 @@
-import { missingLine } from "@/machines/classify";
+import { missingLine, wrongLine } from "@/machines/classify";
 import type { Category, Fix } from "@/machines/types";
 import { pickWinner } from "./ai/raffle";
 
@@ -29,9 +29,23 @@ export const RAFFLE = {
     "spot = a random number from 0 to (count − 2)",
     "show names[spot]",
   ],
+  /** Spots count from 0: names[0] is the first name (the code question says so). */
   fixFor(kind: Category): Fix {
-    if (kind === "off_by_one") return { type: "wrong_line", line: 3 };
-    return missingLine(2, 'if there is only 1 name → say "Add at least 2 names."', "names = names in ABC order", 'if a name has an A → say "Lucky!"');
+    if (kind === "off_by_one")
+      return wrongLine(
+        3,
+        "spot = a random number from 0 to (count − 1)",
+        "spot = a random number from 0 to count",
+        "spot = a random number from 1 to count",
+        "spot = a random number from 1 to (count − 1)",
+      );
+    return missingLine(
+      2,
+      'if there are fewer than 2 names → say "Add at least 2 names."',
+      'if there are more than 2 names → say "Add at least 2 names."',
+      'if there are fewer than 1 name → say "Add at least 2 names."',
+      "if there is 1 name → spot = 1",
+    );
   },
 };
 

@@ -12,7 +12,7 @@ create table public.scores (
   updated_at   timestamptz not null default now()
 );
 
-create index scores_board on public.scores (class_period, day);
+create index scores_board on public.scores (day);
 
 alter table public.scores enable row level security;
 revoke all on public.scores from anon, authenticated;

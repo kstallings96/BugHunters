@@ -62,7 +62,7 @@ export function Ready({ count, nickname, onStart }: { count: number; nickname: s
       </span>
       <h1 className="text-4xl font-bold">{count} apps to test. Ready?</h1>
       <p className="text-xl">
-        Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on the class leaderboard at the end.
+        Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on today&apos;s leaderboard at the end.
       </p>
       <BigButton onClick={onStart}>Start →</BigButton>
     </main>

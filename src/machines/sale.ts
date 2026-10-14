@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { salePrice as aiSalePrice } from "./ai/sale";
-import { aiOutput, classifyNumberField, missingLine, parseMoney, parsePercent } from "./classify";
+import { aiOutput, classifyNumberField, missingLine, parseMoney, parsePercent, wrongLine } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
@@ -17,13 +17,50 @@ import type { Category, Fix, Inputs, Machine, Output } from "./types";
 const salePrice = (p: number, off: number) => `Sale price: $${(p - p * (off / 100)).toFixed(2)}`;
 
 // Lines: 1 read price, 2 read off, 3 compute, 4 show.
+// Near misses: "and" for "or", the wrong box, a check that only covers this one input.
 const FIXES: Partial<Record<Category, Fix>> = {
-  out_of_range: missingLine(2, 'if off is below 0% or above 100% → say "Discounts go from 0% to 100%."', 'if off is 50% → say "Half off!"', "sale = price + off"),
-  negative: missingLine(2, 'if price is below 0 → say "Prices can\'t be below zero."', 'if off is 50% → say "Half off!"', "sale = off − price"),
-  empty: missingLine(2, 'if price or off is blank → say "Please type a number."', 'if price is over $100 → say "Big sale!"', "sale = price × off"),
-  spaces_only: missingLine(2, 'if price or off is blank → say "Please type a number."', 'if off is 50% → say "Half off!"', "sale = price ÷ off"),
-  wrong_type: missingLine(2, 'if price or off is not a number → say "That\'s not a number."', 'if price is over $100 → say "Big sale!"', "sale = price − off"),
-  special: missingLine(0, 'price = price without the "$" sign', 'price = price + "$"', 'show "$" + price'),
+  out_of_range: missingLine(
+    2,
+    'if off is below 0% or above 100% → say "Discounts go from 0% to 100%."',
+    'if off is below 0% and above 100% → say "Discounts go from 0% to 100%."',
+    'if off is above 0% or below 100% → say "Discounts go from 0% to 100%."',
+    'if price is below 0 or above 100 → say "Discounts go from 0% to 100%."',
+  ),
+  negative: missingLine(
+    2,
+    'if price is below 0 → say "Prices can\'t be below zero."',
+    'if off is below 0 → say "Prices can\'t be below zero."',
+    'if price is 0 → say "Prices can\'t be below zero."',
+    "if price is below 0 → price = price × −1",
+  ),
+  empty: missingLine(
+    2,
+    'if price or off is blank → say "Please type a number."',
+    'if price and off are both blank → say "Please type a number."',
+    'if price or off is 0 → say "Please type a number."',
+    "if price or off is blank → sale = 0",
+  ),
+  spaces_only: missingLine(
+    2,
+    'if price or off is blank or only spaces → say "Please type a number."',
+    'if price or off is blank → say "Please type a number."',
+    'if price or off has a space in it → say "Please type a number."',
+    "if price or off is only spaces → sale = 0",
+  ),
+  wrong_type: missingLine(
+    2,
+    'if price or off is not a number → say "That\'s not a number."',
+    'if price and off are both not numbers → say "That\'s not a number."',
+    'if price or off is a number → say "That\'s not a number."',
+    'if price or off is a word → say "That\'s not a number."',
+  ),
+  special: wrongLine(
+    1,
+    'price = the number in what you typed, after a "$" if there is one',
+    'price = "$" + the number at the start of what you typed',
+    "price = what you typed, without any numbers",
+    'off = the number in what you typed, before a "%" if there is one',
+  ),
 };
 
 type Num = { ok: true; n: number } | { ok: false; out: Output };
@@ -82,7 +119,14 @@ export const sale: Machine = {
       const box = classifyNumberField(inputs.price ?? "").includes("wrong_type") ? "price" : "off";
       // "1.2.3" starts like a number and gets read as 1.2: the line that reads it is guilty.
       // "half" can't be read at all: a check is missing.
-      if (Number.isFinite(parseFloat(inputs[box] ?? ""))) return { type: "wrong_line", line: box === "price" ? 1 : 2 };
+      if (Number.isFinite(parseFloat(inputs[box] ?? "")))
+        return wrongLine(
+          box === "price" ? 1 : 2,
+          `${box} = what you typed, only if ALL of it is a number`,
+          `${box} = the number at the end of what you typed`,
+          `${box} = what you typed, without the dots`,
+          `${box} = the first digit of what you typed`,
+        );
     }
     return FIXES[kind] ?? FIXES.wrong_type!;
   },
