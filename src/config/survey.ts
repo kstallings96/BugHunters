@@ -1,29 +1,32 @@
 /**
  * The only survey items inside the tool, asked right after login. Pre/post
  * surveys happen outside the tool and join on first name, last initial and
- * class period. Word for word, options in this order (1 = first).
+ * class period. Classic 5-point Likert items: a statement with examples,
+ * then Strongly disagree (1) to Strongly agree (5), logged as 1–5.
  */
 
 export interface SurveyQuestion {
   id: "coding_experience" | "ai_confidence";
+  /** The statement students agree or disagree with. */
   question: string;
+  /** Examples, shown under the statement. */
+  examples: string;
   options: string[];
 }
+
+export const LIKERT = ["Strongly disagree", "Disagree", "Neither agree nor disagree", "Agree", "Strongly agree"];
 
 export const INTAKE: SurveyQuestion[] = [
   {
     id: "coding_experience",
-    question: "How much coding have you done before today?",
-    options: [
-      "Never",
-      "A little (like one class activity or an Hour of Code)",
-      "Some (a class or club for a few weeks)",
-      "A lot (lots of projects, maybe outside school too)",
-    ],
+    question: "I have experience writing code.",
+    examples: "For example: Scratch, Code.org, Python, or making games or websites.",
+    options: LIKERT,
   },
   {
     id: "ai_confidence",
-    question: "How confident are you using AI tools, like chatbots?",
-    options: ["I've never used one", "Not very confident", "Somewhat confident", "Very confident"],
+    question: "I feel confident using AI tools.",
+    examples: "For example: ChatGPT, Gemini, Copilot, or Snapchat My AI.",
+    options: LIKERT,
   },
 ];

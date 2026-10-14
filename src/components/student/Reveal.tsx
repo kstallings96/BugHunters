@@ -20,7 +20,9 @@ function split(machine: MachineId, busted: BustedBug[]) {
 
 function describeInputs(machine: MachineId, inputs: Record<string, string>): string {
   const shown = (raw: string) => (raw === "" ? "(empty)" : raw);
-  return MACHINES[machine].fields.map((f) => (MACHINES[machine].fields.length > 1 ? `${f.label}: ${shown(inputs[f.id])}` : shown(inputs[f.id]))).join(", ");
+  // "Price: 100, Saved per week: 20" (labels without their "($)").
+  const label = (text: string) => text.replace(/\s*\(.*\)$/, "");
+  return MACHINES[machine].fields.map((f) => (MACHINES[machine].fields.length > 1 ? `${label(f.label)}: ${shown(inputs[f.id])}` : shown(inputs[f.id]))).join(", ");
 }
 
 /** True when every AI test used only ordinary inputs (so we can say so). */
@@ -48,23 +50,24 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
   useLogOnce({ scope: "machine", reveal_machine: machine, found: found.map((b) => b.kind), missed: hiding.map((b) => b.kind) });
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-6 py-4">
+    <main className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-6 py-3">
       <h1 className="text-3xl font-bold">
         {m.icon} {m.name}: what was hiding?
       </h1>
       <div className="grid min-h-0 flex-1 grid-cols-[1fr_1.4fr] gap-5">
-        <section className="flex flex-col gap-2 rounded-3xl border-2 border-[#475569] bg-[#f1f5f9] p-4">
+        <section className="flex min-h-0 flex-col gap-2 rounded-3xl border-2 border-[#475569] bg-[#f1f5f9] p-4">
           <h2 className="text-xl font-bold">🤖 {AI_TESTS_SOURCE === "generated" ? "Here's what the AI tested." : "Tests an AI might write (example)"}</h2>
-          <ul className="flex flex-col gap-1.5">
+          {/* The model wrote up to 9 tests: the list scrolls so Next always fits on a Chromebook. */}
+          <ul className="flex min-h-0 flex-col gap-1 overflow-y-auto">
             {tests.map((t) => (
-              <li key={JSON.stringify(t.inputs)} className="rounded-xl bg-white px-3 py-1.5 text-lg">
+              <li key={JSON.stringify(t.inputs)} className="rounded-xl bg-white px-3 py-1 text-base leading-snug">
                 {describeInputs(machine, t.inputs)} → {shownExpectation(t.expects).trim() === "" ? "(blank)" : shownExpectation(t.expects)} ✅
               </li>
             ))}
           </ul>
           {onlyOrdinary(machine) && <p className="mt-auto text-lg font-bold">The AI only tried ordinary inputs.</p>}
         </section>
-        <section className="flex flex-col gap-2 rounded-3xl border-2 border-line bg-card p-4">
+        <section className="flex min-h-0 flex-col gap-2 overflow-y-auto rounded-3xl border-2 border-line bg-card p-4">
           <h2 className="text-xl font-bold">🔍 Here&apos;s what you found.</h2>
           <BugList found={found.map((b) => bugLabel(machine, b.kind))} hiding={hiding.map((b) => ({ label: bugLabel(machine, b.kind), tryThis: b.tryThis }))} />
         </section>

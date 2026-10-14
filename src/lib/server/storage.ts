@@ -66,6 +66,21 @@ export interface EventRow {
   payload: Record<string, unknown>;
 }
 
+/**
+ * One leaderboard row per session: a nickname (never a name), how many bugs
+ * were busted in the three apps, and which class and day it belongs to.
+ */
+export interface ScoreRow {
+  session_id: string;
+  nickname: string;
+  bugs: number;
+  class_period: string;
+  /** "2026-10-13" in the school's time zone. */
+  day: string;
+  is_test: boolean;
+  updated_at: string;
+}
+
 export interface DataStore {
   kind: "supabase" | "blob" | "file" | "none";
   createStudent(row: StudentRow): Promise<void>;
@@ -82,6 +97,10 @@ export interface DataStore {
   setPosition(sessionId: string, step: string, machine: string | null): Promise<void>;
   /** step_enter and busted events, in order, for rebuilding progress. */
   progressEvents(sessionId: string): Promise<Pick<EventRow, "step" | "machine" | "event_type" | "payload">[]>;
+  /** Leaderboard: saves this session's score (the latest one wins). */
+  putScore(row: ScoreRow): Promise<void>;
+  /** Leaderboard: every score for one class period on one day. */
+  listScores(period: string, day: string): Promise<ScoreRow[]>;
 }
 
 /** Rebuilds where a student was from their own events. */
@@ -157,6 +176,14 @@ function supabaseStore(): DataStore | null {
         .order("seq");
       fail("progress lookup", error);
       return data ?? [];
+    },
+    async putScore(row) {
+      fail("score upsert", (await db.from("scores").upsert(row, { onConflict: "session_id" })).error);
+    },
+    async listScores(period, day) {
+      const { data, error } = await db.from("scores").select("*").eq("class_period", period).eq("day", day);
+      fail("scores lookup", error);
+      return (data ?? []) as ScoreRow[];
     },
   };
 }
@@ -288,7 +315,28 @@ export function fileStore(dir: string = process.env.LOG_DIR || defaultLogDir()):
     async progressEvents(sessionId) {
       return (await readEvents(sessionId)).filter((e) => e.event_type === "step_enter" || e.event_type === "busted");
     },
+    async putScore(row) {
+      const d = scoreDir(dir, row.day, row.class_period);
+      await mkdir(d, { recursive: true });
+      await writeFile(path.join(d, `${safeId(row.session_id)}.json`), JSON.stringify(row, null, 2));
+    },
+    async listScores(period, day) {
+      const d = scoreDir(dir, day, period);
+      let names: string[] = [];
+      try {
+        names = (await readdir(d)).filter((n) => n.endsWith(".json"));
+      } catch {
+        return [];
+      }
+      return (await Promise.all(names.map((n) => readJson<ScoreRow>(path.join(d, n))))).filter((r): r is ScoreRow => r !== null);
+    },
   };
+}
+
+/** scores/<day>/<period>/: day and period are checked so they can't leave the folder. */
+function scoreDir(dir: string, day: string, period: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^[\w-]{1,20}$/.test(period)) throw new Error("bad score key");
+  return path.join(dir, "scores", day, period);
 }
 
 // -------------------------------------------------------------------- blob
@@ -382,6 +430,14 @@ function blobStore(): DataStore | null {
       const bySeq = new Map(rows.map((r) => [r.seq, r]));
       return [...bySeq.values()].sort((a, b) => a.seq - b.seq).filter((e) => e.event_type === "step_enter" || e.event_type === "busted");
     },
+    async putScore(row) {
+      if (!UUID.test(row.session_id)) throw new Error("bad id");
+      await putJson(`scores/${row.day}/${encodeURIComponent(row.class_period)}/${row.session_id}.json`, row);
+    },
+    async listScores(period, day) {
+      const files = await listAll(`scores/${day}/${encodeURIComponent(period)}/`);
+      return (await Promise.all(files.map((f) => getJson<ScoreRow>(f.pathname)))).filter((r): r is ScoreRow => !!r);
+    },
   };
 }
 
@@ -404,6 +460,10 @@ const noStore: DataStore = {
   async markEnded() {},
   async setPosition() {},
   async progressEvents() {
+    return [];
+  },
+  async putScore() {},
+  async listScores() {
     return [];
   },
 };

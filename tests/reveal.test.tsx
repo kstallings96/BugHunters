@@ -26,7 +26,7 @@ describe("missed-bug reveal", () => {
     expect(screen.getByText(/Try \$10 with \$3 a week/)).toBeTruthy();
     expect(screen.queryByText(/Leave the name empty/)).toBeNull(); // other apps' bugs aren't shown
     expect(screen.getByText(/what the AI tested/)).toBeTruthy();
-    expect(screen.getByText(/Price \(\$\): 100, Saved per week \(\$\): 20 → 5 weeks/)).toBeTruthy();
+    expect(screen.getByText(/Price: 100, Saved per week: 20 → 5 weeks/)).toBeTruthy();
     expect(screen.queryByText("The AI only tried ordinary inputs.")).toBeNull();
     expect(logged[0]).toMatchObject({ type: "reveal_view", payload: { scope: "machine", reveal_machine: "savings", found: ["zero"] } });
     expect((logged[0].payload.missed as string[]).length).toBe(3);

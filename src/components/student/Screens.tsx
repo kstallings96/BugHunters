@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { BigButton } from "@/components/ui";
 import type { SurveyQuestion } from "@/config/survey";
 import { logEvent } from "@/lib/logger";
@@ -10,22 +10,29 @@ import { bugLabel, MACHINES } from "@/machines";
 
 // ------------------------------------------------------------- intake
 
-/** One intake question; the answer is logged as its 1-based position. */
+/** One intake Likert item; the answer is logged as 1 (Strongly disagree) to 5 (Strongly agree). */
 export function SurveyScreen({ q, onAnswer }: { q: SurveyQuestion; onAnswer: () => void }) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6 py-6">
-      <h1 className="text-3xl leading-snug font-bold">{q.question}</h1>
-      <div className="flex flex-col gap-3">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-6 px-6 py-6">
+      <p className="text-xl font-bold text-ink-soft">How much do you agree?</p>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl leading-snug font-bold">{q.question}</h1>
+        <p className="text-xl text-ink-soft">{q.examples}</p>
+      </div>
+      <div className="grid grid-cols-5 gap-3" role="group" aria-label={q.question}>
         {q.options.map((text, i) => (
           <button
             key={text}
             type="button"
             onClick={() => {
-              logEvent("survey_response", { question: q.id, choice: i + 1, text });
+              logEvent("survey_response", { question: q.id, choice: i + 1, text, scale: q.options.length });
               onAnswer();
             }}
-            className="flex min-h-16 items-center rounded-2xl border-4 border-line bg-white px-5 py-2 text-left text-xl hover:border-teal"
+            className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border-4 border-line bg-white px-2 py-3 text-center text-lg leading-tight font-bold hover:border-teal"
           >
+            <span className="text-3xl text-teal" aria-hidden="true">
+              {i + 1}
+            </span>
             {text}
           </button>
         ))}
@@ -45,15 +52,19 @@ export function EndScreen({
   bonusDone,
   onBonus,
   onFinish,
+  leaderboard,
 }: {
   busted: BustedBug[];
   bonusDone: boolean;
   onBonus: () => void;
   onFinish: () => void;
+  /** The class leaderboard, beside the results. */
+  leaderboard?: ReactNode;
 }) {
   const kinds = kindsFound(busted);
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-6 py-6 text-center">
+    <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-[1fr_auto] items-center gap-6 px-6 py-6">
+      <div className="flex flex-col items-center justify-center gap-5 text-center">
       <span className="text-8xl" aria-hidden="true">
         💥
       </span>
@@ -79,6 +90,8 @@ export function EndScreen({
         )}
         <BigButton onClick={onFinish}>I&apos;m finished</BigButton>
       </div>
+      </div>
+      {leaderboard && <div className="w-[24rem] self-center">{leaderboard}</div>}
     </main>
   );
 }
@@ -90,7 +103,21 @@ export function EndScreen({
  * check is missing, pick which line fills the gap. Every answer is a choice
  * on screen.
  */
-export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () => void; last: boolean }) {
+export function GuiltyLine({
+  bug,
+  onNext,
+  onSkip,
+  index,
+  total,
+}: {
+  bug: BustedBug;
+  onNext: () => void;
+  /** Leave the code questions now. */
+  onSkip: () => void;
+  index: number;
+  total: number;
+}) {
+  const last = index >= total - 1;
   const machine = bug.machine === "raffle" ? RAFFLE : MACHINES[bug.machine];
   const fix = machine.fixFor(bug.kind, bug.inputs);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -125,6 +152,21 @@ export function GuiltyLine({ bug, onNext, last }: { bug: BustedBug; onNext: () =
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center gap-4 px-6 py-5">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-lg font-bold text-ink-soft">
+          ⭐ Code question {index + 1} of {total}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            logEvent("guilty_line_skip", { at: index + 1, of: total, answered: chosen !== null });
+            onSkip();
+          }}
+          className="min-h-12 rounded-full border-2 border-line px-4 text-lg font-bold text-ink-soft hover:bg-paper"
+        >
+          I&apos;m done with code questions →
+        </button>
+      </div>
       <h1 className="text-3xl leading-snug font-bold">
         {machine.icon} {fix.type === "wrong_line" ? "Which line made" : "A line is missing! Which one fixes"} the {bugLabel(bug.machine, bug.kind)} bug in{" "}
         {machine.name}?

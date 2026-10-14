@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BigButton } from "@/components/ui";
 import { DISCLOSURE, DISCLOSURE_LINE } from "@/config/disclosure";
 import { logEvent } from "@/lib/logger";
+import type { Machine } from "@/machines";
 
 /**
  * Intro screens 1 and 2: an AI built these apps, and your job is to check
@@ -53,14 +54,49 @@ export function Intro({ onDone }: { onDone: () => void }) {
 }
 
 /** Intro screen 4, after the guided demo. */
-export function Ready({ count, onStart }: { count: number; onStart: () => void }) {
+export function Ready({ count, nickname, onStart }: { count: number; nickname: string; onStart: () => void }) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 px-6 py-6 text-center">
       <span className="text-7xl" aria-hidden="true">
         🔍
       </span>
       <h1 className="text-4xl font-bold">{count} apps to test. Ready?</h1>
+      <p className="text-xl">
+        Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on the class leaderboard at the end.
+      </p>
       <BigButton onClick={onStart}>Start →</BigButton>
+    </main>
+  );
+}
+
+/**
+ * Before each app: what was asked of the AI (the exact prompt the model
+ * got), and its confident reply, like the intro's chat. Then check it.
+ */
+export function Briefing({ machine, index, total, onStart }: { machine: Machine; index: number; total: number; onStart: () => void }) {
+  return (
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6 py-6">
+      <p className="text-xl font-bold text-ink-soft">
+        App {index + 1} of {total}
+      </p>
+      <h1 className="text-4xl font-bold">
+        {machine.icon} {machine.name}
+      </h1>
+      <div className="flex flex-col gap-3 rounded-3xl border-2 border-line bg-card p-5">
+        <p className="text-base font-bold text-ink-soft">Someone asked an AI:</p>
+        <div className="flex justify-end">
+          <p className="max-w-[80%] rounded-2xl rounded-br-sm bg-teal px-5 py-3 text-xl text-white">{machine.prompt}</p>
+        </div>
+        <div className="flex items-end gap-2">
+          <span className="text-3xl" aria-hidden="true">
+            🤖
+          </span>
+          <p className="max-w-[80%] rounded-2xl rounded-bl-sm bg-[#e2e8f0] px-5 py-3 text-xl">Done! ✅ I built {machine.name} and tested it. It works perfectly.</p>
+        </div>
+      </div>
+      <BigButton onClick={onStart} className="self-end">
+        Check it →
+      </BigButton>
     </main>
   );
 }

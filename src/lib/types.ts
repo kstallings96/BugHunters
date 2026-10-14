@@ -6,6 +6,8 @@ export type Step =
   | "intake"
   | "intro"
   | "tutorial"
+  /** The scene before each app: what was asked of the AI. */
+  | "briefing"
   | "machine"
   | "reveal"
   | "post_survey"

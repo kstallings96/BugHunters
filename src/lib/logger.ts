@@ -37,7 +37,9 @@ export type EventType =
   | "nudge_response"
   | "facilitator_advance"
   | "bonus_enter"
-  | "guilty_line_attempt";
+  | "guilty_line_attempt"
+  | "guilty_line_skip"
+  | "leaderboard_view";
 
 let queue: EventQueue | null = null;
 let session: ClientSession | null = null;

@@ -1,3 +1,4 @@
+import { hasBadWords } from "./clean";
 /**
  * Students sign in with a first name, last initial and class period. These
  * rules are shared by the login screen and the server so both agree.
@@ -25,6 +26,8 @@ export function normalizeName(firstName: unknown, lastInitial: unknown): Student
   const first = firstName.normalize("NFC").trim().replace(/\s+/g, " ");
   const initial = lastInitial.normalize("NFC").trim().replace(/\.$/, "");
   if (!FIRST_NAME.test(first) || !INITIAL.test(initial)) return null;
+  // Names show in the header all session: no bad words (checked here, so the server refuses them too).
+  if (hasBadWords(first)) return null;
   return { firstName: tidyCase(first), lastInitial: initial.toUpperCase() };
 }
 

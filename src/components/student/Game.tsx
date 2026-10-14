@@ -5,7 +5,9 @@ import { INTAKE } from "@/config/survey";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
-import { Intro, Ready } from "./Intro";
+import { nicknameFor } from "@/lib/nickname";
+import { Briefing, Intro, Ready } from "./Intro";
+import { Leaderboard } from "./Leaderboard";
 import { RaffleStep } from "./RaffleStep";
 import { FullReveal, MachineReveal, NextApp } from "./Reveal";
 import { MachineStep, type BustedResult } from "./MachineStep";
@@ -16,11 +18,14 @@ import { EndScreen, GuiltyLine, SurveyScreen } from "./Screens";
 import {
   categoryCounts,
   clearGame,
+  codeQuestions,
   gameFromProgress,
   isEdge,
   isNewBug,
   loadGame,
+  measuredBugs,
   newGame,
+  progressStage,
   saveGame,
   STEP_OF,
   type GameState,
@@ -42,7 +47,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   const machineFor = (g: GameState): MachineId | "raffle" | null =>
     g.screen === "tutorial"
       ? "allowance"
-      : g.screen === "machine" || g.screen === "between"
+      : g.screen === "briefing" || g.screen === "machine" || g.screen === "between"
         ? session.machineOrder[g.machineIndex]
         : g.screen === "bonus_machine"
           ? "raffle"
@@ -106,6 +111,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   // Sessions saved before the reveal condition existed get the full reveal at the end.
   const revealCondition = session.revealCondition ?? "end_only";
   const counter = game.screen === "machine" || game.screen === "bonus_machine";
+  const board = <Leaderboard token={session.token} bugs={measuredBugs(game.busted)} />;
 
   let body: React.ReactNode;
   switch (game.screen) {
@@ -122,8 +128,13 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       body = <Tutorial game={game} onTry={(t) => addTry("allowance", t)} onDone={() => go("ready")} />;
       break;
     case "ready":
-      body = <Ready count={session.machineOrder.length} onStart={() => go("machine", { machineIndex: 0 })} />;
+      body = <Ready count={session.machineOrder.length} nickname={nicknameFor(session.id)} onStart={() => go("briefing", { machineIndex: 0 })} />;
       break;
+    case "briefing": {
+      const id = session.machineOrder[game.machineIndex];
+      body = <Briefing key={id} machine={MACHINES[id]} index={game.machineIndex} total={session.machineOrder.length} onStart={() => go("machine")} />;
+      break;
+    }
     case "machine": {
       const id = session.machineOrder[game.machineIndex];
       const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
@@ -154,7 +165,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     case "between": {
       const id = session.machineOrder[game.machineIndex];
       const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
-      const next = () => (lastMachine ? go("end") : go("machine", { machineIndex: game.machineIndex + 1 }));
+      const next = () => (lastMachine ? go("end") : go("briefing", { machineIndex: game.machineIndex + 1 }));
       body =
         revealCondition === "reveal" ? (
           <MachineReveal key={id} machine={id} busted={game.busted} last={lastMachine} onNext={next} />
@@ -175,32 +186,37 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       );
       break;
     case "bonus_guilty": {
-      const bug = game.busted[game.guiltyIndex];
-      const last = game.guiltyIndex >= game.busted.length - 1;
+      // A few code questions at most, and the student can leave any time.
+      const questions = codeQuestions(game.busted);
+      const bug = questions[game.guiltyIndex];
+      const last = game.guiltyIndex >= questions.length - 1;
       body = bug ? (
         <GuiltyLine
           key={game.guiltyIndex}
           bug={bug}
-          last={last}
+          index={game.guiltyIndex}
+          total={questions.length}
           onNext={() => (last ? go("end", { bonusDone: true }) : setGame((g) => ({ ...g, guiltyIndex: g.guiltyIndex + 1 })))}
+          onSkip={() => go("end", { bonusDone: true })}
         />
       ) : (
-        <EndScreen busted={game.busted} bonusDone onBonus={() => {}} onFinish={finish} />
+        <EndScreen busted={game.busted} bonusDone onBonus={() => {}} onFinish={finish} leaderboard={board} />
       );
       break;
     }
     default:
-      body = <EndScreen busted={game.busted} bonusDone={game.bonusDone} onBonus={() => go("bonus_machine")} onFinish={finish} />;
+      body = <EndScreen busted={game.busted} bonusDone={game.bonusDone} onBonus={() => go("bonus_machine")} onFinish={finish} leaderboard={board} />;
   }
 
   return (
-    <div className={`flex flex-1 flex-col ${counter || game.screen === "tutorial" ? "h-dvh" : "min-h-dvh"}`}>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b-2 border-line bg-card px-5">
-        <span className="text-xl font-bold">
+    <div className={`flex flex-1 flex-col ${counter || game.screen === "tutorial" || game.screen === "between" ? "h-dvh" : "min-h-dvh"}`}>
+      <header className="flex h-14 shrink-0 items-center gap-5 border-b-2 border-line bg-card px-5">
+        <span className="shrink-0 text-xl font-bold">
           🔍 bug<span className="text-teal">Hunters</span>
         </span>
-        {counter && <span className="rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">💥 Bugs busted: {game.busted.length}</span>}
-        <span className="text-base text-ink-soft">
+        <ProgressBar stage={progressStage(game.screen, game.machineIndex)} />
+        {counter && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">💥 {game.busted.length} busted</span>}
+        <span className="shrink-0 text-base text-ink-soft">
           {session.firstName} {session.lastInitial}.
         </span>
       </header>
@@ -252,5 +268,32 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
         </div>
       }
     />
+  );
+}
+
+// ------------------------------------------------------------ progress
+
+const PARTS = ["Questions", "Practice", "App 1", "App 2", "App 3", "Done"];
+
+/** How far through the session the student is: finished parts filled, the current one outlined. */
+function ProgressBar({ stage }: { stage: number }) {
+  return (
+    <ol className="flex flex-1 items-center gap-1.5" aria-label={`Progress: ${PARTS[stage]}`}>
+      {PARTS.map((label, i) => (
+        <li
+          key={label}
+          aria-current={i === stage ? "step" : undefined}
+          className={`flex h-8 flex-1 items-center justify-center rounded-full text-sm font-bold ${
+            i < stage || stage === PARTS.length - 1
+              ? "bg-teal text-white"
+              : i === stage
+                ? "border-4 border-teal bg-teal/10 text-teal"
+                : "bg-paper text-ink-soft"
+          }`}
+        >
+          {i < stage || (stage === PARTS.length - 1 && i === stage) ? `✓ ${label}` : label}
+        </li>
+      ))}
+    </ol>
   );
 }

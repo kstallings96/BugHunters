@@ -76,3 +76,8 @@ export function startOfToday(timeZone: string, now: Date = new Date()): string {
   const sinceMidnight = ((get("hour") * 60 + get("minute")) * 60 + get("second")) * 1000 + now.getMilliseconds();
   return new Date(now.getTime() - sinceMidnight).toISOString();
 }
+
+/** Today's date in the school's time zone, like "2026-10-13" (leaderboards are per class per day). */
+export function dayKey(timeZone: string, now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}

@@ -8,6 +8,7 @@ export type Screen =
   | "intro"
   | "tutorial"
   | "ready"
+  | "briefing"
   | "machine"
   | "between"
   | "end"
@@ -20,6 +21,7 @@ export const STEP_OF: Record<Screen, Step> = {
   intro: "intro",
   tutorial: "tutorial",
   ready: "intro",
+  briefing: "briefing",
   machine: "machine",
   between: "reveal",
   end: "end",
@@ -73,8 +75,8 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
   const screen: Screen =
     p.step === "tutorial" || p.step === "intro"
       ? "intro"
-      : p.step === "machine" || p.step === "reveal"
-        ? "machine"
+      : p.step === "briefing" || p.step === "machine" || p.step === "reveal"
+        ? "briefing"
         : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
             ? "end"
             : "intake_coding";
@@ -84,6 +86,26 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
 /** Does this real bug add to the counter? Not if the same kind was already busted on this machine. */
 export function isNewBug(busted: BustedBug[], machine: MachineId | "raffle", kind: Category): boolean {
   return !busted.some((b) => b.machine === machine && b.kind === kind);
+}
+
+/** The bonus asks about a few bugs at most, one per app first, so it never drags on. */
+export const MAX_CODE_QUESTIONS = 3;
+
+export function codeQuestions(busted: BustedBug[]): BustedBug[] {
+  const firstPerApp = busted.filter((b, i) => busted.findIndex((o) => o.machine === b.machine) === i);
+  const rest = busted.filter((b) => !firstPerApp.includes(b));
+  return [...firstPerApp, ...rest].slice(0, MAX_CODE_QUESTIONS);
+}
+
+/** Bugs busted in the three measured apps (the bonus doesn't count): the leaderboard score. */
+export const measuredBugs = (busted: BustedBug[]) => busted.filter((b) => b.machine !== "raffle").length;
+
+/** Where the progress bar is: 0 questions, 1 practice, 2–4 the apps, 5 done. */
+export function progressStage(screen: Screen, machineIndex: number): number {
+  if (screen === "intake_coding" || screen === "intake_ai") return 0;
+  if (screen === "intro" || screen === "tutorial" || screen === "ready") return 1;
+  if (screen === "briefing" || screen === "machine" || screen === "between") return 2 + machineIndex;
+  return 5;
 }
 
 export function categoryCounts(tries: Try[]): Partial<Record<Category, number>> {

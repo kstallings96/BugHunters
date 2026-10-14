@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { hasBadWords } from "@/lib/clean";
 import { normalizeName, type StudentName } from "@/lib/identity";
 import { beginSession, logEvent, savedSession, setStep, startLogger } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
@@ -80,6 +81,7 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
 
   function submitName(e: FormEvent) {
     e.preventDefault();
+    if (hasBadWords(first)) return setProblem("Please type your real first name.");
     const n = normalizeName(first, initial);
     if (!n) return setProblem("Use letters only, please.");
     if (!period) return setProblem("Pick your class period.");
