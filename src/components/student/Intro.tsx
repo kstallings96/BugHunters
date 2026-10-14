@@ -44,22 +44,22 @@ export function Intro({ onDone }: { onDone: () => void }) {
           {/* General on purpose: naming kinds of input (zero, blank...) would give away what the study measures. */}
           <ol className="flex flex-col gap-3 text-2xl leading-snug">
             <li className="flex items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 py-3">
-              <span className="text-4xl" aria-hidden="true">
-                🔨
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal text-2xl font-bold text-white" aria-hidden="true">
+                1
               </span>
               <span>
                 Try <b>lots of different inputs</b>, not just one.
               </span>
             </li>
             <li className="flex items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 py-3">
-              <span className="text-4xl" aria-hidden="true">
-                👀
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal text-2xl font-bold text-white" aria-hidden="true">
+                2
               </span>
               <span>Check each answer. Is it what the app should say?</span>
             </li>
             <li className="flex items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 py-3">
-              <span className="text-4xl" aria-hidden="true">
-                💥
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal text-2xl font-bold text-white" aria-hidden="true">
+                3
               </span>
               <span>
                 Found a wrong answer? Tap <span className="font-bold text-danger">Busted!</span>
@@ -79,9 +79,6 @@ export function Intro({ onDone }: { onDone: () => void }) {
 export function Ready({ count, nickname, onStart }: { count: number; nickname: string; onStart: () => void }) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 px-6 py-6 text-center">
-      <span className="text-7xl" aria-hidden="true">
-        🔍
-      </span>
       <h1 className="text-4xl font-bold">{count} apps to test. Ready?</h1>
       <p className="text-xl">
         Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on today&apos;s leaderboard at the end.
@@ -117,7 +114,7 @@ export function Briefing({ machine, index, total, onStart }: { machine: Machine;
         </div>
       </div>
       <p className="rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-2xl font-bold">
-        🔨 Your job: try lots of different inputs. Can you make it break?
+        Your job: try lots of different inputs. Can you make it break?
       </p>
       <BigButton onClick={onStart} className="self-end">
         Start testing →

@@ -141,7 +141,7 @@ export function MachineStep({
         {coach}
         {nudge === "shown" && (
           <div className="flex items-center gap-4 rounded-2xl border-4 border-amber bg-amber-soft px-4 py-2">
-            <p className="flex-1 text-xl font-bold">🙂 Ready for the next machine?</p>
+            <p className="flex-1 text-xl font-bold">Ready for the next machine?</p>
             <BigButton
               className="min-h-12! px-5! text-lg!"
               onClick={() => {
@@ -303,17 +303,14 @@ function BustedDialog({
     const message =
       result.verdict === "real"
         ? result.labelAgrees
-          ? `Yes, ${bug} bug! 🎉`
-          : `We'd call that ${bug} bug 🎉`
+          ? `Yes, ${bug} bug!`
+          : `We'd call that ${bug} bug.`
         : result.verdict === "debatable"
           ? "The request doesn't say. Good thinking: what should it do?"
           : "That one works the way the request says. Keep testing!";
     return (
       <Modal label="Busted result">
         <div className="flex flex-col items-center gap-5 py-2 text-center">
-          <span className="text-7xl" aria-hidden="true">
-            {result.verdict === "real" ? "💥" : result.verdict === "debatable" ? "🤔" : "🔍"}
-          </span>
           <p className="text-3xl leading-snug font-bold">{message}</p>
           <BigButton onClick={() => onDone(result)}>Keep testing</BigButton>
         </div>
@@ -326,7 +323,7 @@ function BustedDialog({
       <Modal label="Busted: what kind">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-bold">💥 What kind of input broke it?</h2>
+            <h2 className="text-2xl font-bold">What kind of input broke it?</h2>
             <button type="button" onClick={onCancel} className="min-h-12 rounded-full px-4 text-lg font-bold text-ink-soft hover:bg-paper">
               ✕ Cancel
             </button>
@@ -350,7 +347,7 @@ function BustedDialog({
     <Modal label="Busted">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold">💥 Which try broke it?</h2>
+          <h2 className="text-2xl font-bold">Which try broke it?</h2>
           <button type="button" onClick={onCancel} className="min-h-12 rounded-full px-4 text-lg font-bold text-ink-soft hover:bg-paper">
             ✕ Cancel
           </button>

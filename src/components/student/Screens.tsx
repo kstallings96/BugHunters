@@ -66,9 +66,6 @@ export function EndScreen({
   return (
     <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-[1fr_auto] items-center gap-6 px-6 py-6">
       <div className="flex flex-col items-center justify-center gap-5 text-center">
-      <span className="text-8xl" aria-hidden="true">
-        💥
-      </span>
       <h1 className="text-4xl font-bold">
         You busted {busted.length} {busted.length === 1 ? "bug" : "bugs"}!
       </h1>
@@ -86,7 +83,7 @@ export function EndScreen({
       <div className="mt-2 flex flex-wrap justify-center gap-4">
         {!bonusDone && (
           <BigButton variant="secondary" onClick={onBonus}>
-            ⭐ Bonus challenge
+            Bonus challenge
           </BigButton>
         )}
         <BigButton onClick={onFinish}>I&apos;m finished</BigButton>
@@ -176,7 +173,7 @@ export function GuiltyLine({
     <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
       <div className="flex items-center justify-between gap-4">
         <p className="text-lg font-bold text-ink-soft">
-          ⭐ Code question {index + 1} of {total}
+          Code question {index + 1} of {total}
         </p>
         <button
           type="button"
@@ -212,7 +209,7 @@ export function GuiltyLine({
                   {code}
                 </button>
                 {fix.type === "missing_line" && fixed !== null && i + 1 === fix.after && (
-                  <span className="rounded-lg bg-teal/15 px-3 py-1 font-mono text-base font-bold text-teal">➕ {fix.options[fix.answer]}</span>
+                  <span className="rounded-lg bg-teal/15 px-3 py-1 font-mono text-base font-bold text-teal">+ {fix.options[fix.answer]}</span>
                 )}
               </li>
             ))}
@@ -222,12 +219,12 @@ export function GuiltyLine({
             onClick={() => find(0)}
             className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border-4 border-dashed px-3 text-left text-lg ${lineLook(0)}`}
           >
-            ➕ No line is wrong. A check is missing.
+            + No line is wrong. A check is missing.
           </button>
           {found !== null && (
             <p className="text-lg font-bold">
               {foundRight
-                ? "✅ Yes!"
+                ? "Yes!"
                 : fix.type === "wrong_line"
                   ? `Not quite: line ${fix.line} is the problem.`
                   : `Not quite: every line does its job. A check is missing after line ${fix.after}.`}
@@ -257,7 +254,7 @@ export function GuiltyLine({
           </div>
           {fixed !== null && (
             <div className="flex flex-col gap-2 pt-1">
-              <p className="text-xl font-bold">{fixed === fix.answer ? "🎉 Yes! That fixes it." : "Close! The green one fixes it for every input, not just yours."}</p>
+              <p className="text-xl font-bold">{fixed === fix.answer ? "Yes! That fixes it." : "Close! The green one fixes it for every input, not just yours."}</p>
               <BigButton onClick={onNext} className="self-end">
                 {last ? "Done" : "Next bug →"}
               </BigButton>

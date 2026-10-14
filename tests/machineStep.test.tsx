@@ -103,7 +103,7 @@ describe("a machine", () => {
     const t = setup();
     tryIt("20", "0");
     bust(/not sure/, "Zero");
-    expect(screen.getByText("Yes, a Zero bug! 🎉")).toBeTruthy();
+    expect(screen.getByText("Yes, a Zero bug!")).toBeTruthy();
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({
       verdict: "real",
       bug_kind: "zero",
@@ -116,7 +116,7 @@ describe("a machine", () => {
     click("Keep testing");
     tryIt("50", "0");
     bust(/not sure/, "Negative");
-    expect(screen.getByText("We'd call that a Zero bug 🎉")).toBeTruthy();
+    expect(screen.getByText("We'd call that a Zero bug.")).toBeTruthy();
     expect(screen.queryByText(/different kind/)).toBeNull();
     expect(t.busted).toHaveLength(1);
   });
@@ -148,7 +148,7 @@ describe("a machine", () => {
     const t = setup({ machine: "monster" });
     tryIt("Grizzlemonster22");
     bust(/not sure/, "Too long");
-    expect(screen.getByText("Yes, a Too long bug! 🎉")).toBeTruthy();
+    expect(screen.getByText("Yes, a Too long bug!")).toBeTruthy();
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({
       bug_kind: "very_long",
       bug_kinds: ["wrong_type", "very_long"],
@@ -158,7 +158,7 @@ describe("a machine", () => {
     // The numbers bug is still there to find, with this same input.
     click("Keep testing");
     bust(/not sure/, "Has numbers");
-    expect(screen.getByText("Yes, a Has numbers bug! 🎉")).toBeTruthy();
+    expect(screen.getByText("Yes, a Has numbers bug!")).toBeTruthy();
     click("Keep testing");
     expect(t.busted.map((b) => b.kind)).toEqual(["very_long", "wrong_type"]);
   });
@@ -167,7 +167,7 @@ describe("a machine", () => {
     setup({ machine: "monster" });
     tryIt("Grizzlemonster22");
     bust(/not sure/, "Blank");
-    expect(screen.getByText("We'd call that a Has numbers bug 🎉")).toBeTruthy();
+    expect(screen.getByText("We'd call that a Has numbers bug.")).toBeTruthy();
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ bug_kind: "wrong_type", label_agreement: false });
   });
 
@@ -181,7 +181,7 @@ describe("a machine", () => {
     click(/Money can't be below zero/);
     click(/Next/);
     click("Negative");
-    expect(screen.getByText("Yes, a Negative bug! 🎉")).toBeTruthy();
+    expect(screen.getByText("Yes, a Negative bug!")).toBeTruthy();
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ input_n: 1, expected_correct: true });
   });
 

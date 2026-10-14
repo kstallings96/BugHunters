@@ -46,19 +46,19 @@ export function MachineCard({
 
       {machine.request && (
         <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">
-          <span className="font-bold">📝 Request:</span> &ldquo;
+          <span className="font-bold">Request:</span> &ldquo;
           {machine.request}&rdquo;
         </p>
       )}
       {machine.clientNote && (
         <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg leading-snug">
-          📌 {machine.clientNote}
+          {machine.clientNote}
         </p>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
         <p className="rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">✅ Built and tested by AI.</p>
-        <p className="rounded-full border-2 border-amber bg-amber-soft px-4 py-1 text-base font-bold">🔨 Your job: try lots of different inputs to break it.</p>
+        <p className="rounded-full border-2 border-amber bg-amber-soft px-4 py-1 text-base font-bold">Your job: try lots of different inputs to break it.</p>
       </div>
 
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3">

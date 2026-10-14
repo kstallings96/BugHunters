@@ -56,19 +56,19 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
       </h1>
       <div className="grid min-h-0 flex-1 grid-cols-[1fr_1.4fr] gap-5">
         <section className="flex min-h-0 flex-col gap-2 rounded-3xl border-2 border-[#475569] bg-[#f1f5f9] p-4">
-          <h2 className="text-xl font-bold">🤖 {AI_TESTS_SOURCE === "generated" ? "Here's what the AI tested." : "Tests an AI might write (example)"}</h2>
+          <h2 className="text-xl font-bold">{AI_TESTS_SOURCE === "generated" ? "Here's what the AI tested." : "Tests an AI might write (example)"}</h2>
           {/* The model wrote up to 9 tests: the list scrolls so Next always fits on a Chromebook. */}
           <ul className="flex min-h-0 flex-col gap-1 overflow-y-auto">
             {tests.map((t) => (
               <li key={JSON.stringify(t.inputs)} className="rounded-xl bg-white px-3 py-1 text-base leading-snug">
-                {describeInputs(machine, t.inputs)} → {shownExpectation(t.expects).trim() === "" ? "(blank)" : shownExpectation(t.expects)} ✅
+                {describeInputs(machine, t.inputs)} → {shownExpectation(t.expects).trim() === "" ? "(blank)" : shownExpectation(t.expects)} ✓
               </li>
             ))}
           </ul>
           {onlyOrdinary(machine) && <p className="mt-auto text-lg font-bold">The AI only tried ordinary inputs.</p>}
         </section>
         <section className="flex min-h-0 flex-col gap-2 overflow-y-auto rounded-3xl border-2 border-line bg-card p-4">
-          <h2 className="text-xl font-bold">🔍 Here&apos;s what you found.</h2>
+          <h2 className="text-xl font-bold">Here&apos;s what you found.</h2>
           <BugList found={found.map((b) => bugLabel(machine, b.kind))} hiding={hiding.map((b) => ({ label: bugLabel(machine, b.kind), tryThis: b.tryThis }))} />
         </section>
       </div>
@@ -101,7 +101,7 @@ export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]
           </section>
         ))}
       </div>
-      {machines.every(onlyOrdinary) && <p className="text-lg">🤖 The AI&apos;s own tests only tried ordinary inputs.</p>}
+      {machines.every(onlyOrdinary) && <p className="text-lg">The AI&apos;s own tests only tried ordinary inputs.</p>}
       <BigButton onClick={onNext} className="self-end">
         Finish →
       </BigButton>
@@ -115,12 +115,12 @@ function BugList({ found, hiding, compact = false }: { found: string[]; hiding: 
     <ul className="flex flex-col gap-1.5">
       {found.map((label) => (
         <li key={label} className={`rounded-xl bg-teal/10 px-3 py-1 font-bold ${size}`}>
-          ✅ {label}: you found it!
+          ✓ {label}: you found it!
         </li>
       ))}
       {hiding.map((h) => (
         <li key={h.label} className={`rounded-xl border-2 border-dashed border-amber bg-amber-soft/50 px-3 py-1 leading-snug ${size}`}>
-          🔎 <span className="font-bold">{h.label}</span>: {h.tryThis}
+          <span className="font-bold">{h.label}</span>: {h.tryThis}
         </li>
       ))}
     </ul>
@@ -131,9 +131,6 @@ function BugList({ found, hiding, compact = false }: { found: string[]; hiding: 
 export function NextApp({ onNext }: { onNext: () => void }) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 px-6 py-6 text-center">
-      <span className="text-7xl" aria-hidden="true">
-        👍
-      </span>
       <h1 className="text-4xl font-bold">Next app!</h1>
       <BigButton onClick={onNext}>Next app →</BigButton>
     </main>

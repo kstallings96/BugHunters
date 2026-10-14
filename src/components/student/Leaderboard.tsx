@@ -60,7 +60,7 @@ export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
   if (board === "off") return null;
   return (
     <section className="flex min-h-0 w-full flex-col gap-2 rounded-3xl border-4 border-amber bg-card p-4 text-left" aria-label="Class leaderboard">
-      <h2 className="text-2xl font-bold">🏆 Today&apos;s leaderboard</h2>
+      <h2 className="text-2xl font-bold">Today&apos;s leaderboard</h2>
       <p className="text-base text-ink-soft">All class periods. Bugs busted in the 3 apps (not the bonus).</p>
       {board === null ? (
         <p className="text-lg text-ink-soft">Loading…</p>
@@ -74,10 +74,10 @@ export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
               <span className="w-8 tabular-nums">{r.rank}.</span>
               <span className="flex-1 truncate">
                 {r.nickname}
-                {r.you && " (you)"}
+                {r.you && <span className="sr-only"> (you)</span>}
               </span>
               <span className={`text-sm ${r.you ? "text-white" : "text-ink-soft"}`}>P{r.period}</span>
-              <span className="tabular-nums">💥 {r.bugs}</span>
+              <span className="tabular-nums">{r.bugs} {r.bugs === 1 ? "bug" : "bugs"}</span>
             </li>
           ))}
         </ol>

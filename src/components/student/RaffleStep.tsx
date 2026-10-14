@@ -46,7 +46,7 @@ export function RaffleStep({
           </div>
         </div>
         <p className="rounded-2xl bg-amber-soft px-4 py-2 text-lg">
-          <span className="font-bold">📝 Request:</span> &ldquo;{RAFFLE.request}&rdquo;
+          <span className="font-bold">Request:</span> &ldquo;{RAFFLE.request}&rdquo;
         </p>
         <p className="self-start rounded-full border-2 border-teal/40 bg-teal/5 px-4 py-1 text-base font-bold text-teal">✅ Built and tested by AI.</p>
         <div className="grid min-h-0 flex-1 grid-cols-[14rem_1fr] gap-4">
@@ -74,7 +74,7 @@ export function RaffleStep({
       </section>
 
       <aside className="flex min-h-0 flex-col gap-3">
-        <p className="text-lg font-bold text-ink-soft">⭐ Bonus app</p>
+        <p className="text-lg font-bold text-ink-soft">Bonus app</p>
         <div className="flex-1" />
         <BigButton variant="danger" disabled={!last} onClick={() => setBustOpen(true)} className="min-h-20! text-2xl!">
           💥 Busted!
@@ -110,7 +110,7 @@ export function RaffleStep({
 /** The result of one try. With `onTap`, every part of it is a button. */
 function Result({ t, onTap }: { t: RaffleTry; onTap?: (tap: RaffleTap) => void }) {
   if (t.mode === "one") {
-    const body = <>🎉 Winner: {clean(t.winners[0])}</>;
+    const body = <>Winner: {clean(t.winners[0])}</>;
     const look = "w-full rounded-2xl border-4 px-5 py-4 text-left text-3xl font-bold whitespace-pre";
     return onTap ? (
       <button type="button" onClick={() => onTap({ type: "winner" })} className={`${look} border-amber bg-white hover:bg-amber-soft`}>
@@ -171,9 +171,6 @@ function RaffleBusted({
     return (
       <Modal label="Busted result">
         <div className="flex flex-col items-center gap-5 py-2 text-center">
-          <span className="text-7xl" aria-hidden="true">
-            {result.verdict === "real" ? "💥" : result.verdict === "debatable" ? "🤔" : "🔍"}
-          </span>
           <p className="text-3xl leading-snug font-bold">{result.message}</p>
           <BigButton onClick={onClose}>Keep testing</BigButton>
         </div>
@@ -192,7 +189,7 @@ function RaffleBusted({
     <Modal label="Busted">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold">{tap ? "💥 What's wrong with it?" : "💥 Tap the part that looks wrong."}</h2>
+          <h2 className="text-2xl font-bold">{tap ? "What's wrong with it?" : "Tap the part that looks wrong."}</h2>
           <button type="button" onClick={onClose} className="min-h-12 rounded-full px-4 text-lg font-bold text-ink-soft hover:bg-paper">
             ✕ Cancel
           </button>

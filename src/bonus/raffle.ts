@@ -82,7 +82,7 @@ export function judgeTap(t: RaffleTry, tap: RaffleTap): RaffleVerdict {
   const names = namesOf(t.text);
   const unique = new Set(names);
   if (unique.size === 1 && t.winners.some((w) => w === names[0]))
-    return { verdict: "real", kind: "boundary", message: "Yes! It picked a winner with only one name. A raffle needs at least 2. That's a Limit bug! 🎉" };
+    return { verdict: "real", kind: "boundary", message: "Yes! It picked a winner with only one name. A raffle needs at least 2. That's a Limit bug!" };
   if (tap.type === "winner") {
     if (names.length === 0) return { verdict: "false_alarm", message: "With no names, that's a fair thing to say. Keep testing!" };
     return { verdict: "false_alarm", message: "One pick can't show much. Try Pick 20 times!" };
@@ -91,7 +91,7 @@ export function judgeTap(t: RaffleTry, tap: RaffleTap): RaffleVerdict {
   if (names.filter((n) => n === tap.name).length > 1)
     return { verdict: "debatable", message: "The request doesn't say. Is a name typed twice a bug, or a fair way to give someone two tickets?" };
   if (wins === 0 && tap.name === names.at(-1) && unique.size >= 2)
-    return { verdict: "real", kind: "off_by_one", message: `Yes! ${tap.name} never wins. That's an Off by one bug! 🎉` };
+    return { verdict: "real", kind: "off_by_one", message: `Yes! ${tap.name} never wins. That's an Off by one bug!` };
   if (wins === 0) return { verdict: "false_alarm", message: "That could be bad luck. Pick 20 times again and see if it happens again!" };
   return { verdict: "false_alarm", message: "Random picks wobble! Pick 20 times again and see if it changes." };
 }

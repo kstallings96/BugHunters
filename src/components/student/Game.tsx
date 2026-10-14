@@ -212,13 +212,13 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     <div className={`flex flex-1 flex-col ${counter || game.screen === "tutorial" || game.screen === "between" ? "h-dvh" : "min-h-dvh"}`}>
       <header className="flex h-14 shrink-0 items-center gap-5 border-b-2 border-line bg-card px-5">
         <span className="shrink-0 text-xl font-bold">
-          🔍 bug<span className="text-teal">Hunters</span>
+          bug<span className="text-teal">Hunters</span>
         </span>
         <ProgressBar stage={progressStage(game.screen, game.machineIndex)} />
-        {counter && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">💥 {game.busted.length} busted</span>}
+        {counter && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">{game.busted.length} busted</span>}
         {/* The bug-hunter nickname, the same one the leaderboard shows; the real name stays small, for the teacher. */}
         <span className="flex shrink-0 flex-col items-end leading-tight">
-          <span className="text-base font-bold text-teal">🐞 {nicknameFor(session.id)}</span>
+          <span className="text-base font-bold text-teal">{nicknameFor(session.id)}</span>
           <span className="text-xs text-ink-soft">
             {session.firstName} {session.lastInitial}.
           </span>
@@ -249,7 +249,7 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
 
   const coach: Record<number, string> = {
     1: "Type 10, then tap Try it.",
-    2: "That one works. ✅ Now try to break it. Type a word.",
+    2: "That one works. Now try to break it. Type a word.",
     3: "That's a bug! The AI didn't plan for words. Tap Busted!",
   };
 
@@ -265,9 +265,6 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
       pulseBusted={stage === 3}
       coach={
         <div className="flex items-center gap-4 rounded-2xl border-4 border-teal bg-teal/5 px-5 py-3">
-          <span className="text-4xl" aria-hidden="true">
-            👉
-          </span>
           <p className="flex-1 text-2xl font-bold">{coach[stage]}</p>
         </div>
       }
