@@ -1,3 +1,4 @@
+import { bugVisibility } from "@/machines";
 import type { Category, MachineId } from "@/machines/types";
 
 /**
@@ -59,6 +60,16 @@ export interface MetricRow {
   transfer_count: number | null;
   nudge_shown: boolean;
   tries_used_up: boolean;
+  /**
+   * Loud vs silent bugs (see bugVisibility). "Seen": distinct bugs (kind ×
+   * loud/silent) the app showed this student a wrong answer for. "Caught":
+   * of those, how many they called Busted! on. Seen but not caught means the
+   * wrong answer was on screen and went unnoticed.
+   */
+  loud_bugs_seen: number;
+  loud_bugs_caught: number;
+  silent_bugs_seen: number;
+  silent_bugs_caught: number;
 }
 
 const isDiagnostic = (cats: Category[]) => !(cats.length === 1 && cats[0] === "normal");
@@ -88,6 +99,23 @@ export function computeMetrics(session: MetricSession, events: MetricEvent[]): M
     const agreements = busts.map((b) => b.payload.label_agreement).filter((v): v is boolean => typeof v === "boolean");
     const expectations = busts.map((b) => b.payload.expected_correct).filter((v): v is boolean => typeof v === "boolean");
     const firstDiag = diagnostic[0];
+
+    // Loud vs silent: every (bug kind, visibility) the student was shown, and the ones they busted.
+    const visibilityOfTry = new Map<number, "loud" | "silent">();
+    const seen = { loud: new Set<string>(), silent: new Set<string>() };
+    for (const x of inputs) {
+      if (x.payload.reveals_bug !== true) continue;
+      const v = bugVisibility(String(x.payload.output_shown ?? ""));
+      visibilityOfTry.set(Number(x.payload.n), v);
+      const kinds = (x.payload.bug_kinds as string[] | undefined) ?? (x.payload.bug_kind ? [String(x.payload.bug_kind)] : []);
+      for (const k of kinds) seen[v].add(k);
+    }
+    const caught = { loud: new Set<string>(), silent: new Set<string>() };
+    for (const b of busts) {
+      if (b.payload.verdict !== "real") continue;
+      const v = visibilityOfTry.get(Number(b.payload.input_n));
+      if (v) caught[v].add(String(b.payload.bug_kind));
+    }
 
     let transfer: string[] | null = null;
     if (machine === "monster") transfer = [...tried].filter((c) => triedOnNumbers.has(c)).sort();
@@ -122,6 +150,10 @@ export function computeMetrics(session: MetricSession, events: MetricEvent[]): M
       transfer_count: transfer ? transfer.length : null,
       nudge_shown: mine.some((x) => x.event_type === "nudge_shown"),
       tries_used_up: mine.some((x) => x.event_type === "tries_used_up"),
+      loud_bugs_seen: seen.loud.size,
+      loud_bugs_caught: [...caught.loud].filter((k) => seen.loud.has(k)).length,
+      silent_bugs_seen: seen.silent.size,
+      silent_bugs_caught: [...caught.silent].filter((k) => seen.silent.has(k)).length,
     });
   });
   return rows;

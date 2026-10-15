@@ -18,7 +18,7 @@ import { readStudySettings } from "@/config/study";
 import { computeMetrics, type MetricEvent, type MetricRow } from "@/lib/metrics";
 import { nicknameFor } from "@/lib/nickname";
 import { defaultLogDir, type SessionRow, type StudentRow } from "@/lib/server/storage";
-import { bugLabel, CATEGORY_LABEL, MACHINES, type Category, type MachineId } from "@/machines";
+import { bugLabel, bugVisibility, CATEGORY_LABEL, MACHINES, type Category, type MachineId } from "@/machines";
 
 const withNames = process.argv.includes("--names");
 const dir = process.env.LOG_DIR || defaultLogDir();
@@ -142,6 +142,8 @@ describe("Students", [
   ["AI confidence", "Intake question 2, 1 (Not at all) to 5 (Very confident)."],
   ["Bugs busted (3 apps)", "Different bugs found in the three apps (each kind counts once per app). The leaderboard score."],
   ["Bug kinds found", "Which kinds, by app."],
+  ["Loud bugs caught", 'Across the 3 apps: loud bugs caught of loud bugs seen. Loud = the answer itself looked broken ("$???", "Infinity weeks", a blank name).'],
+  ["Silent bugs caught", 'Across the 3 apps: silent bugs caught of silent bugs seen. Silent = a normal-looking answer that was wrong for the request ("3 weeks" instead of 4, "Sale price: $48.00" for -20% off).'],
   ["Bonus bugs", "Bugs found in the bonus Raffle Picker (not part of the study measures)."],
   ["Code questions", "Bonus code questions answered, and how many were fully right (found the line AND picked the fix)."],
   ["Session ID", "Joins this row to the other sheets and the raw files."],
@@ -166,6 +168,10 @@ describe("Per app", [
   ["Debatable", 'Busted! on an input the request doesn\'t cover (like "$20" or a hyphenated name).'],
   ["Labels right %", '"What kind of input broke it?" answers that named a bug the input really showed.'],
   ['"It should say" right %', '"It should say…" answers that picked the correct output.'],
+  ["Loud bugs seen", 'Different bugs this app showed the student with an answer that looked broken ("$???", "Infinity", nothing at all).'],
+  ["Loud bugs caught", "Of those, how many they called Busted! on."],
+  ["Silent bugs seen", 'Different bugs it showed them with a normal-looking but wrong answer ("3 weeks" instead of 4, a name cut off at 12 letters).'],
+  ["Silent bugs caught", "Of those, how many they called Busted! on. Seen but not caught = the wrong answer was on screen and went unnoticed."],
   ["Kinds reused (Monster only)", "Input kinds tried on the Monster Namer that they had first tried on a number app: does the testing transfer to text?"],
   ["Saw nudge", 'Yes if "Ready for the next machine?" appeared (3 minutes in). It never moves them on by itself.'],
   ["Used all 8 tries", "Yes if they ran out of tries on this app."],
@@ -181,6 +187,7 @@ describe("Tries", [
   ["Input kinds", "How the input is classified: Normal, Zero, Blank, Negative, Too big, Not a number, Symbols..."],
   ["Bug?", '"Bug" if the app got it wrong, "Debatable" if the request doesn\'t say, otherwise blank.'],
   ["Bug kinds", "Which bug(s) this input shows (an input can show two, like a long name with numbers)."],
+  ["Loud or silent", 'For a bug: "Loud" if the answer itself looked broken ("$???", "Infinity", blank), "Silent" if it looked normal but was wrong.'],
 ]);
 
 describe("Busted", [
@@ -282,6 +289,8 @@ async function main() {
         .filter((m) => m.real_bugs)
         .map((m) => `${appName(m.machine)}: ${kindsName(m.machine, m.bug_kinds)}`)
         .join("; "),
+      "Loud bugs caught": `${metrics.reduce((n, m) => n + m.loud_bugs_caught, 0)} of ${metrics.reduce((n, m) => n + m.loud_bugs_seen, 0)}`,
+      "Silent bugs caught": `${metrics.reduce((n, m) => n + m.silent_bugs_caught, 0)} of ${metrics.reduce((n, m) => n + m.silent_bugs_seen, 0)}`,
       "Bonus bugs": counted.filter((b) => b.machine === "raffle").length,
       "Code questions": codes.length ? `${codes.filter((c) => c.payload.correct === true).length} right of ${codes.length}` : "",
       "Session ID": s.id,
@@ -309,6 +318,10 @@ async function main() {
         Debatable: m.debatable,
         "Labels right %": pct(m.label_agreement),
         '"It should say" right %': pct(m.expected_correct),
+        "Loud bugs seen": m.loud_bugs_seen,
+        "Loud bugs caught": m.loud_bugs_caught,
+        "Silent bugs seen": m.silent_bugs_seen,
+        "Silent bugs caught": m.silent_bugs_caught,
         "Kinds reused (Monster only)": m.transfer_categories === null ? "" : `${m.transfer_count}: ${kindsName(m.machine, m.transfer_categories)}`,
         "Saw nudge": yes(m.nudge_shown),
         "Used all 8 tries": yes(m.tries_used_up),
@@ -333,6 +346,7 @@ async function main() {
           "Input kinds": kindsName(app, p.categories),
           "Bug?": p.reveals_bug ? "Bug" : p.debatable ? "Debatable" : "",
           "Bug kinds": kindsName(app, kinds),
+          "Loud or silent": p.reveals_bug ? (bugVisibility(String(p.output_shown ?? "")) === "loud" ? "Loud" : "Silent") : "",
           "Session ID": s.id,
         });
       } else if (e.event_type === "busted") {

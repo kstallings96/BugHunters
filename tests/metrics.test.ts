@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeMetrics, type MetricEvent, type MetricSession } from "@/lib/metrics";
+import { bugVisibility } from "@/machines";
 
 const session: MetricSession = { id: "s1", is_test: true, machine_order: ["savings", "sale", "monster"], reveal_condition: "reveal" };
 
@@ -71,5 +72,36 @@ describe("metrics", () => {
       e("machine", "savings", "input_submit", { categories: ["empty"] }, 25),
     ]);
     expect(withOverlap[2]).toMatchObject({ transfer_categories: "empty", transfer_count: 1 });
+  });
+});
+
+describe("loud vs silent bugs", () => {
+  it("an answer that looks broken is loud; a normal-looking wrong one is silent", () => {
+    expect(bugVisibility("Sale price: $???")).toBe("loud");
+    expect(bugVisibility("Infinity weeks")).toBe("loud");
+    expect(bugVisibility("   ")).toBe("loud");
+    expect(bugVisibility("3 weeks")).toBe("silent");
+    expect(bugVisibility("Sale price: $48.00")).toBe("silent");
+    expect(bugVisibility("FLUFFERNUTTE")).toBe("silent");
+  });
+
+  it("counts the bugs a student saw, and caught, of each kind", () => {
+    let n = 0;
+    const tryIt = (output_shown: string, bug_kinds: string[], second: number) =>
+      e("machine", "sale", "input_submit", { n: ++n, categories: ["normal"], reveals_bug: bug_kinds.length > 0, bug_kinds, output_shown }, second);
+    const sale: MetricEvent[] = [
+      e("machine", "sale", "step_enter", {}, 300),
+      tryIt("Sale price: $???", ["empty"], 301), // loud, busted below
+      tryIt("Sale price: $???", ["wrong_type"], 302), // loud, missed
+      tryIt("Sale price: $48.00", ["out_of_range"], 303), // silent, missed
+      tryIt("Sale price: $48.00", ["out_of_range"], 304), // same bug again: still one
+      tryIt("Sale price: $-30.00", ["negative"], 305), // silent, busted below
+      tryIt("Sale price: $30.00", [], 306), // no bug
+      e("machine", "sale", "busted", { input_n: 1, verdict: "real", bug_kind: "empty" }, 307),
+      e("machine", "sale", "busted", { input_n: 5, verdict: "real", bug_kind: "negative" }, 308),
+      e("machine", "sale", "busted", { input_n: 6, verdict: "false_alarm", bug_kind: null }, 309),
+    ];
+    const row = computeMetrics({ ...session, machine_order: ["sale", "savings", "monster"] }, sale)[0];
+    expect(row).toMatchObject({ loud_bugs_seen: 2, loud_bugs_caught: 1, silent_bugs_seen: 2, silent_bugs_caught: 1 });
   });
 });

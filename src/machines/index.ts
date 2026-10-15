@@ -86,3 +86,14 @@ export function bugLabel(machine: Machine | MachineId | "raffle", kind: Category
   const m = typeof machine === "string" ? (machine === "raffle" ? null : MACHINES[machine]) : machine;
   return m?.labels?.[kind] ?? CATEGORY_LABEL[kind];
 }
+
+/**
+ * How a wrong answer shows itself. "loud": the output itself looks broken
+ * ($???, Infinity, or nothing at all), so it announces the bug. "silent": a
+ * normal-looking answer that's wrong for the request ("3 weeks" instead of
+ * 4, "Sale price: $48.00" for -20% off), which takes checking against the
+ * request to catch. Judged per output: the same bug kind can be either.
+ */
+export function bugVisibility(shown: string): "loud" | "silent" {
+  return shown.trim() === "" || /\?\?\?|Infinity/.test(shown) ? "loud" : "silent";
+}
