@@ -39,7 +39,10 @@ export type EventType =
   | "bonus_enter"
   | "guilty_line_attempt"
   | "guilty_line_skip"
-  | "leaderboard_view";
+  | "leaderboard_view"
+  | "quit_open"
+  | "quit_cancel"
+  | "quit_early";
 
 let queue: EventQueue | null = null;
 let session: ClientSession | null = null;

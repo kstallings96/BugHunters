@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "./Logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { hasBadWords } from "@/lib/clean";
 import { normalizeName, type StudentName } from "@/lib/identity";
@@ -153,9 +154,9 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 px-6 py-8">
-      <p className="text-5xl font-bold tracking-tight">
-        bug<span className="text-teal">Hunters</span>
-      </p>
+      <h1>
+        <Logo size="lg" />
+      </h1>
 
 
       {phase === "name" && (

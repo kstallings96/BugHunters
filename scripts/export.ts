@@ -111,6 +111,17 @@ const intakeText = (q: "coding_experience" | "ai_confidence", n: number | null) 
 const yes = (v: unknown) => (v === true ? "Yes" : v === false ? "No" : "");
 const pct = (v: number | null) => (v === null ? "" : Math.round(v * 100));
 
+/** "During App 2 (Sale Price)" for a session that tapped Stop; blank otherwise. */
+function stoppedAt(ev: Event[], order: string[]): string {
+  const q = ev.find((e) => e.event_type === "quit_early");
+  if (!q) return "";
+  const screen = String(q.payload.screen ?? "");
+  const i = Number(q.payload.machine_index ?? 0);
+  if (screen === "briefing" || screen === "machine" || screen === "between") return `During App ${i + 1} (${appName(order[i])})`;
+  if (screen.startsWith("intake")) return "During the first questions";
+  return "During the intro or practice";
+}
+
 // ------------------------------------------------------------ the sheets
 
 /** Sheet, column, meaning: shown on the Read me tab. */
@@ -136,6 +147,7 @@ describe("Students", [
   ["Started", "When the session began (school time zone)."],
   ["Finished", 'When they tapped "I\'m finished". Blank if they never did (closed the tab, ran out of time).'],
   ["Minutes", "From start to finish (or to their last event, if they never finished)."],
+  ["Stopped early", 'Where they tapped "Stop" to leave before the end (blank if they didn\'t).'],
   ["Reveal group", '"After each app": saw what they missed after every app. "Only at the end": saw it once, after the last app. Assigned at random.'],
   ["App order", "Which number app came first (random). The Monster Namer is always third."],
   ["Coding experience", "Intake question 1, 1 (Never) to 5 (A lot)."],
@@ -280,6 +292,7 @@ async function main() {
       Started: when(s.started_at),
       Finished: when(end),
       Minutes: minutes,
+      "Stopped early": stoppedAt(ev, s.machine_order),
       "Reveal group": reveal,
       "App order": s.machine_order.map(appName).join(" → "),
       "Coding experience": intakeText("coding_experience", metrics[0]?.coding_experience ?? null),

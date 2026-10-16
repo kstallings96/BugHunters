@@ -1,10 +1,12 @@
 "use client";
 
+import { Logo } from "@/components/Logo";
 import { useEffect, useRef, useState } from "react";
 import { INTAKE } from "@/config/survey";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
+import { BigButton, Modal } from "@/components/ui";
 import { nicknameFor } from "@/lib/nickname";
 import { Briefing, Intro, Ready } from "./Intro";
 import { Leaderboard } from "./Leaderboard";
@@ -111,6 +113,15 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   // Sessions saved before the reveal condition existed get the full reveal at the end.
   const revealCondition = session.revealCondition ?? "end_only";
   const counter = game.screen === "machine" || game.screen === "bonus_machine";
+  // Students can stop any time (the end screen and bonus have their own ways out).
+  const canStop = game.screen !== "end" && game.screen !== "bonus_machine" && game.screen !== "bonus_guilty";
+  const [stopping, setStopping] = useState(false);
+
+  function stopEarly() {
+    logEvent("quit_early", { screen: game.screen, machine_index: game.machineIndex, busted: game.busted.length });
+    setStopping(false);
+    go("end", { bonusDone: true });
+  }
   const board = <Leaderboard token={session.token} bugs={measuredBugs(game.busted)} />;
 
   let body: React.ReactNode;
@@ -213,11 +224,21 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   return (
     <div className={`flex flex-1 flex-col ${counter || game.screen === "tutorial" || game.screen === "between" ? "h-dvh" : "min-h-dvh"}`}>
       <header className="flex h-14 shrink-0 items-center gap-5 border-b-2 border-line bg-card px-5">
-        <span className="shrink-0 text-xl font-bold">
-          bug<span className="text-teal">Hunters</span>
-        </span>
+        <Logo />
         <ProgressBar stage={progressStage(game.screen, game.machineIndex)} />
         {counter && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">{game.busted.length} busted</span>}
+        {canStop && (
+          <button
+            type="button"
+            onClick={() => {
+              logEvent("quit_open", { screen: game.screen });
+              setStopping(true);
+            }}
+            className="min-h-10 shrink-0 rounded-full border-2 border-line px-4 text-base font-bold text-ink-soft hover:bg-paper"
+          >
+            Stop
+          </button>
+        )}
         {/* The bug-hunter nickname, the same one the leaderboard shows; the real name stays small, for the teacher. */}
         <span className="flex shrink-0 flex-col items-end leading-tight">
           <span className="text-base font-bold text-teal">{nicknameFor(session.id)}</span>
@@ -227,6 +248,26 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         </span>
       </header>
       {body}
+      {stopping && (
+        <Modal label="Stop playing?">
+          <div className="flex flex-col gap-5 py-2 text-center">
+            <h2 className="text-3xl font-bold">Stop playing?</h2>
+            <p className="text-xl">That&apos;s OK! Everything you did so far is saved.</p>
+            <div className="flex justify-center gap-4">
+              <BigButton
+                variant="secondary"
+                onClick={() => {
+                  logEvent("quit_cancel", { screen: game.screen });
+                  setStopping(false);
+                }}
+              >
+                Keep playing
+              </BigButton>
+              <BigButton onClick={stopEarly}>Stop</BigButton>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
