@@ -32,7 +32,7 @@ function setup(opts: { nudgeAt?: number | null; maxTries?: number; machine?: Mac
         if (r.counted && r.kind) busted.push({ machine: id, kind: r.kind, inputs: r.inputs });
         utils.rerender(view());
       }}
-      acceptLabel="Looks good, next machine →"
+      acceptLabel="Looks good, next app →"
       onAccept={onAccept}
       nudgeAt={opts.nudgeAt ?? null}
       maxTries={opts.maxTries}
@@ -193,14 +193,14 @@ describe("a machine", () => {
 
   it("the nudge asks but never moves on by itself", () => {
     const t = setup({ nudgeAt: Date.now() + 180_000 });
-    expect(screen.queryByText(/Ready for the next machine/)).toBeNull();
+    expect(screen.queryByText(/Ready for the next app/)).toBeNull();
     act(() => vi.advanceTimersByTime(180_500));
-    expect(screen.getByText(/Ready for the next machine/)).toBeTruthy();
+    expect(screen.getByText(/Ready for the next app/)).toBeTruthy();
     expect(t.onNudge).toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(600_000));
     expect(t.onAccept).not.toHaveBeenCalled();
     click("Keep testing");
-    expect(screen.queryByText(/Ready for the next machine/)).toBeNull();
+    expect(screen.queryByText(/Ready for the next app/)).toBeNull();
   });
 
   it("caps tries: after the 8th, Try it is off but Busted! still works", () => {

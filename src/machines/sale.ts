@@ -20,31 +20,31 @@ const salePrice = (p: number, off: number) => `Sale price: $${(p - p * (off / 10
 // Near misses: "and" for "or", the wrong box, a check that only covers this one input.
 const FIXES: Partial<Record<Category, Fix>> = {
   out_of_range: missingLine(
-    2,
+    [2, 3],
     'if off is below 0% or above 100% → say "Discounts go from 0% to 100%."',
     'if off is above 0% or below 100% → say "Discounts go from 0% to 100%."',
     'if price is below 0 or above 100 → say "Discounts go from 0% to 100%."',
   ),
   negative: missingLine(
-    2,
+    [1, 2, 3],
     'if price is below 0 → say "Prices can\'t be below zero."',
     'if off is below 0 → say "Prices can\'t be below zero."',
     'if price is 0 → say "Prices can\'t be below zero."',
   ),
   empty: missingLine(
-    2,
+    [2, 3],
     'if price or off is blank → say "Please type a number."',
     'if price or off is 0 → say "Please type a number."',
     "if price or off is blank → sale = 0",
   ),
   spaces_only: missingLine(
-    2,
+    [2, 3],
     'if price or off is blank or only spaces → say "Please type a number."',
     'if price or off is blank → say "Please type a number."',
     'if price or off has a space in it → say "Please type a number."',
   ),
   wrong_type: missingLine(
-    2,
+    [2, 3],
     'if price or off is not a number → say "That\'s not a number."',
     'if price or off is a number → say "That\'s not a number."',
     'if price or off is a word → say "That\'s not a number."',
@@ -110,6 +110,8 @@ export const sale: Machine = {
   debatable: () => false,
   // Both versions answer but disagree: "$40" ($???) or "1.2.3" read as 1.2.
   resultBugKind: (_inputs, categories) => (categories.includes("special") ? "special" : categories.includes("wrong_type") ? "wrong_type" : categories[0]),
+  messages: ["Please type the price.", "Please type the % off.", "That's not a number.", "Prices can't be below zero.", "Discounts go from 0% to 100%."],
+  goodInputs: { price: "40", off: "25" },
   otherAnswers: ({ price }) => {
     const p = parseMoney(price);
     return [salePrice(0, 0), p !== null && p > 0 ? salePrice(p, 0) : "Sale price: $10.00"];

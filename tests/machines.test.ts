@@ -260,14 +260,27 @@ describe("every machine", () => {
     }
   });
 
-  it.each(BUGS)("%s %j: the right answer is one of three choices", (id, inputs) => {
+  it.each(BUGS)("%s %j: the right answer, what it said, and a believable wrong one", (id, inputs) => {
     const e = run(id, inputs);
     expect(e.revealsBug).toBe(true);
-    const { options, correct } = answerChoices(MACHINES[id], inputs, e.buggy.text, e.reference.text);
+    const { options, correct } = answerChoices(MACHINES[id], inputs, e.buggy.text);
     expect(options).toHaveLength(3);
     expect(new Set(options).size).toBe(3);
-    expect(options[correct]).toBe(e.reference.text);
+    expect(correct.map((i) => options[i])).toEqual([e.reference.text]);
     expect(options).toContain(e.buggy.text);
+    // When the right answer is a message, the wrong one is a real message too.
+    if (e.reference.type === "not_allowed") expect(options.filter((o) => MACHINES[id].messages.includes(o))).toHaveLength(2);
+  });
+
+  it("an input that breaks two rules offers both right messages", () => {
+    const e = run("savings", { price: "-5", saved: "0" });
+    const { options, correct } = answerChoices(MACHINES.savings, { price: "-5", saved: "0" }, e.buggy.text);
+    expect(correct.map((i) => options[i]).sort()).toEqual(["Money can't be below zero.", "You have to save more than $0 a week."]);
+    expect(options).toContain("-Infinity weeks");
+    expect(options).not.toContain("0 weeks");
+    expect(options).toHaveLength(4);
+    const name = answerChoices(MACHINES.monster, { name: "Grizzlemonster22" }, "GRIZZLEMONST");
+    expect(name.correct.map((i) => name.options[i]).sort()).toEqual(["Names use letters only.", "Up to 12 letters."]);
   });
 
   it.each(BUGS)("%s %j: the bonus fix has its answer among the choices", (id, inputs) => {
@@ -289,7 +302,7 @@ describe("every machine", () => {
     const spots = new Set(
       BUGS.map(([id, inputs]) => {
         const e = run(id, inputs);
-        return answerChoices(MACHINES[id], inputs, e.buggy.text, e.reference.text).correct;
+        return answerChoices(MACHINES[id], inputs, e.buggy.text).correct[0];
       }),
     );
     expect(spots.size).toBeGreaterThan(1);

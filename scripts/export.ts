@@ -225,9 +225,10 @@ describe("Code questions", [
   ["Bug", "Which bug the question was about."],
   ["They found it", "Yes if the student found this bug in the game; No if it was one they missed (questions fill in with those)."],
   ["Question type", '"A line is wrong" or "A check is missing".'],
-  ["Found it", "Part 1: did they pick the right line (or spot that a check was missing)?"],
-  ["Their fix", "Part 2: the fix they picked."],
-  ["Fix right", "Yes if it was the fix that works for every input (three choices are near misses)."],
+  ["Found the line", '"A line is wrong" questions: did they pick the line that made it happen?'],
+  ["Their fix", "The fixed line (or the missing check) they picked."],
+  ["Fix right", "Yes if it was the one that works for every input (the other choices are near misses)."],
+  ["Right place", '"A check is missing" questions: did they put the check in a spot where it works?'],
 ]);
 
 describe("raw/ folder", [
@@ -389,9 +390,10 @@ async function main() {
           Bug: kindName(p.bug_machine as string, p.bug_kind),
           "They found it": p.bug_found === undefined ? "Yes" : yes(p.bug_found),
           "Question type": p.question === "wrong_line" ? "A line is wrong" : "A check is missing",
-          "Found it": yes(p.find_correct),
+          "Found the line": p.question === "wrong_line" ? yes(p.find_correct) : "",
           "Their fix": String(fixed ?? ""),
           "Fix right": yes(p.fix_correct ?? p.correct),
+          "Right place": p.question === "missing_line" ? yes(p.place_correct) : "",
           "Session ID": s.id,
         });
       }

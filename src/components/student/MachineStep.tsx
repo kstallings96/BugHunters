@@ -74,7 +74,7 @@ export function MachineStep({
   onBusted: (r: BustedResult) => void;
   acceptLabel?: string;
   onAccept?: (via: "button" | "nudge") => void;
-  /** Epoch ms when "Ready for the next machine?" may appear; null for never. */
+  /** Epoch ms when "Ready for the next app?" may appear; null for never. */
   nudgeAt?: number | null;
   onNudge?: () => void;
   /** Tutorial guidance shown above the tools. */
@@ -141,7 +141,7 @@ export function MachineStep({
         {coach}
         {nudge === "shown" && (
           <div className="flex items-center gap-4 rounded-2xl border-4 border-amber bg-amber-soft px-4 py-2">
-            <p className="flex-1 text-xl font-bold">Ready for the next machine?</p>
+            <p className="flex-1 text-xl font-bold">Ready for the next app?</p>
             <BigButton
               className="min-h-12! px-5! text-lg!"
               onClick={() => {
@@ -149,7 +149,7 @@ export function MachineStep({
                 onAccept?.("nudge");
               }}
             >
-              Next machine →
+              Next app →
             </BigButton>
             <BigButton
               variant="secondary"
@@ -194,7 +194,7 @@ export function MachineStep({
                 <li key={t.n} className="rounded-xl bg-paper px-3 py-1 text-base leading-snug">
                   <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
                   <span className="text-ink-soft"> → </span>
-                  <span className="break-all whitespace-pre-wrap">{t.output.text.trim() === "" ? "(blank)" : clean(t.output.text)}</span>
+                  <span className="break-words whitespace-pre-wrap">{t.output.text.trim() === "" ? "(blank)" : clean(t.output.text)}</span>
                 </li>
               ))}
             </ol>
@@ -261,7 +261,7 @@ function BustedDialog({
   const [result, setResult] = useState<BustedResult | null>(null);
   const t = tries[pick];
   // Tries saved before answer choices existed have no `correct`; fall back to what it said.
-  const choices = answerChoices(machine, t.inputs, t.output.text, t.correct ?? t.output.text);
+  const choices = answerChoices(machine, t.inputs, t.output.text);
 
   function submit(label: StudentLabel) {
     if (expect === null) return;
@@ -283,7 +283,8 @@ function BustedDialog({
       expected_options: choices.options,
       expected_choice: expect === "unsure" ? null : choices.options[expect],
       expected_unsure: expect === "unsure",
-      expected_correct: expect !== "unsure" && expect === choices.correct,
+      expected_correct: expect !== "unsure" && choices.correct.includes(expect),
+      expected_right_options: choices.correct.map((i) => choices.options[i]),
       student_label: label,
       // The first rule the correct version checks, and every bug the input shows.
       classifier_label: classifierLabel,
@@ -367,7 +368,7 @@ function BustedDialog({
                       setChoosing(false);
                     }}
                   >
-                    {describeInputs(machine, tr.inputs)} → <span className="break-all whitespace-pre-wrap">{clean(tr.output.text)}</span>
+                    {describeInputs(machine, tr.inputs)} → <span className="break-words whitespace-pre-wrap">{clean(tr.output.text)}</span>
                   </OptionButton>
                 </li>
               );
@@ -377,7 +378,7 @@ function BustedDialog({
           <div className="flex items-center gap-3 rounded-2xl border-4 border-danger/40 bg-danger/5 px-4 py-3">
             <p className="flex-1 text-xl">
               <span className="font-bold">{describeInputs(machine, t.inputs)}</span> →{" "}
-              <span className="break-all whitespace-pre-wrap">{clean(t.output.text)}</span>
+              <span className="break-words whitespace-pre-wrap">{clean(t.output.text)}</span>
             </p>
             {tries.length > 1 && (
               <button type="button" onClick={() => setChoosing(true)} className="min-h-11 rounded-full px-3 text-base font-bold text-teal underline">
@@ -391,7 +392,7 @@ function BustedDialog({
         <div className="flex flex-col gap-2">
           {choices.options.map((o, i) => (
             <OptionButton key={o} selected={expect === i} onClick={() => setExpect(i)}>
-              <span className="break-all whitespace-pre-wrap">{o.trim() === "" ? "(blank)" : clean(o)}</span>
+              <span className="break-words whitespace-pre-wrap">{o.trim() === "" ? "(blank)" : clean(o)}</span>
             </OptionButton>
           ))}
           <OptionButton selected={expect === "unsure"} onClick={() => setExpect("unsure")}>

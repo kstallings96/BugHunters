@@ -41,6 +41,22 @@ describe("code questions (bonus)", () => {
     for (const m of Object.values(MACHINES))
       for (const b of m.bugs) expect(evaluate(m, b.example, { today: new Date() }).bugKinds).toContain(b.kind);
   });
+  it("mixes in a wrong-line question when every pick is a missing check", () => {
+    const allMissing = [bug("sale", "empty"), bug("monster", "empty"), bug("sale", "negative")];
+    const qs = codeQuestions(allMissing, order);
+    const types = qs.map((q) => MACHINES[q.bug.machine as MachineId].fixFor(q.bug.kind, q.bug.inputs).type);
+    expect(types).toContain("wrong_line");
+    expect(qs.slice(0, 2).every((q) => q.found)).toBe(true);
+  });
+  it("every missing check has spots inside the code where it works", () => {
+    for (const m of Object.values(MACHINES))
+      for (const b of m.bugs) {
+        const fix = m.fixFor(b.kind, b.example);
+        if (fix.type !== "missing_line") continue;
+        expect(fix.validAfter.length).toBeGreaterThan(0);
+        for (const g of fix.validAfter) expect(g >= 0 && g <= m.pseudocode.length).toBe(true);
+      }
+  });
   it("the leaderboard counts only the three apps", () => {
     expect(measuredBugs([bug("savings", "zero"), bug("raffle", "off_by_one")])).toBe(1);
   });

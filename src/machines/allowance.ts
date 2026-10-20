@@ -28,6 +28,7 @@ export const allowance: Machine = {
     return { type: "result", text: `$${n * 2}` };
   },
   debatable: () => false,
+  messages: ["Please type a number.", "That's not a number.", "Allowance can't be below zero."],
   otherAnswers: ({ allowance: a }) => {
     const n = parseMoney(a);
     return n === null ? ["$0", "$2"] : [`$${n}`, `$${n + 2}`];
@@ -49,7 +50,7 @@ export const allowance: Machine = {
           "allowance = what you typed, keeping digits, dots and minus signs",
         )
       : missingLine(
-          1,
+          [1],
           'if allowance is blank or not a number → say "That\'s not a number."',
           'if allowance is blank → say "That\'s not a number."',
           'if allowance is 0 → say "That\'s not a number."',

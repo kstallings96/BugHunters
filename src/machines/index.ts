@@ -70,15 +70,43 @@ export function verdictFor(e: Pick<Evaluation, "revealsBug" | "debatable">): Bus
 }
 
 /**
- * Choices for "It should say…": the correct output, what the machine actually
- * said, and plausible others, three in all, in a stable mixed order.
+ * Every right "It should say…" answer. Usually one; but when the input breaks
+ * several rules (a price below zero AND $0 a week), each rule's message is
+ * right too.
  */
-export function answerChoices(machine: Machine, inputs: Inputs, shownText: string, correctText: string): { options: string[]; correct: number } {
-  const pool = [correctText, shownText, ...machine.otherAnswers(inputs)];
-  const unique = [...new Set(pool)].slice(0, 3);
+export function correctAnswers(machine: Machine, inputs: Inputs, ctx: Context = { today: new Date() }): string[] {
+  const reference = machine.reference(inputs, ctx);
+  const out = [reference.text];
+  if (reference.type === "not_allowed") {
+    // Each box on its own, the others ordinary: its own problem, its own message.
+    if (machine.goodInputs && machine.fields.length > 1)
+      for (const f of machine.fields) {
+        const alone = machine.reference({ ...machine.goodInputs, [f.id]: inputs[f.id] ?? "" }, ctx);
+        if (alone.type === "not_allowed") out.push(alone.text);
+      }
+    for (const k of machine.rulesBroken?.(inputs, ctx) ?? []) {
+      const m = machine.ruleMessages?.[k];
+      if (m) out.push(m);
+    }
+  }
+  return [...new Set(out)];
+}
+
+/**
+ * Choices for "It should say…": the right answer(s), what the app actually
+ * said, and one believable wrong one, in a stable mixed order. When the right
+ * answer is a message, the wrong one is another real message that doesn't fit
+ * this input (never a made-up number like "0 weeks").
+ */
+export function answerChoices(machine: Machine, inputs: Inputs, shownText: string, ctx: Context = { today: new Date() }): { options: string[]; correct: number[] } {
+  const right = correctAnswers(machine, inputs, ctx).slice(0, 2);
+  const refuses = machine.reference(inputs, ctx).type === "not_allowed";
+  const wrongPool = (refuses ? machine.messages : machine.otherAnswers(inputs)).filter((o) => !right.includes(o) && o !== shownText);
+  const wrong = wrongPool.length ? [wrongPool[stableHash(JSON.stringify(inputs)) % wrongPool.length]] : [];
+  const unique = [...new Set([...right, shownText, ...wrong])];
   const shift = stableHash(JSON.stringify(inputs)) % unique.length;
   const options = [...unique.slice(shift), ...unique.slice(0, shift)];
-  return { options, correct: options.indexOf(correctText) };
+  return { options, correct: options.map((o, i) => (right.includes(o) ? i : -1)).filter((i) => i >= 0) };
 }
 
 /** What students call this kind of bug on this machine ("Has numbers" on the Monster Namer). */

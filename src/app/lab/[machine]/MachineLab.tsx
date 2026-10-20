@@ -51,9 +51,10 @@ export function MachineLab({ id }: { id: MachineId }) {
               </p>
               <p>
                 <b>&ldquo;It should say&rdquo; choices:</b>{" "}
-                {answerChoices(machine, result.inputs, result.e.buggy.text, result.e.reference.text)
-                  .options.map((o) => (o === result.e.reference.text ? `✔ ${o}` : o))
-                  .join("  |  ")}
+                {(() => {
+                  const c = answerChoices(machine, result.inputs, result.e.buggy.text);
+                  return c.options.map((o, i) => (c.correct.includes(i) ? `✔ ${o}` : o)).join("  |  ");
+                })()}
               </p>
               {result.e.bugKind &&
                 (() => {

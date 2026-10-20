@@ -9,7 +9,7 @@ import type { MachineId } from "@/machines/types";
 export interface StudySettings {
   /** Class periods students pick from. */
   periods: string[];
-  /** Seconds on one machine before "Ready for the next machine?" appears. Never auto-advances. */
+  /** Seconds on one machine before "Ready for the next app?" appears. Never auto-advances. */
   nudgeSeconds: number;
   /** Used to decide what "today" means when resuming a session by name. */
   timeZone: string;

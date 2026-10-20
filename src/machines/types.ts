@@ -126,6 +126,12 @@ export interface Machine {
    * (and what the machine actually said).
    */
   otherAnswers: (inputs: Inputs) => string[];
+  /** Every message the correct version can refuse with (wrong-but-believable choices when it refuses). */
+  messages: string[];
+  /** An ordinary input, used to find each box's own message when several boxes are wrong. */
+  goodInputs?: Inputs;
+  /** The message for each rule, for a one-box input that breaks several (a long name with numbers). */
+  ruleMessages?: Partial<Record<Category, string>>;
   /** Bonus "find the guilty line". */
   pseudocode: string[];
   /** How to fix this bug: a line that's wrong, or a line that's missing. */
@@ -133,14 +139,15 @@ export interface Machine {
 }
 
 /**
- * Bonus code question for one bug, in two parts. Find it: which line is
- * wrong, or is a check missing? Fix it: pick the right line from `options`,
- * where the wrong ones are near misses (the wrong variable, "and" for "or",
- * a boundary off by one, a fix that only works for this one input).
+ * Bonus code question for one bug, in two parts. A wrong line: find the
+ * line, then pick its fixed version. A missing check: pick the check, then
+ * where it goes. Wrong choices are near misses (the wrong variable, a limit
+ * off by one, a check that only works for this one input).
  */
 export type Fix =
   | { type: "wrong_line"; line: number; options: string[]; answer: number }
-  | { type: "missing_line"; after: number; options: string[]; answer: number };
+  /** validAfter: every gap the check works in (0 = before line 1). */
+  | { type: "missing_line"; after: number; validAfter: number[]; options: string[]; answer: number };
 
 export interface Evaluation {
   categories: Category[];

@@ -48,7 +48,7 @@ const FIXES: Partial<Record<Category, Fix>> = {
     "weeks = saved ÷ price, rounded UP to a whole week",
   ),
   negative: missingLine(
-    3,
+    [1, 2, 3],
     'if price is below 0 → say "Invalid input"',
     'if saved is below 0 → say "Invalid input"',
     'if price is above 0 → say "Invalid input"',
@@ -104,6 +104,8 @@ export const savings: Machine = {
   debatable: () => false,
   // Both versions answer but disagree: the nearest-week rounding.
   resultBugKind: (_inputs, categories) => (categories.includes("wrong_type") ? "wrong_type" : "rounding"),
+  messages: ["Please type the price.", "Please type the amount you save each week.", "That's not a number.", "Money can't be below zero.", "You have to save more than $0 a week."],
+  goodInputs: { price: "20", saved: "5" },
   otherAnswers: ({ price, saved }) => {
     const p = parseMoney(price);
     const s = parseMoney(saved);

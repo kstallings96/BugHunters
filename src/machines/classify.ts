@@ -123,7 +123,12 @@ export function wrongLine(line: number, answer: string, ...nearMisses: [string, 
   return { type: "wrong_line" as const, line, ...mix(answer, nearMisses) };
 }
 
-/** A check is missing after line `after`: the student spots that, then picks the check. */
-export function missingLine(after: number, answer: string, ...nearMisses: [string, string]) {
-  return { type: "missing_line" as const, after, ...mix(answer, nearMisses) };
+/**
+ * A check is missing. The student picks the check, then where it goes:
+ * `validAfter` lists every gap that works (after line N), from just after
+ * the box is read to just before the answer is worked out. `after` is the
+ * last of them, where the code shows it.
+ */
+export function missingLine(validAfter: number[], answer: string, ...nearMisses: [string, string]) {
+  return { type: "missing_line" as const, after: validAfter[validAfter.length - 1], validAfter, ...mix(answer, nearMisses) };
 }

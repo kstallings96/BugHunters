@@ -97,10 +97,11 @@ export function EndScreen({
 // ------------------------------------------------------ guilty line
 
 /**
- * Bonus code question for one real bug, in two parts. Find it: tap the line
- * that's wrong, or say a check is missing. Fix it: pick the right line from
- * four, where the wrong ones are near misses. Every answer is a choice on
- * screen, and the student can leave the code questions at any time.
+ * Bonus code question for one bug, in two parts, depending on the bug:
+ *   A line is wrong:     1. which line made that happen?  2. pick its fixed version.
+ *   A check is missing:  1. which check is missing?        2. where does it go?
+ * Wrong choices are near misses. Every answer is a choice on screen, and the
+ * student can leave the code questions at any time.
  */
 export function GuiltyLine({
   bug,
@@ -122,20 +123,17 @@ export function GuiltyLine({
   const last = index >= total - 1;
   const machine = bug.machine === "raffle" ? RAFFLE : MACHINES[bug.machine];
   const fix = machine.fixFor(bug.kind, bug.inputs);
-  // Part 1: a line number, or 0 for "a check is missing".
-  const [found, setFound] = useState<number | null>(null);
-  const [fixed, setFixed] = useState<number | null>(null);
-  const target = fix.type === "wrong_line" ? fix.line : 0;
-  const foundRight = found === target;
+  const missing = fix.type === "missing_line";
+  // Part 1: a line (wrong line) or a check (missing). Part 2: a fixed line, or a spot (gap after line N).
+  const [first, setFirst] = useState<number | null>(null);
+  const [second, setSecond] = useState<number | null>(null);
+  const firstRight = first !== null && (missing ? first === fix.answer : first === fix.line);
+  const secondRight = second !== null && (missing ? fix.validAfter.includes(second) : second === fix.answer);
 
-  function find(choice: number) {
-    if (found !== null) return;
-    setFound(choice);
-  }
-
-  function choose(c: number) {
-    if (fixed !== null || found === null) return;
-    setFixed(c);
+  function answerSecond(choice: number) {
+    if (first === null || second !== null) return;
+    setSecond(choice);
+    const right = missing ? fix.validAfter.includes(choice) : choice === fix.answer;
     logEvent("guilty_line_attempt", {
       bug_machine: bug.machine,
       bug_kind: bug.kind,
@@ -143,37 +141,58 @@ export function GuiltyLine({
       question: fix.type,
       // A bug the student found, or one they missed (code questions fill in with those).
       bug_found: studentFound,
-      find_choice: found === 0 ? "missing" : found,
-      find_answer: target === 0 ? "missing" : target,
-      find_correct: foundRight,
       fix_options: fix.options,
-      fix_choice: c,
-      fix_choice_text: fix.options[c],
-      fix_answer: fix.answer,
-      fix_correct: c === fix.answer,
-      // Kept for older exports: the whole question right.
-      correct: foundRight && c === fix.answer,
+      ...(missing
+        ? {
+            fix_choice: first,
+            fix_choice_text: fix.options[first],
+            fix_correct: first === fix.answer,
+            place_choice: choice,
+            place_valid: fix.validAfter,
+            place_correct: right,
+          }
+        : {
+            find_choice: first,
+            find_answer: fix.line,
+            find_correct: first === fix.line,
+            fix_choice: choice,
+            fix_choice_text: fix.options[choice],
+            fix_correct: right,
+          }),
+      correct: firstRight && right,
     });
   }
 
   const shown = machine.fields.map((f) => `${f.label.replace(/\s*\(.*\)$/, "")}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${clean(bug.inputs[f.id])}"`}`).join(", ");
   const example = exampleOf(bug);
-  const lineLook = (n: number) =>
-    found === null
-      ? "border-line bg-white hover:border-teal"
-      : n === target
-        ? "border-teal bg-teal/15 font-bold"
-        : n === found
-          ? "border-danger bg-danger/10"
-          : "border-line bg-white opacity-60";
-  const optionLook = (c: number) =>
-    fixed === null
-      ? "border-line bg-white hover:border-teal"
-      : c === fix.answer
-        ? "border-teal bg-teal text-white"
-        : c === fixed
-          ? "border-danger bg-danger/10"
-          : "border-line bg-white opacity-60";
+  const look = (state: "idle" | "right" | "wrong" | "dim") =>
+    ({
+      idle: "border-line bg-white hover:border-teal",
+      right: "border-teal bg-teal text-white",
+      wrong: "border-danger bg-danger/10",
+      dim: "border-line bg-white opacity-60",
+    })[state];
+  const optionState = (i: number, chosen: number | null, answer: number) =>
+    chosen === null ? "idle" : i === answer ? "right" : i === chosen ? "wrong" : "dim";
+
+  const options = (chosen: number | null, onPick: (i: number) => void, disabled = false) => (
+    <div className="flex flex-col gap-1.5">
+      {fix.options.map((o, i) => (
+        <button
+          key={o}
+          type="button"
+          disabled={disabled || chosen !== null}
+          onClick={() => onPick(i)}
+          className={`flex min-h-12 w-full items-center rounded-2xl border-4 px-3 py-1 text-left font-mono text-base leading-snug ${look(optionState(i, chosen, fix.answer))}`}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+
+  const lastGap = machine.pseudocode.length;
+  const range = missing ? `between line ${fix.validAfter[0]} and ${fix.validAfter.at(-1)! + 1 > lastGap ? "the end" : `line ${fix.validAfter.at(-1)! + 1}`}` : "";
 
   return (
     <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
@@ -184,7 +203,7 @@ export function GuiltyLine({
         <button
           type="button"
           onClick={() => {
-            logEvent("guilty_line_skip", { at: index + 1, of: total, answered: fixed !== null });
+            logEvent("guilty_line_skip", { at: index + 1, of: total, answered: second !== null });
             onSkip();
           }}
           className="min-h-12 rounded-full border-2 border-line px-4 text-lg font-bold text-ink-soft hover:bg-paper"
@@ -198,89 +217,116 @@ export function GuiltyLine({
       <div className="rounded-2xl border-2 border-line bg-card px-4 py-2 text-lg leading-snug">
         {example ? (
           <>
-            You type <b>{shown}</b>. It says <b className="text-danger">{example.said}</b>. It should say <b className="text-teal">{example.should}</b>.
+            You type <b>{shown}</b>. It says <b className="text-danger">{example.said}</b>
+            {stop(example.said)} It should say <b className="text-teal">{example.should}</b>
+            {stop(example.should)}
           </>
         ) : (
           raffleExample(bug)
-        )}
+        )}{" "}
+        {missing ? "The AI's code never checks for this." : "One line of the AI's code is wrong."}
       </div>
-      <p className="text-lg text-ink-soft">
-        Below is the AI&apos;s code, in plain words.
-        {bug.machine === "raffle" && " Spots count from 0: names[0] is the first name."}
-      </p>
 
-      <div className="grid grid-cols-[1.1fr_1fr] gap-5">
-        <section className="flex flex-col gap-2">
-          <h2 className="text-xl font-bold">1. Which line made that happen?</h2>
-          <ol className="flex flex-col gap-1.5">
-            {machine.pseudocode.map((code, i) => (
-              <li key={code} className="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => find(i + 1)}
-                  className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border-4 px-3 text-left font-mono text-base leading-snug ${lineLook(i + 1)}`}
-                >
-                  <span className="w-5 opacity-60">{i + 1}</span>
-                  {code}
-                </button>
-                {fix.type === "missing_line" && fixed !== null && i + 1 === fix.after && (
-                  <span className="rounded-lg bg-teal/15 px-3 py-1 font-mono text-base font-bold text-teal">+ {fix.options[fix.answer]}</span>
-                )}
-              </li>
-            ))}
-          </ol>
-          <button
-            type="button"
-            onClick={() => find(0)}
-            className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border-4 border-dashed px-3 text-left text-lg ${lineLook(0)}`}
-          >
-            + None of them. A check is missing.
-          </button>
-          {found !== null && (
-            <p className="text-lg font-bold">
-              {foundRight
-                ? "Yes!"
-                : fix.type === "wrong_line"
-                  ? `Not quite. It's line ${fix.line}.`
-                  : `Not quite. Every line does its job, but the code never checks for this.`}
+      {missing ? (
+        <div className="grid grid-cols-[1fr_1.1fr] gap-5">
+          <section className="flex flex-col gap-2">
+            <h2 className="text-xl font-bold">1. Which check is missing?</h2>
+            {options(first, setFirst)}
+            {first !== null && <p className="text-lg font-bold">{firstRight ? "Yes!" : "Not that one. The green check is the one it needs."}</p>}
+          </section>
+          <section className="flex flex-col gap-2">
+            <h2 className="text-xl font-bold">2. Where should it go?</h2>
+            <p className="text-base text-ink-soft">
+              {first === null ? "Pick the check first." : "Tap a spot in the AI's code."}
+              {bug.machine === "raffle" && " Spots count from 0: names[0] is the first name."}
             </p>
-          )}
-        </section>
-
-        <section className={`flex flex-col gap-2 ${found === null ? "opacity-40" : ""}`}>
-          <h2 className="text-xl font-bold">
+            <ol className="flex flex-col">
+              {Array.from({ length: lastGap + 1 }, (_, gap) => (
+                <li key={gap} className="flex flex-col">
+                  {second === null ? (
+                    <button
+                      type="button"
+                      disabled={first === null}
+                      onClick={() => answerSecond(gap)}
+                      aria-label={gap === 0 ? "Before line 1" : `After line ${gap}`}
+                      className="my-0.5 min-h-9 rounded-lg border-2 border-dashed border-amber/70 px-3 text-left text-sm font-bold text-ink-soft enabled:hover:bg-amber-soft disabled:opacity-30"
+                    >
+                      + here
+                    </button>
+                  ) : gap === second || (!secondRight && gap === fix.after) ? (
+                    <span
+                      className={`my-0.5 rounded-lg px-3 py-1 font-mono text-base font-bold ${
+                        fix.validAfter.includes(gap) ? "bg-teal/15 text-teal" : "bg-danger/10 text-danger line-through"
+                      }`}
+                    >
+                      + {fix.options[fix.answer]}
+                    </span>
+                  ) : (
+                    <span className="h-1.5" />
+                  )}
+                  {gap < lastGap && (
+                    <span className="flex items-center gap-3 rounded-xl border-2 border-line bg-white px-3 py-1.5 font-mono text-base leading-snug">
+                      <span className="w-5 opacity-60">{gap + 1}</span>
+                      {machine.pseudocode[gap]}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+      ) : (
+        <div className="grid grid-cols-[1.1fr_1fr] gap-5">
+          <section className="flex flex-col gap-2">
+            <h2 className="text-xl font-bold">1. Which line made that happen?</h2>
+            {bug.machine === "raffle" && <p className="text-base text-ink-soft">Spots count from 0: names[0] is the first name.</p>}
+            <ol className="flex flex-col gap-1.5">
+              {machine.pseudocode.map((code, i) => (
+                <li key={code}>
+                  <button
+                    type="button"
+                    disabled={first !== null}
+                    onClick={() => setFirst(i + 1)}
+                    className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border-4 px-3 text-left font-mono text-base leading-snug ${look(
+                      first === null ? "idle" : i + 1 === fix.line ? "right" : i + 1 === first ? "wrong" : "dim",
+                    )}`}
+                  >
+                    <span className="w-5 opacity-60">{i + 1}</span>
+                    {code}
+                  </button>
+                </li>
+              ))}
+            </ol>
+            {first !== null && <p className="text-lg font-bold">{firstRight ? "Yes!" : `Not quite. It's line ${fix.line}.`}</p>}
+          </section>
+          <section className="flex flex-col gap-2">
             {/* Naming the line before part 1 is answered would give it away. */}
-            2. {found === null ? "Fix it" : fix.type === "wrong_line" ? `Pick the fixed line ${fix.line}:` : `Which check should go after line ${fix.after}?`}
-          </h2>
-          {/* The choices stay hidden until part 1 is answered: their shape (four "if" checks, or four versions of one line) would give it away. */}
-          {found === null && <p className="text-base text-ink-soft">Find it first.</p>}
-          <div className={`flex flex-col gap-1.5 ${found === null ? "hidden" : ""}`}>
-            {fix.options.map((o, i) => (
-              <button
-                key={o}
-                type="button"
-                disabled={found === null}
-                onClick={() => choose(i)}
-                className={`flex min-h-12 w-full items-center rounded-2xl border-4 px-3 py-1 text-left font-mono text-base leading-snug ${optionLook(i)}`}
-              >
-                {o}
-              </button>
-            ))}
-          </div>
-          {fixed !== null && (
-            <div className="flex flex-col gap-2 pt-1">
-              <p className="text-xl font-bold">{fixed === fix.answer ? "Yes! That fixes it." : "Not that one. The green one fixes it."}</p>
-              <BigButton onClick={onNext} className="self-end">
-                {last ? "Done" : "Next bug →"}
-              </BigButton>
-            </div>
-          )}
-        </section>
-      </div>
+            <h2 className="text-xl font-bold">2. {first === null ? "Fix it" : `Pick the fixed line ${fix.line}:`}</h2>
+            {first === null ? <p className="text-base text-ink-soft">Find the line first.</p> : options(second, answerSecond)}
+          </section>
+        </div>
+      )}
 
+      {second !== null && (
+        <div className="flex items-center gap-4">
+          <p className="flex-1 text-xl font-bold">
+            {missing
+              ? secondRight
+                ? "Yes! The check works there."
+                : `Not there. It has to go ${range}: after the code has what it needs to check, and before the answer.`
+              : secondRight
+                ? "Yes! That fixes it."
+                : "Not that one. The green one fixes it."}
+          </p>
+          <BigButton onClick={onNext}>{last ? "Done" : "Next bug →"}</BigButton>
+        </div>
+      )}
     </main>
   );
 }
+
+/** A full stop after quoted output, unless it already ends a sentence. */
+const stop = (text: string) => (/[.!?]$/.test(text) ? "" : ".");
 
 /** What the app said and should say for this bug's input (the three apps; the raffle is random). */
 function exampleOf(bug: BustedBug): { said: string; should: string } | null {

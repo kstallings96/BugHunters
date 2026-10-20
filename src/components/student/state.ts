@@ -1,4 +1,5 @@
 import type { BustedBug, Progress, Step } from "@/lib/types";
+import { RAFFLE } from "@/bonus/raffle";
 import { MACHINES } from "@/machines";
 import type { Category, Inputs, MachineId, Output } from "@/machines/types";
 
@@ -116,7 +117,15 @@ export function codeQuestions(busted: BustedBug[], machineOrder: MachineId[]): C
   const missed: CodeQuestion[] = [];
   for (let round = 0; missedByApp.some((list) => list.length > round); round++)
     for (const list of missedByApp) if (list[round]) missed.push({ bug: list[round], found: false });
-  return [...found, ...missed].slice(0, MAX_CODE_QUESTIONS);
+  const all = [...found, ...missed];
+  const picked = all.slice(0, MAX_CODE_QUESTIONS);
+  // Most bugs are a missing check: make sure one question is about a wrong line, if there is one.
+  const kindOf = (q: CodeQuestion) => (q.bug.machine === "raffle" ? RAFFLE.fixFor(q.bug.kind) : MACHINES[q.bug.machine].fixFor(q.bug.kind, q.bug.inputs)).type;
+  if (picked.length === MAX_CODE_QUESTIONS && picked.every((q) => kindOf(q) === "missing_line")) {
+    const wrongLine = all.slice(MAX_CODE_QUESTIONS).find((q) => kindOf(q) === "wrong_line");
+    if (wrongLine) picked[MAX_CODE_QUESTIONS - 1] = wrongLine;
+  }
+  return picked;
 }
 
 /** Bugs busted in the three measured apps (the bonus doesn't count): the leaderboard score. */

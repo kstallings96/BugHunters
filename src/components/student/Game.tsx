@@ -155,12 +155,12 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         <MachineStep
           key={id}
           machine={MACHINES[id]}
-          title={`Machine ${game.machineIndex + 1} of ${session.machineOrder.length}`}
+          title={`App ${game.machineIndex + 1} of ${session.machineOrder.length}`}
           tries={game.tries[id] ?? []}
           onTry={(t) => addTry(id, t)}
           isNewKind={isNewKind(id)}
           onBusted={(r) => busted(id, r, true)}
-          acceptLabel={lastMachine ? "Looks good, I'm done →" : "Looks good, next machine →"}
+          acceptLabel={lastMachine ? "Looks good, I'm done →" : "Looks good, next app →"}
           maxTries={MAX_TRIES}
           onAccept={(via) => accept(id, via, advance)}
           nudgeAt={game.machineStartedAt + session.nudgeSeconds * 1000}

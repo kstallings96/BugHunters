@@ -39,7 +39,7 @@ export const RAFFLE = {
         "spot = a random number from 1 to (count − 1)",
       );
     return missingLine(
-      2,
+      [1, 2],
       'if there are fewer than 2 names → say "Add at least 2 names."',
       'if there are more than 2 names → say "Add at least 2 names."',
       'if there are fewer than 1 name → say "Add at least 2 names."',
