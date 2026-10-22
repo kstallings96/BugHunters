@@ -33,15 +33,15 @@ const FIXES: Partial<Record<Category, Fix>> = {
   ),
   empty: missingLine(
     [2, 3],
-    'if price or off is blank → say "Please type a number."',
-    'if price or off is 0 → say "Please type a number."',
+    'if price or off is blank → say "You left it blank."',
+    'if price or off is 0 → say "You left it blank."',
     "if price or off is blank → sale = 0",
   ),
   spaces_only: missingLine(
     [2, 3],
-    'if price or off is blank or only spaces → say "Please type a number."',
-    'if price or off is blank → say "Please type a number."',
-    'if price or off has a space in it → say "Please type a number."',
+    'if price or off is blank or only spaces → say "You left it blank."',
+    'if price or off is blank → say "You left it blank."',
+    'if price or off has a space in it → say "You left it blank."',
   ),
   wrong_type: missingLine(
     [2, 3],
@@ -61,8 +61,8 @@ type Num = { ok: true; n: number } | { ok: false; out: Output };
 
 function read(raw: string, what: string, parse: (s: string) => number | null): Num {
   const no = (text: string, rule: Category): Num => ({ ok: false, out: { type: "not_allowed", text, rule } });
-  if (raw === "") return no(`Please type the ${what}.`, "empty");
-  if (raw.trim() === "") return no(`Please type the ${what}.`, "spaces_only");
+  if (raw === "") return no(`You left the ${what} blank.`, "empty");
+  if (raw.trim() === "") return no(`You left the ${what} blank.`, "spaces_only");
   const n = parse(raw);
   return n === null ? no("That's not a number.", "wrong_type") : { ok: true, n };
 }
@@ -110,7 +110,7 @@ export const sale: Machine = {
   debatable: () => false,
   // Both versions answer but disagree: "$40" ($???) or "1.2.3" read as 1.2.
   resultBugKind: (_inputs, categories) => (categories.includes("special") ? "special" : categories.includes("wrong_type") ? "wrong_type" : categories[0]),
-  messages: ["Please type the price.", "Please type the % off.", "That's not a number.", "Prices can't be below zero.", "Discounts go from 0% to 100%."],
+  messages: ["You left the price blank.", "You left the % off blank.", "That's not a number.", "Prices can't be below zero.", "Discounts go from 0% to 100%."],
   goodInputs: { price: "40", off: "25" },
   otherAnswers: ({ price }) => {
     const p = parseMoney(price);

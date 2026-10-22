@@ -217,7 +217,7 @@ describe("the app's own vague refusal (\"Invalid input\")", () => {
     expect(e.unclearMessage).toBe(true);
     expect(verdictFor(e)).toBe("debatable");
     const { options, correct } = answerChoices(MACHINES.savings, inputs, e.buggy.text);
-    expect(correct.map((i) => options[i])).toEqual(expect.arrayContaining(["Please type the price.", "Invalid input"]));
+    expect(correct.map((i) => options[i])).toEqual(expect.arrayContaining(["You left the price blank.", "Invalid input"]));
   });
   it("only applies where refusing is right", () => {
     expect(run("savings", { price: "20", saved: "5" }).unclearMessage).toBe(false);
@@ -288,6 +288,13 @@ describe("every machine", () => {
     expect(options).toContain(e.buggy.text);
     // When the right answer is a message, the wrong one is a real message too.
     if (e.reference.type === "not_allowed") expect(options.filter((o) => MACHINES[id].messages.includes(o))).toHaveLength(2);
+  });
+
+  it("the wrong message can't be mistaken for the right one (4cat)", () => {
+    const { options, correct } = answerChoices(MACHINES.allowance, { allowance: "4cat" }, "$8");
+    expect(correct.map((i) => options[i])).toEqual(["That's not a number."]);
+    expect(options).toContain("$8");
+    expect(options.filter((o) => /number/i.test(o))).toEqual(["That's not a number."]);
   });
 
   it("an input that breaks two rules offers both right messages", () => {

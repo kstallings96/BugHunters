@@ -32,15 +32,15 @@ const FIXES: Partial<Record<Category, Fix>> = {
   ),
   empty: missingLine(
     [1, 2, 3],
-    'if name is blank → say "Please type a monster name."',
-    'if name has a space in it → say "Please type a monster name."',
-    'if name is longer than 0 letters → say "Please type a monster name."',
+    'if name is blank → say "You left the name blank."',
+    'if name has a space in it → say "You left the name blank."',
+    'if name is longer than 0 letters → say "You left the name blank."',
   ),
   spaces_only: missingLine(
     [1, 2, 3],
-    'if name is blank or only spaces → say "Please type a monster name."',
-    'if name is blank → say "Please type a monster name."',
-    'if name has a space in it → say "Please type a monster name."',
+    'if name is blank or only spaces → say "You left the name blank."',
+    'if name is blank → say "You left the name blank."',
+    'if name has a space in it → say "You left the name blank."',
   ),
   extra_spaces: missingLine(
     [1, 2],
@@ -74,9 +74,9 @@ export const monster: Machine = {
   labels: { wrong_type: "Has numbers", very_long: "Too long", special: "Symbols or emoji" },
   buggy: ({ name }: Inputs): Output => aiOutput(monsterName(name)),
   reference: ({ name }: Inputs): Output => {
-    if (name === "") return { type: "not_allowed", text: "Please type a monster name.", rule: "empty" };
+    if (name === "") return { type: "not_allowed", text: "You left the name blank.", rule: "empty" };
     const t = name.trim();
-    if (t === "") return { type: "not_allowed", text: "Please type a monster name.", rule: "spaces_only" };
+    if (t === "") return { type: "not_allowed", text: "You left the name blank.", rule: "spaces_only" };
     if (/\d/.test(t)) return { type: "not_allowed", text: "Names use letters only.", rule: "wrong_type" };
     if (!/^\p{L}[\p{L}\p{M} '’-]*$/u.test(t)) return { type: "not_allowed", text: "Names use letters only.", rule: "special" };
     if (length(t) > MONSTER_MAX) return { type: "not_allowed", text: `Up to ${MONSTER_MAX} letters.`, rule: "very_long" };
@@ -105,10 +105,10 @@ export const monster: Machine = {
   },
   // Both show a name, but the buggy one kept the spaces.
   resultBugKind: (_inputs, categories) => (categories.includes("extra_spaces") ? "extra_spaces" : categories[0]),
-  messages: ["Please type a monster name.", "Names use letters only.", `Up to ${MONSTER_MAX} letters.`],
+  messages: ["You left the name blank.", "Names use letters only.", `Up to ${MONSTER_MAX} letters.`],
   ruleMessages: {
-    empty: "Please type a monster name.",
-    spaces_only: "Please type a monster name.",
+    empty: "You left the name blank.",
+    spaces_only: "You left the name blank.",
     wrong_type: "Names use letters only.",
     special: "Names use letters only.",
     very_long: `Up to ${MONSTER_MAX} letters.`,

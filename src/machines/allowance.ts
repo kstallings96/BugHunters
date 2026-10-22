@@ -20,15 +20,15 @@ export const allowance: Machine = {
   fields: [{ id: "allowance", label: "Allowance ($)", kind: "number" }],
   buggy: ({ allowance: a }: Inputs): Output => aiOutput(doubleAllowance(a)),
   reference: ({ allowance: a }: Inputs): Output => {
-    if (a === "") return { type: "not_allowed", text: "Please type a number.", rule: "empty" };
-    if (a.trim() === "") return { type: "not_allowed", text: "Please type a number.", rule: "spaces_only" };
+    if (a === "") return { type: "not_allowed", text: "You left it blank.", rule: "empty" };
+    if (a.trim() === "") return { type: "not_allowed", text: "You left it blank.", rule: "spaces_only" };
     const n = parseMoney(a);
     if (n === null) return { type: "not_allowed", text: "That's not a number.", rule: "wrong_type" };
     if (n < 0) return { type: "not_allowed", text: "Allowance can't be below zero.", rule: "negative" };
     return { type: "result", text: `$${n * 2}` };
   },
   debatable: () => false,
-  messages: ["Please type a number.", "That's not a number.", "Allowance can't be below zero."],
+  messages: ["You left it blank.", "That's not a number.", "Allowance can't be below zero."],
   otherAnswers: ({ allowance: a }) => {
     const n = parseMoney(a);
     return n === null ? ["$0", "$2"] : [`$${n}`, `$${n + 2}`];

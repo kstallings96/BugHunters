@@ -24,8 +24,8 @@ type Money = { ok: true; n: number } | { ok: false; out: Output };
 
 function money(raw: string, what: string): Money {
   const no = (text: string, rule: Category): Money => ({ ok: false, out: { type: "not_allowed", text, rule } });
-  if (raw === "") return no(`Please type the ${what}.`, "empty");
-  if (raw.trim() === "") return no(`Please type the ${what}.`, "spaces_only");
+  if (raw === "") return no(`You left the ${what} blank.`, "empty");
+  if (raw.trim() === "") return no(`You left the ${what} blank.`, "spaces_only");
   const n = parseMoney(raw);
   if (n === null) return no("That's not a number.", "wrong_type");
   if (n < 0) return no("Money can't be below zero.", "negative");
@@ -80,14 +80,14 @@ export const savings: Machine = {
   reference: ({ price, saved }: Inputs): Output => {
     const p = money(price, "price");
     if (!p.ok) return p.out;
-    const s = money(saved, "amount you save each week");
+    const s = money(saved, "amount saved");
     if (!s.ok) return s.out;
     if (s.n === 0) return { type: "not_allowed", text: "You have to save more than $0 a week.", rule: "zero" };
     return { type: "result", text: weeks(Math.ceil(p.n / s.n)) };
   },
   rulesBroken: ({ price, saved }) => {
     const broken: Category[] = [];
-    for (const [raw, what] of [[price, "price"], [saved, "amount you save each week"]]) {
+    for (const [raw, what] of [[price, "price"], [saved, "amount saved"]]) {
       const m = money(raw, what);
       if (!m.ok) broken.push((m.out as { rule: Category }).rule);
     }
@@ -104,7 +104,7 @@ export const savings: Machine = {
   debatable: () => false,
   // Both versions answer but disagree: the nearest-week rounding.
   resultBugKind: (_inputs, categories) => (categories.includes("wrong_type") ? "wrong_type" : "rounding"),
-  messages: ["Please type the price.", "Please type the amount you save each week.", "That's not a number.", "Money can't be below zero.", "You have to save more than $0 a week."],
+  messages: ["You left the price blank.", "You left the amount saved blank.", "That's not a number.", "Money can't be below zero.", "You have to save more than $0 a week."],
   goodInputs: { price: "20", saved: "5" },
   otherAnswers: ({ price, saved }) => {
     const p = parseMoney(price);
