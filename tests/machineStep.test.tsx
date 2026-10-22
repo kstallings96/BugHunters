@@ -171,6 +171,14 @@ describe("a machine", () => {
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ bug_kind: "wrong_type", label_agreement: false });
   });
 
+  it("busting the app's vague 'Invalid input' asks if the message is clear enough", () => {
+    setup();
+    tryIt("", "5");
+    bust(/^Invalid input$/, "Blank");
+    expect(screen.getByText(/It said no, which is OK. But is "Invalid input" clear enough\?/)).toBeTruthy();
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "debatable", unclear_message: true, expected_correct: true, counted: false });
+  });
+
   it("Busted! can point at an earlier try", () => {
     setup();
     tryIt("-20", "5");

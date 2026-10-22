@@ -51,7 +51,8 @@ export function evaluate(machine: Machine, inputs: Inputs, ctx: Context): Evalua
   // An input can break several rules at once; every one the app gets wrong counts.
   const known = new Set(machine.bugs.map((b) => b.kind));
   const bugKinds = bugKind ? [...new Set([bugKind, ...(machine.rulesBroken?.(inputs, ctx) ?? []).filter((k) => known.has(k))])] : [];
-  return { categories, buggy, reference, revealsBug: differs && !debatable, bugKind, bugKinds, debatable };
+  const unclearMessage = buggy.type === "message" && reference.type === "not_allowed";
+  return { categories, buggy, reference, revealsBug: differs && !debatable, bugKind, bugKinds, debatable, unclearMessage };
 }
 
 /**
@@ -64,8 +65,9 @@ export function writesDollar(machine: Machine, inputs: Inputs): boolean {
 }
 
 /** What a Busted! on this input means. */
-export function verdictFor(e: Pick<Evaluation, "revealsBug" | "debatable">): BustedVerdict {
-  if (e.debatable) return "debatable";
+export function verdictFor(e: Pick<Evaluation, "revealsBug" | "debatable"> & { unclearMessage?: boolean }): BustedVerdict {
+  // A vague refusal ("Invalid input") isn't wrong, but is it clear enough? The request doesn't say.
+  if (e.debatable || e.unclearMessage) return "debatable";
   return e.revealsBug ? "real" : "false_alarm";
 }
 
@@ -99,8 +101,10 @@ export function correctAnswers(machine: Machine, inputs: Inputs, ctx: Context = 
  * this input (never a made-up number like "0 weeks").
  */
 export function answerChoices(machine: Machine, inputs: Inputs, shownText: string, ctx: Context = { today: new Date() }): { options: string[]; correct: number[] } {
-  const right = correctAnswers(machine, inputs, ctx).slice(0, 2);
   const refuses = machine.reference(inputs, ctx).type === "not_allowed";
+  // The app's own refusal ("Invalid input") is a right answer too where refusing is right.
+  const appRefusalOk = refuses && machine.buggy(inputs, ctx).type === "message";
+  const right = [...correctAnswers(machine, inputs, ctx).slice(0, 2), ...(appRefusalOk ? [shownText] : [])];
   const wrongPool = (refuses ? machine.messages : machine.otherAnswers(inputs)).filter((o) => !right.includes(o) && o !== shownText);
   const wrong = wrongPool.length ? [wrongPool[stableHash(JSON.stringify(inputs)) % wrongPool.length]] : [];
   const unique = [...new Set([...right, shownText, ...wrong])];

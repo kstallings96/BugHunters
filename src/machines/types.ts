@@ -162,6 +162,12 @@ export interface Evaluation {
    * rules at once, like a 16-letter name with numbers in it. Empty if no bug.
    */
   bugKinds: Category[];
+  /**
+   * The app refused in its own words ("Invalid input") where refusing is
+   * right. Not a bug; a Busted! on it is Debatable: is the message clear
+   * enough? Kept apart from `debatable`, which the harness skips.
+   */
+  unclearMessage: boolean;
   debatable: boolean;
 }
 

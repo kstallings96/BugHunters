@@ -41,6 +41,8 @@ function describeInputs(machine: Machine, inputs: Inputs): string {
 
 export interface BustedResult {
   verdict: BustedVerdict;
+  /** The app's vague refusal the student busted ("Invalid input"), if that's what it was. */
+  unclearMessage?: string;
   kind: Category | null;
   inputs: Inputs;
   /** A real bug of a kind not yet busted on this machine. */
@@ -119,6 +121,7 @@ export function MachineStep({
       bugKind: e.bugKind,
       bugKinds: e.bugKinds,
       debatable: e.debatable,
+      unclearMessage: e.unclearMessage,
     };
     logEvent("input_submit", {
       n: t.n,
@@ -130,6 +133,7 @@ export function MachineStep({
       bug_kind: e.bugKind,
       bug_kinds: e.bugKinds,
       debatable: e.debatable,
+      unclear_message: e.unclearMessage,
     });
     onTry(t);
     if (maxTries !== undefined && t.n === maxTries) logEvent("tries_used_up", { max: maxTries });
@@ -295,8 +299,10 @@ function BustedDialog({
       bug_kind: kind,
       bug_kinds: kinds,
       counted,
+      // Busted! on the app's vague refusal ("Invalid input"): Debatable, counted apart.
+      unclear_message: t.unclearMessage === true,
     });
-    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: agrees });
+    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: agrees, unclearMessage: t.unclearMessage === true ? t.output.text : undefined });
   }
 
   if (result) {
@@ -306,8 +312,10 @@ function BustedDialog({
         ? result.labelAgrees
           ? `Yes, ${bug} bug!`
           : `We'd call that ${bug} bug.`
-        : result.verdict === "debatable"
-          ? "The request doesn't say. Good thinking: what should it do?"
+        : result.unclearMessage
+          ? `It said no, which is OK. But is "${result.unclearMessage}" clear enough? The request doesn't say.`
+          : result.verdict === "debatable"
+            ? "The request doesn't say. Good thinking: what should it do?"
           : "That one works the way the request says. Keep testing!";
     return (
       <Modal label="Busted result">

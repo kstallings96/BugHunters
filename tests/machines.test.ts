@@ -208,6 +208,24 @@ describe("inputs that break more than one rule", () => {
   });
 });
 
+describe("the app's own vague refusal (\"Invalid input\")", () => {
+  it("is not a bug, but busting it is Debatable, and it counts as a right answer", () => {
+    const inputs = { price: "", saved: "5" };
+    const e = run("savings", inputs);
+    expect(e.revealsBug).toBe(false);
+    expect(e.debatable).toBe(false);
+    expect(e.unclearMessage).toBe(true);
+    expect(verdictFor(e)).toBe("debatable");
+    const { options, correct } = answerChoices(MACHINES.savings, inputs, e.buggy.text);
+    expect(correct.map((i) => options[i])).toEqual(expect.arrayContaining(["Please type the price.", "Invalid input"]));
+  });
+  it("only applies where refusing is right", () => {
+    expect(run("savings", { price: "20", saved: "5" }).unclearMessage).toBe(false);
+    expect(run("savings", { price: "$20", saved: "5" }).unclearMessage).toBe(false);
+    expect(run("sale", { price: "", off: "25" }).unclearMessage).toBe(false);
+  });
+});
+
 describe("busted verdicts", () => {
   it("real, false alarm, debatable", () => {
     expect(verdictFor(run("savings", { price: "20", saved: "0" }))).toBe("real");

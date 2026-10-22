@@ -51,6 +51,8 @@ export interface MetricRow {
   bug_kinds: string;
   false_alarm: number;
   debatable: number;
+  /** Busted! on the app's vague refusal ("Invalid input"): refusing was right, the message is unhelpful. */
+  unclear_message: number;
   /** Share of Busted! labels matching the classifier's (null if none to compare). */
   label_agreement: number | null;
   /** Share of "It should say" answers that were right (null if no Busted!). */
@@ -143,7 +145,8 @@ export function computeMetrics(session: MetricSession, events: MetricEvent[]): M
       real_bugs: realKinds.size,
       bug_kinds: [...realKinds].sort().join("|"),
       false_alarm: busts.filter((b) => b.payload.verdict === "false_alarm").length,
-      debatable: busts.filter((b) => b.payload.verdict === "debatable").length,
+      debatable: busts.filter((b) => b.payload.verdict === "debatable" && b.payload.unclear_message !== true).length,
+      unclear_message: busts.filter((b) => b.payload.unclear_message === true).length,
       label_agreement: agreements.length ? agreements.filter(Boolean).length / agreements.length : null,
       expected_correct: expectations.length ? expectations.filter(Boolean).length / expectations.length : null,
       transfer_categories: transfer ? transfer.join("|") : null,
