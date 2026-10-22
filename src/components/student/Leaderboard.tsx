@@ -7,7 +7,7 @@ interface Row {
   rank: number;
   nickname: string;
   period: string;
-  bugs: number;
+  points: number;
   you: boolean;
 }
 
@@ -23,7 +23,7 @@ interface Board {
  * student's score once, then refreshes every 15 seconds as classmates
  * finish. Hidden if the server can't keep scores.
  */
-export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
+export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: number; codePoints: number }) {
   const [board, setBoard] = useState<Board | "off" | null>(null);
   const saved = useRef(false);
 
@@ -34,7 +34,7 @@ export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
         const res = await fetch("/api/leaderboard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(saved.current ? { token } : { token, bugs }),
+          body: JSON.stringify(saved.current ? { token } : { token, bugs, codePoints }),
         });
         if (!res.ok) {
           if (alive && !saved.current) setBoard("off");
@@ -42,7 +42,7 @@ export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
         }
         const data = (await res.json()) as Board;
         if (!alive) return;
-        if (!saved.current) logEvent("leaderboard_view", { bugs, rank: data.rows.find((r) => r.you)?.rank ?? null, players: data.players });
+        if (!saved.current) logEvent("leaderboard_view", { bugs, code_points: codePoints, rank: data.rows.find((r) => r.you)?.rank ?? null, players: data.players });
         saved.current = true;
         setBoard(data);
       } catch {
@@ -55,13 +55,13 @@ export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
       alive = false;
       window.clearInterval(timer);
     };
-  }, [token, bugs]);
+  }, [token, bugs, codePoints]);
 
   if (board === "off") return null;
   return (
     <section className="flex min-h-0 w-full flex-col gap-2 rounded-3xl border-4 border-amber bg-card p-4 text-left" aria-label="Class leaderboard">
       <h2 className="text-2xl font-bold">Today&apos;s leaderboard</h2>
-      <p className="text-base text-ink-soft">All class periods. Bugs busted in the 3 apps (not the bonus).</p>
+      <p className="text-base text-ink-soft">All class periods. Score = bugs busted + code question points.</p>
       {board === null ? (
         <p className="text-lg text-ink-soft">Loading…</p>
       ) : (
@@ -77,7 +77,7 @@ export function Leaderboard({ token, bugs }: { token: string; bugs: number }) {
                 {r.you && <span className="sr-only"> (you)</span>}
               </span>
               <span className={`text-sm ${r.you ? "text-white" : "text-ink-soft"}`}>P{r.period}</span>
-              <span className="tabular-nums">{r.bugs} {r.bugs === 1 ? "bug" : "bugs"}</span>
+              <span className="tabular-nums">{r.points} {r.points === 1 ? "point" : "points"}</span>
             </li>
           ))}
         </ol>

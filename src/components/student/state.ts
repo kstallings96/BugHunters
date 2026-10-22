@@ -14,8 +14,8 @@ export type Screen =
   | "machine"
   | "between"
   | "end"
-  | "bonus_machine"
-  | "bonus_guilty";
+  /** Code questions, after the three apps: required, and part of the score. */
+  | "code";
 
 export const STEP_OF: Record<Screen, Step> = {
   intake_coding: "intake",
@@ -27,8 +27,7 @@ export const STEP_OF: Record<Screen, Step> = {
   machine: "machine",
   between: "reveal",
   end: "end",
-  bonus_machine: "bonus_machine",
-  bonus_guilty: "bonus_guilty",
+  code: "code",
 };
 
 /** One "Try it" on a machine. */
@@ -56,7 +55,8 @@ export interface GameState {
   /** Real bugs busted, one per kind per machine (the counter). */
   busted: BustedBug[];
   nudged: Partial<Record<MachineId, boolean>>;
-  bonusDone: boolean;
+  /** Points per code question (1 per part right), by question number. */
+  codeScores: number[];
   guiltyIndex: number;
 }
 
@@ -69,7 +69,7 @@ export function newGame(now = Date.now()): GameState {
     tries: {},
     busted: [],
     nudged: {},
-    bonusDone: false,
+    codeScores: [],
     guiltyIndex: 0,
   };
 }
@@ -81,7 +81,9 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
       ? "intro"
       : p.step === "briefing" || p.step === "machine" || p.step === "reveal"
         ? "briefing"
-        : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
+        : p.step === "code"
+          ? "code"
+          : p.step === "post_survey" || p.step === "end" || p.step === "bonus_machine" || p.step === "bonus_guilty"
             ? "end"
             : "intake_coding";
   return { ...newGame(now), screen, machineIndex: Math.min(2, Math.max(0, p.machineIndex)), busted: p.busted };
@@ -104,8 +106,8 @@ export interface CodeQuestion {
 /**
  * Bugs the student found come first (one per app, then the rest); if that's
  * fewer than three, bugs they missed fill in, one per app in the order they
- * played, using each bug's example input. So everyone who opts in gets
- * questions, even with no bugs found.
+ * played, using each bug's example input. So everyone gets questions, even
+ * with no bugs found.
  */
 export function codeQuestions(busted: BustedBug[], machineOrder: MachineId[]): CodeQuestion[] {
   const firstPerApp = busted.filter((b, i) => busted.findIndex((o) => o.machine === b.machine) === i);
@@ -128,15 +130,16 @@ export function codeQuestions(busted: BustedBug[], machineOrder: MachineId[]): C
   return picked;
 }
 
-/** Bugs busted in the three measured apps (the bonus doesn't count): the leaderboard score. */
+/** Bugs busted in the three apps (older sessions also had a bonus app, which doesn't count). */
 export const measuredBugs = (busted: BustedBug[]) => busted.filter((b) => b.machine !== "raffle").length;
 
-/** Where the progress bar is: 0 questions, 1 practice, 2–4 the apps, 5 done. */
+/** Where the progress bar is: 0 questions, 1 practice, 2–4 the apps, 5 code questions, 6 done. */
 export function progressStage(screen: Screen, machineIndex: number): number {
   if (screen === "intake_coding" || screen === "intake_ai") return 0;
   if (screen === "intro" || screen === "tutorial" || screen === "ready") return 1;
   if (screen === "briefing" || screen === "machine" || screen === "between") return 2 + machineIndex;
-  return 5;
+  if (screen === "code") return 5;
+  return 6;
 }
 
 export function categoryCounts(tries: Try[]): Partial<Record<Category, number>> {
@@ -170,3 +173,8 @@ export function clearGame(sessionId: string): void {
     window.sessionStorage.removeItem(key(sessionId));
   } catch {}
 }
+
+/** Most points the code questions can give: 2 parts each. */
+export const MAX_CODE_POINTS = MAX_CODE_QUESTIONS * 2;
+
+export const codePoints = (g: Pick<GameState, "codeScores">) => (g.codeScores ?? []).reduce((n, p) => n + (p ?? 0), 0);

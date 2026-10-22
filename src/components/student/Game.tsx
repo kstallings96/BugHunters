@@ -10,7 +10,6 @@ import { BigButton, Modal } from "@/components/ui";
 import { nicknameFor } from "@/lib/nickname";
 import { Briefing, Intro, Ready } from "./Intro";
 import { Leaderboard } from "./Leaderboard";
-import { RaffleStep } from "./RaffleStep";
 import { FullReveal, MachineReveal, NextApp } from "./Reveal";
 import { MachineStep, type BustedResult } from "./MachineStep";
 
@@ -25,6 +24,8 @@ import {
   isEdge,
   isNewBug,
   loadGame,
+  codePoints,
+  MAX_CODE_POINTS,
   measuredBugs,
   newGame,
   progressStage,
@@ -51,9 +52,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       ? "allowance"
       : g.screen === "briefing" || g.screen === "machine" || g.screen === "between"
         ? session.machineOrder[g.machineIndex]
-        : g.screen === "bonus_machine"
-          ? "raffle"
-          : null;
+        : null;
 
   useEffect(() => {
     if (started.current) return;
@@ -73,10 +72,8 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     logEvent("step_exit", { screen: game.screen, ms: now - game.screenEnteredAt });
     const next: GameState = { ...game, ...patch, screen, screenEnteredAt: now };
     if (screen === "machine" && (game.screen !== "machine" || patch.machineIndex !== undefined)) next.machineStartedAt = now;
-    if (screen === "bonus_machine") next.machineStartedAt = now;
     setStep(STEP_OF[screen], machineFor(next));
     logEvent("step_enter", { screen, machine_index: next.machineIndex });
-    if (screen === "bonus_machine") logEvent("bonus_enter", { busted: next.busted.length });
     setGame(next);
     void flushNow();
   }
@@ -112,17 +109,17 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   const isNewKind = (machine: MachineId) => (kind: Category) => isNewBug(game.busted, machine, kind);
   // Sessions saved before the reveal condition existed get the full reveal at the end.
   const revealCondition = session.revealCondition ?? "end_only";
-  const counter = game.screen === "machine" || game.screen === "bonus_machine";
-  // Students can stop any time (the end screen and bonus have their own ways out).
-  const canStop = game.screen !== "end" && game.screen !== "bonus_machine" && game.screen !== "bonus_guilty";
+  const counter = game.screen === "machine";
+  // Students can stop any time before the end.
+  const canStop = game.screen !== "end";
   const [stopping, setStopping] = useState(false);
 
   function stopEarly() {
     logEvent("quit_early", { screen: game.screen, machine_index: game.machineIndex, busted: game.busted.length });
     setStopping(false);
-    go("end", { bonusDone: true });
+    go("end");
   }
-  const board = <Leaderboard token={session.token} bugs={measuredBugs(game.busted)} />;
+  const board = <Leaderboard token={session.token} bugs={measuredBugs(game.busted)} codePoints={codePoints(game)} />;
 
   let body: React.ReactNode;
   switch (game.screen) {
@@ -176,7 +173,8 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     case "between": {
       const id = session.machineOrder[game.machineIndex];
       const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
-      const next = () => (lastMachine ? go("end") : go("briefing", { machineIndex: game.machineIndex + 1 }));
+      // After the last app: the code questions, then the end.
+      const next = () => (lastMachine ? go("code", { guiltyIndex: 0 }) : go("briefing", { machineIndex: game.machineIndex + 1 }));
       body =
         revealCondition === "reveal" ? (
           <MachineReveal key={id} machine={id} busted={game.busted} last={lastMachine} onNext={next} />
@@ -187,18 +185,8 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         );
       break;
     }
-    case "bonus_machine":
-      body = (
-        <RaffleStep
-          isNewKind={(kind) => isNewBug(game.busted, "raffle", kind)}
-          onBug={(kind, text) => setGame((g) => ({ ...g, busted: [...g.busted, { machine: "raffle", kind, inputs: { names: text } }] }))}
-          // Code questions follow for everyone (bugs they missed fill in).
-          onDone={() => go("bonus_guilty", { guiltyIndex: 0 })}
-        />
-      );
-      break;
-    case "bonus_guilty": {
-      // A few code questions at most, and the student can leave any time.
+    case "code": {
+      // Three code questions, required, scored 1 point per part right.
       const questions = codeQuestions(game.busted, session.machineOrder);
       const q = questions[game.guiltyIndex];
       const last = game.guiltyIndex >= questions.length - 1;
@@ -209,16 +197,22 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
           found={q.found}
           index={game.guiltyIndex}
           total={questions.length}
-          onNext={() => (last ? go("end", { bonusDone: true }) : setGame((g) => ({ ...g, guiltyIndex: g.guiltyIndex + 1 })))}
-          onSkip={() => go("end", { bonusDone: true })}
+          onScore={(points) =>
+            setGame((g) => {
+              const codeScores = [...(g.codeScores ?? [])];
+              codeScores[g.guiltyIndex] = points;
+              return { ...g, codeScores };
+            })
+          }
+          onNext={() => (last ? go("end") : setGame((g) => ({ ...g, guiltyIndex: g.guiltyIndex + 1 })))}
         />
       ) : (
-        <EndScreen busted={game.busted} bonusDone onBonus={() => {}} onFinish={finish} leaderboard={board} />
+        <EndScreen busted={game.busted} codePoints={codePoints(game)} codeMax={MAX_CODE_POINTS} onFinish={finish} leaderboard={board} />
       );
       break;
     }
     default:
-      body = <EndScreen busted={game.busted} bonusDone={game.bonusDone} onBonus={() => go("bonus_machine")} onFinish={finish} leaderboard={board} />;
+      body = <EndScreen busted={game.busted} codePoints={codePoints(game)} codeMax={MAX_CODE_POINTS} onFinish={finish} leaderboard={board} />;
   }
 
   return (
@@ -227,6 +221,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         <Logo />
         <ProgressBar stage={progressStage(game.screen, game.machineIndex)} />
         {counter && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">{game.busted.length} busted</span>}
+        {game.screen === "code" && <span className="shrink-0 rounded-full bg-amber-soft px-4 py-1 text-xl font-bold">{codePoints(game)} code points</span>}
         {canStop && (
           <button
             type="button"
@@ -317,7 +312,7 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
 
 // ------------------------------------------------------------ progress
 
-const PARTS = ["Questions", "Practice", "App 1", "App 2", "App 3", "Done"];
+const PARTS = ["Questions", "Practice", "App 1", "App 2", "App 3", "Code", "Done"];
 
 /** How far through the session the student is: finished parts filled, the current one outlined. */
 function ProgressBar({ stage }: { stage: number }) {

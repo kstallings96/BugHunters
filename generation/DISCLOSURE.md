@@ -6,7 +6,7 @@ shows students the line that matches.
 **Current status: `generated_with_planted`.** Every app students test is code
 written by `google/gemini-3.1-flash-lite` (requested and reported model,
 through OpenRouter; settings and every prompt are in each run's `meta.json`).
-Three lines were changed by the research team to add bugs the model did not
+Three lines were changed by the research team (one of them in the Raffle Picker, which is no longer in the game) to add bugs the model did not
 make in any sample. The intro says: "An AI wrote these apps. We kept the bugs
 it made, and added a few."
 
@@ -20,7 +20,7 @@ which are marked `PLANTED` in place with what the AI originally wrote.
 | Savings Planner | `2026-10-13T17-15-39-803Z/savings/sample-03` | **zero** (`weekly <= 0` → `weekly < 0`) and **rounding** (`Math.ceil` → `Math.round`) | "NaN" shown as "???" |
 | Sale Price | `2026-10-13T17-15-39-803Z/sale/sample-04` | none | "NaN" shown as "???" |
 | Monster Namer | `2026-10-14T00-15-39-037Z/monster/sample-03` | none | name shown on a tag under a monster drawing |
-| Raffle Picker (bonus) | `2026-10-13T17-15-39-803Z/raffle/sample-01` | **off by one** (`names.length` → `names.length - 1`) | tally chart for Pick 20 times |
+| Raffle Picker (bonus; removed from the game 2026-10-22) | `2026-10-13T17-15-39-803Z/raffle/sample-01` | **off by one** (`names.length` → `names.length - 1`) | tally chart for Pick 20 times |
 
 Every screen also stars out bad words in what students typed (`****`); the
 code's output is unchanged underneath.

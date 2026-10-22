@@ -73,7 +73,7 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
         </section>
       </div>
       <BigButton onClick={onNext} className="self-end">
-        {last ? "Finish →" : "Next app →"}
+        {last ? "Code questions →" : "Next app →"}
       </BigButton>
     </main>
   );
@@ -103,7 +103,7 @@ export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]
       </div>
       {machines.every(onlyOrdinary) && <p className="text-lg">The AI&apos;s own tests only tried ordinary inputs.</p>}
       <BigButton onClick={onNext} className="self-end">
-        Finish →
+        Code questions →
       </BigButton>
     </main>
   );

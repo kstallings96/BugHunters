@@ -50,14 +50,15 @@ export function kindsFound(busted: BustedBug[]): string[] {
 
 export function EndScreen({
   busted,
-  bonusDone,
-  onBonus,
+  codePoints,
+  codeMax,
   onFinish,
   leaderboard,
 }: {
   busted: BustedBug[];
-  bonusDone: boolean;
-  onBonus: () => void;
+  /** Points from the code questions, out of codeMax. */
+  codePoints: number;
+  codeMax: number;
   onFinish: () => void;
   /** The class leaderboard, beside the results. */
   leaderboard?: ReactNode;
@@ -79,13 +80,11 @@ export function EndScreen({
           ))}
         </div>
       )}
+      <p className="text-2xl">
+        Code questions: <b>{codePoints}</b> of {codeMax} points. Your score: <b>{busted.filter((b) => b.machine !== "raffle").length + codePoints}</b>
+      </p>
       <p className="text-2xl">Thank you for testing the AI&apos;s tools!</p>
       <div className="mt-2 flex flex-wrap justify-center gap-4">
-        {!bonusDone && (
-          <BigButton variant="secondary" onClick={onBonus}>
-            Bonus challenge
-          </BigButton>
-        )}
         <BigButton onClick={onFinish}>I&apos;m finished</BigButton>
       </div>
       </div>
@@ -100,14 +99,14 @@ export function EndScreen({
  * Bonus code question for one bug, in two parts, depending on the bug:
  *   A line is wrong:     1. which line made that happen?  2. pick its fixed version.
  *   A check is missing:  1. which check is missing?        2. where does it go?
- * Wrong choices are near misses. Every answer is a choice on screen, and the
- * student can leave the code questions at any time.
+ * Wrong choices are near misses. Every answer is a choice on screen. Each
+ * part right is 1 point toward the leaderboard score.
  */
 export function GuiltyLine({
   bug,
   found: studentFound,
   onNext,
-  onSkip,
+  onScore,
   index,
   total,
 }: {
@@ -115,8 +114,8 @@ export function GuiltyLine({
   /** A bug the student found, or one they missed (shown with its example input). */
   found: boolean;
   onNext: () => void;
-  /** Leave the code questions now. */
-  onSkip: () => void;
+  /** Points for this question once both parts are answered: 1 per part right. */
+  onScore: (points: number) => void;
   index: number;
   total: number;
 }) {
@@ -160,7 +159,9 @@ export function GuiltyLine({
             fix_correct: right,
           }),
       correct: firstRight && right,
+      points: (firstRight ? 1 : 0) + (right ? 1 : 0),
     });
+    onScore((firstRight ? 1 : 0) + (right ? 1 : 0));
   }
 
   const shown = machine.fields.map((f) => `${f.label.replace(/\s*\(.*\)$/, "")}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${clean(bug.inputs[f.id])}"`}`).join(", ");
@@ -196,21 +197,9 @@ export function GuiltyLine({
 
   return (
     <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-lg font-bold text-ink-soft">
-          Code question {index + 1} of {total}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            logEvent("guilty_line_skip", { at: index + 1, of: total, answered: second !== null });
-            onSkip();
-          }}
-          className="min-h-12 rounded-full border-2 border-line px-4 text-lg font-bold text-ink-soft hover:bg-paper"
-        >
-          I&apos;m done with code questions →
-        </button>
-      </div>
+      <p className="text-lg font-bold text-ink-soft">
+        Code question {index + 1} of {total}: 1 point for each part you get right
+      </p>
       <h1 className="text-3xl leading-snug font-bold">
         {machine.icon} A bug you {studentFound ? "found" : "didn't find"} in {machine.name}: {bugLabel(bug.machine, bug.kind)}
       </h1>

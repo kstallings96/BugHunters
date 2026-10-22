@@ -14,7 +14,7 @@ import { evaluate, MACHINES, type MachineId } from "@/machines";
 
 const bug = (machine: BustedBug["machine"], kind: BustedBug["kind"]): BustedBug => ({ machine, kind, inputs: {} });
 
-describe("code questions (bonus)", () => {
+describe("code questions", () => {
   const order: MachineId[] = ["savings", "sale", "monster"];
   it("asks about at most 3 bugs: found ones first, one per app", () => {
     const busted = [bug("savings", "zero"), bug("savings", "negative"), bug("sale", "empty"), bug("monster", "empty"), bug("raffle", "off_by_one")];
@@ -68,8 +68,8 @@ describe("progress bar", () => {
     expect(progressStage("tutorial", 0)).toBe(1);
     expect(progressStage("briefing", 0)).toBe(2);
     expect(progressStage("between", 2)).toBe(4);
-    expect(progressStage("end", 2)).toBe(5);
-    expect(progressStage("bonus_guilty", 2)).toBe(5);
+    expect(progressStage("code", 2)).toBe(5);
+    expect(progressStage("end", 2)).toBe(6);
   });
 });
 

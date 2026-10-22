@@ -67,13 +67,18 @@ export interface EventRow {
 }
 
 /**
- * One leaderboard row per session: a nickname (never a name), how many bugs
- * were busted in the three apps, and which class and day it belongs to.
+ * One leaderboard row per session: a nickname (never a name), bugs busted
+ * in the three apps plus code question points, and its class and day.
  */
 export interface ScoreRow {
   session_id: string;
   nickname: string;
+  /** Bugs busted in the three apps. */
   bugs: number;
+  /** Code question points (1 per part right). Absent on older rows. */
+  code_points?: number;
+  /** The leaderboard score: bugs + code points. Absent on older rows (use bugs). */
+  points?: number;
   class_period: string;
   /** "2026-10-13" in the school's time zone. */
   day: string;

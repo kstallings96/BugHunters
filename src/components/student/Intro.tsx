@@ -79,7 +79,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
 export function Ready({ count, nickname, onStart }: { count: number; nickname: string; onStart: () => void }) {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 px-6 py-6 text-center">
-      <h1 className="text-4xl font-bold">{count} apps to test. Ready?</h1>
+      <h1 className="text-4xl font-bold">{count} apps to test, then 3 code questions. Ready?</h1>
       <p className="text-xl">
         Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on today&apos;s leaderboard at the end.
       </p>

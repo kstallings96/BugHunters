@@ -111,6 +111,14 @@ const intakeText = (q: "coding_experience" | "ai_confidence", n: number | null) 
 const yes = (v: unknown) => (v === true ? "Yes" : v === false ? "No" : "");
 const pct = (v: number | null) => (v === null ? "" : Math.round(v * 100));
 
+/** Points for one code question: logged directly, or worked out from its parts (older logs). */
+function codePointsOf(p: Record<string, unknown>): number {
+  if (typeof p.points === "number") return p.points;
+  if (p.question === "wrong_line") return Number(p.find_correct === true) + Number(p.fix_correct === true);
+  if (p.question === "missing_line") return Number(p.fix_correct === true) + Number(p.place_correct === true);
+  return p.correct === true ? 2 : 0;
+}
+
 /** "During App 2 (Sale Price)" for a session that tapped Stop; blank otherwise. */
 function stoppedAt(ev: Event[], order: string[]): string {
   const q = ev.find((e) => e.event_type === "quit_early");
@@ -119,6 +127,7 @@ function stoppedAt(ev: Event[], order: string[]): string {
   const i = Number(q.payload.machine_index ?? 0);
   if (screen === "briefing" || screen === "machine" || screen === "between") return `During App ${i + 1} (${appName(order[i])})`;
   if (screen.startsWith("intake")) return "During the first questions";
+  if (screen === "code") return "During the code questions";
   return "During the intro or practice";
 }
 
@@ -156,8 +165,8 @@ describe("Students", [
   ["Bug kinds found", "Which kinds, by app."],
   ["Loud bugs caught", 'Across the 3 apps: loud bugs caught of loud bugs seen. Loud = the answer itself looked broken ("$???", "Infinity weeks", a blank name).'],
   ["Silent bugs caught", 'Across the 3 apps: silent bugs caught of silent bugs seen. Silent = a normal-looking answer that was wrong for the request ("3 weeks" instead of 4, "Sale price: $48.00" for -20% off).'],
-  ["Bonus bugs", "Bugs found in the bonus Raffle Picker (not part of the study measures)."],
-  ["Code questions", "Bonus code questions answered, and how many were fully right (found the line AND picked the fix)."],
+  ["Code points", "Code questions after the 3 apps (required): 1 point per part right, out of 6."],
+  ["Score", "The leaderboard score: bugs busted in the 3 apps + code points."],
   ["Session ID", "Joins this row to the other sheets and the raw files."],
 ]);
 
@@ -215,8 +224,6 @@ describe("Busted", [
   ["Verdict", '"Real bug", "Not a bug" (false alarm) or "Debatable".'],
   ["Bug credited", "Which bug got credit."],
   ["Counted", "Yes if it added to their score (not a kind they had already found on this app)."],
-  ["Raffle: tapped", "Bonus only: the part of the result the student tapped."],
-  ["Raffle: their words", "Bonus only: what they typed about what's wrong (as typed; may need a check for language)."],
 ]);
 
 describe("Code questions", [
@@ -305,8 +312,8 @@ async function main() {
         .join("; "),
       "Loud bugs caught": `${metrics.reduce((n, m) => n + m.loud_bugs_caught, 0)} of ${metrics.reduce((n, m) => n + m.loud_bugs_seen, 0)}`,
       "Silent bugs caught": `${metrics.reduce((n, m) => n + m.silent_bugs_caught, 0)} of ${metrics.reduce((n, m) => n + m.silent_bugs_seen, 0)}`,
-      "Bonus bugs": counted.filter((b) => b.machine === "raffle").length,
-      "Code questions": codes.length ? `${codes.filter((c) => c.payload.correct === true).length} right of ${codes.length}` : "",
+      "Code points": codes.length ? codes.reduce((n, c) => n + codePointsOf(c.payload), 0) : "",
+      Score: measured.length + codes.reduce((n, c) => n + codePointsOf(c.payload), 0),
       "Session ID": s.id,
     });
 
@@ -364,7 +371,6 @@ async function main() {
           "Session ID": s.id,
         });
       } else if (e.event_type === "busted") {
-        const tap = p.tap as { type: string; name?: string } | undefined;
         bustRows.push({
           ...who(s),
           App: appLabel,
@@ -378,8 +384,6 @@ async function main() {
           Verdict: VERDICT[String(p.verdict)] ?? String(p.verdict ?? ""),
           "Bug credited": kindName(app, p.bug_kind),
           Counted: yes(p.counted),
-          "Raffle: tapped": tap ? (tap.type === "row" ? `${tap.name}'s bar` : "the winner") : "",
-          "Raffle: their words": String(p.explanation ?? ""),
           "Session ID": s.id,
         });
       } else if (e.event_type === "guilty_line_attempt") {
@@ -448,7 +452,7 @@ async function main() {
     ["Per app", "One student × one of the three apps: how they tested it. The study measures."],
     ["Tries", "Every input a student tried, what the app showed, and what it should have shown."],
     ["Busted", "Every time a student called Busted!, what they said, and how it was scored."],
-    ["Code questions", "Bonus code questions (not part of the study measures)."],
+    ["Code questions", "The 3 code questions after the apps (required; part of the score)."],
     ["raw/ folder", "The same data as CSV files for stats software."],
     [],
     ["Sheet", "Column", "What it means"],
@@ -462,7 +466,7 @@ async function main() {
   addSheet(wb, "Students", studentRows, { "Bug kinds found": 50, "App order": 44, "Session ID": 38, Started: 16, Finished: 16 });
   addSheet(wb, "Per app", appRows, { "Which input kinds": 40, "Which bugs": 36, "Kinds reused (Monster only)": 30, "Session ID": 38 });
   addSheet(wb, "Tries", tryRows, { Typed: 34, "App showed": 30, "Should say": 34, "Input kinds": 28, "Bug kinds": 28, "Session ID": 38 });
-  addSheet(wb, "Busted", bustRows, { Typed: 30, "App showed": 26, '"It should say" pick': 34, "Raffle: their words": 40, "Session ID": 38 });
+  addSheet(wb, "Busted", bustRows, { Typed: 30, "App showed": 26, '"It should say" pick': 34, "Session ID": 38 });
   addSheet(wb, "Code questions", codeRows, { "Their fix": 70, "Session ID": 38 });
 
   const out = path.join(dir, "exports", new Date().toISOString().replace(/[:.]/g, "-") + (withNames ? "-with-names" : ""));

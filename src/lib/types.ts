@@ -12,6 +12,8 @@ export type Step =
   | "reveal"
   | "post_survey"
   | "end"
+  | "code"
+  /** Older sessions only: the bonus Raffle Picker and its code questions. */
   | "bonus_machine"
   | "bonus_guilty";
 

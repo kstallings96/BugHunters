@@ -6,6 +6,8 @@ create table public.scores (
   session_id   uuid primary key references public.sessions(id),
   nickname     text not null,
   bugs         integer not null check (bugs >= 0),
+  code_points  integer not null default 0 check (code_points >= 0),
+  points       integer not null default 0 check (points >= 0),
   class_period text not null,
   day          date not null,
   is_test      boolean not null default false,
