@@ -42,7 +42,8 @@ export type EventType =
   | "leaderboard_view"
   | "quit_open"
   | "quit_cancel"
-  | "quit_early";
+  | "quit_early"
+  | "debatable_vote";
 
 let queue: EventQueue | null = null;
 let session: ClientSession | null = null;

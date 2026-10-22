@@ -312,11 +312,60 @@ function BustedDialog({
         ? result.labelAgrees
           ? `Yes, ${bug} bug!`
           : `We'd call that ${bug} bug.`
-        : result.unclearMessage
-          ? `It said no, which is OK. But is "${result.unclearMessage}" clear enough? The request doesn't say.`
-          : result.verdict === "debatable"
-            ? "The request doesn't say. Good thinking: what should it do?"
-          : "That one works the way the request says. Keep testing!";
+        : "That one works the way the request says. Keep testing!";
+
+    // No right answer: explain why in plain words, then ask what the student thinks (not scored).
+    if (result.verdict === "debatable") {
+      const unclear = result.unclearMessage;
+      const choices = unclear
+        ? [
+            { id: "clear", text: "Yes, it's clear" },
+            { id: "not_clear", text: "No, it should say what's wrong" },
+            { id: "unsure", text: "Not sure" },
+          ]
+        : [
+            { id: "should_work", text: "It should work" },
+            { id: "should_say_no", text: "It should say no" },
+            { id: "unsure", text: "Not sure" },
+          ];
+      return (
+        <Modal label="Busted result">
+          <div className="flex flex-col items-center gap-4 py-2 text-center">
+            {unclear ? (
+              <>
+                <p className="text-3xl leading-snug font-bold">It said no, which is fine.</p>
+                <p className="text-2xl leading-snug">But does &ldquo;{unclear}&rdquo; tell you what&apos;s wrong?</p>
+              </>
+            ) : (
+              <>
+                <p className="text-3xl leading-snug font-bold">There&apos;s no right answer for this one.</p>
+                {machine.request && (
+                  <p className="rounded-2xl bg-amber-soft px-4 py-2 text-xl">
+                    <span className="font-bold">Request:</span> &ldquo;{machine.request}&rdquo;
+                  </p>
+                )}
+                <p className="text-2xl leading-snug">The request doesn&apos;t say if this is OK. What do you think?</p>
+              </>
+            )}
+            <div className="flex flex-wrap justify-center gap-3">
+              {choices.map((c) => (
+                <BigButton
+                  key={c.id}
+                  variant={c.id === "unsure" ? "secondary" : "primary"}
+                  onClick={() => {
+                    logEvent("debatable_vote", { input_n: t.n, inputs: t.inputs, unclear_message: !!unclear, vote: c.id });
+                    onDone(result);
+                  }}
+                >
+                  {c.text}
+                </BigButton>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+
     return (
       <Modal label="Busted result">
         <div className="flex flex-col items-center gap-5 py-2 text-center">

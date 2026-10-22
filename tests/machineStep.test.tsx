@@ -133,7 +133,10 @@ describe("a machine", () => {
     setup({ machine: "monster" });
     tryIt("Mega-Bob");
     bust(/not sure/);
-    expect(screen.getByText("The request doesn't say. Good thinking: what should it do?")).toBeTruthy();
+    expect(screen.getByText("There's no right answer for this one.")).toBeTruthy();
+    expect(screen.getByText(/The request doesn't say if this is OK/)).toBeTruthy();
+    click("It should say no");
+    expect(logged.find((e) => e.type === "debatable_vote")?.payload).toMatchObject({ unclear_message: false, vote: "should_say_no" });
   });
 
   it("the monster shows its name, and a blank answer reads (blank)", () => {
@@ -175,7 +178,9 @@ describe("a machine", () => {
     setup();
     tryIt("", "5");
     bust(/^Invalid input$/, "Blank");
-    expect(screen.getByText(/It said no, which is OK. But is "Invalid input" clear enough\?/)).toBeTruthy();
+    expect(screen.getByText("It said no, which is fine.")).toBeTruthy();
+    click("No, it should say what's wrong");
+    expect(logged.find((e) => e.type === "debatable_vote")?.payload).toMatchObject({ unclear_message: true, vote: "not_clear" });
     expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "debatable", unclear_message: true, expected_correct: true, counted: false });
   });
 

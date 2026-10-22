@@ -119,6 +119,20 @@ function codePointsOf(p: Record<string, unknown>): number {
   return p.correct === true ? 2 : 0;
 }
 
+const VOTE: Record<string, string> = {
+  clear: "Message is clear",
+  not_clear: "Message isn't clear",
+  should_work: "It should work",
+  should_say_no: "It should say no",
+  unsure: "Not sure",
+};
+
+/** The opinion a student gave right after a Debatable Busted! (the next event), if any. */
+function voteText(ev: Event[], busted: Event): string {
+  const next = ev[ev.indexOf(busted) + 1];
+  return next?.event_type === "debatable_vote" ? (VOTE[String(next.payload.vote)] ?? String(next.payload.vote)) : "";
+}
+
 /** "During App 2 (Sale Price)" for a session that tapped Stop; blank otherwise. */
 function stoppedAt(ev: Event[], order: string[]): string {
   const q = ev.find((e) => e.event_type === "quit_early");
@@ -225,6 +239,7 @@ describe("Busted", [
   ["Verdict", '"Real bug", "Not a bug" (false alarm) or "Debatable".'],
   ["Bug credited", "Which bug got credit."],
   ["Counted", "Yes if it added to their score (not a kind they had already found on this app)."],
+  ["Their opinion", 'Debatable ones only: what they thought. For "Invalid input": clear / not clear. Otherwise: it should work / it should say no. Not scored.'],
 ]);
 
 describe("Code questions", [
@@ -386,6 +401,7 @@ async function main() {
           Verdict: p.unclear_message ? "Debatable (unclear message)" : (VERDICT[String(p.verdict)] ?? String(p.verdict ?? "")),
           "Bug credited": kindName(app, p.bug_kind),
           Counted: yes(p.counted),
+          "Their opinion": voteText(ev, e),
           "Session ID": s.id,
         });
       } else if (e.event_type === "guilty_line_attempt") {
