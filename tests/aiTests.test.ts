@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AI_TESTS, shownExpectation } from "@/config/aiTests";
 import { evaluate, MACHINES, type MachineId } from "@/machines";
-import { clean, hasBadWords } from "@/lib/clean";
+import { clean, hasBadWords, shownText } from "@/lib/clean";
 
 describe("the AI's own tests at the reveal", () => {
   const all = Object.entries(AI_TESTS).flatMap(([id, tests]) => tests!.map((t) => [id as MachineId, t] as const));
@@ -17,5 +17,15 @@ describe("bad-word protection", () => {
     expect(clean("GRIZZLE")).toBe("GRIZZLE");
     expect(clean("SHIT")).not.toContain("SHIT");
     for (const name of ["Cassidy", "Hancock", "Dickens", "Assan", "Scunthorpe"]) expect(hasBadWords(name)).toBe(false);
+  });
+});
+
+describe("how typed text is shown", () => {
+  it("marks spaces at the start and end, so they can be seen", () => {
+    expect(shownText("    C")).toBe("␣␣␣␣C");
+    expect(shownText("C ")).toBe("C␣");
+    expect(shownText("BIG BOB")).toBe("BIG BOB");
+    expect(shownText("   ")).toBe("␣␣␣");
+    expect(shownText("")).toBe("(blank)");
   });
 });

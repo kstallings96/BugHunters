@@ -3,7 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { blankInputs, MachineCard } from "@/components/MachineCard";
 import { BigButton, Modal, OptionButton } from "@/components/ui";
-import { clean } from "@/lib/clean";
+import { Spaced, SpaceBox } from "@/components/Spaced";
+import { shownText, SPACE_MARK } from "@/lib/clean";
 import { logEvent } from "@/lib/logger";
 import {
   answerChoices,
@@ -33,8 +34,8 @@ const MAX_INPUT = 200;
 function describeInputs(machine: Machine, inputs: Inputs): string {
   return machine.fields
     .map((f) => {
-      const raw = clean(inputs[f.id] ?? "");
-      const shown = f.kind === "select" ? (f.options!.find((o) => o.value === raw)?.label ?? raw) : raw === "" ? "(empty)" : `"${raw}"`;
+      const raw = inputs[f.id] ?? "";
+      const shown = f.kind === "select" ? (f.options!.find((o) => o.value === raw)?.label ?? raw) : raw === "" ? "(empty)" : `"${shownText(raw)}"`;
       return machine.fields.length > 1 ? `${f.label}: ${shown}` : shown;
     })
     .join(", ");
@@ -197,9 +198,9 @@ export function MachineStep({
             <ol className="flex min-h-0 flex-col gap-1 overflow-y-auto">
               {[...tries].reverse().map((t) => (
                 <li key={t.n} className="rounded-xl bg-paper px-3 py-1 text-base leading-snug">
-                  <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
+                  <span className="font-bold"><Spaced>{describeInputs(machine, t.inputs)}</Spaced></span>
                   <span className="text-ink-soft"> → </span>
-                  <span className="break-words whitespace-pre-wrap">{t.output.text.trim() === "" ? "(blank)" : clean(t.output.text)}</span>
+                  <span className="break-words whitespace-pre-wrap"><Spaced>{shownText(t.output.text)}</Spaced></span>
                 </li>
               ))}
             </ol>
@@ -388,7 +389,7 @@ function BustedDialog({
             </button>
           </div>
           <p className="text-xl">
-            <span className="font-bold">{describeInputs(machine, t.inputs)}</span>
+            <span className="font-bold"><Spaced>{describeInputs(machine, t.inputs)}</Spaced></span>
           </p>
           <div className="grid grid-cols-2 gap-2">
             {studentLabels(machine).map((l) => (
@@ -426,7 +427,7 @@ function BustedDialog({
                       setChoosing(false);
                     }}
                   >
-                    {describeInputs(machine, tr.inputs)} → <span className="break-words whitespace-pre-wrap">{clean(tr.output.text)}</span>
+                    <Spaced>{describeInputs(machine, tr.inputs)}</Spaced> → <span className="break-words whitespace-pre-wrap"><Spaced>{shownText(tr.output.text)}</Spaced></span>
                   </OptionButton>
                 </li>
               );
@@ -435,8 +436,8 @@ function BustedDialog({
         ) : (
           <div className="flex items-center gap-3 rounded-2xl border-4 border-danger/40 bg-danger/5 px-4 py-3">
             <p className="flex-1 text-xl">
-              <span className="font-bold">{describeInputs(machine, t.inputs)}</span> →{" "}
-              <span className="break-words whitespace-pre-wrap">{clean(t.output.text)}</span>
+              <span className="font-bold"><Spaced>{describeInputs(machine, t.inputs)}</Spaced></span> →{" "}
+              <span className="break-words whitespace-pre-wrap"><Spaced>{shownText(t.output.text)}</Spaced></span>
             </p>
             {tries.length > 1 && (
               <button type="button" onClick={() => setChoosing(true)} className="min-h-11 rounded-full px-3 text-base font-bold text-teal underline">
@@ -447,10 +448,15 @@ function BustedDialog({
         )}
 
         <h3 className="text-2xl font-bold">It should say…</h3>
+        {[t.output.text, ...choices.options, ...Object.values(t.inputs)].some((x) => shownText(x).includes(SPACE_MARK)) && (
+          <p className="-mt-2 text-base text-ink-soft">
+            <SpaceBox /> means a space.
+          </p>
+        )}
         <div className="flex flex-col gap-2">
           {choices.options.map((o, i) => (
             <OptionButton key={o} selected={expect === i} onClick={() => setExpect(i)}>
-              <span className="break-words whitespace-pre-wrap">{o.trim() === "" ? "(blank)" : clean(o)}</span>
+              <span className="break-words whitespace-pre-wrap"><Spaced>{shownText(o)}</Spaced></span>
             </OptionButton>
           ))}
           <OptionButton selected={expect === "unsure"} onClick={() => setExpect("unsure")}>

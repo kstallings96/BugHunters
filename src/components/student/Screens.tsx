@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { BigButton } from "@/components/ui";
 import type { SurveyQuestion } from "@/config/survey";
-import { clean } from "@/lib/clean";
+import { shownText } from "@/lib/clean";
 import { logEvent } from "@/lib/logger";
 import type { BustedBug } from "@/lib/types";
 import { RAFFLE } from "@/bonus/raffle";
@@ -164,7 +164,7 @@ export function GuiltyLine({
     onScore((firstRight ? 1 : 0) + (right ? 1 : 0));
   }
 
-  const shown = machine.fields.map((f) => `${f.label.replace(/\s*\(.*\)$/, "")}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${clean(bug.inputs[f.id])}"`}`).join(", ");
+  const shown = machine.fields.map((f) => `${f.label.replace(/\s*\(.*\)$/, "")}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${shownText(bug.inputs[f.id])}"`}`).join(", ");
   const example = exampleOf(bug);
   const look = (state: "idle" | "right" | "wrong" | "dim") =>
     ({
@@ -330,7 +330,7 @@ const stop = (text: string) => (/[.!?]$/.test(text) ? "" : ".");
 function exampleOf(bug: BustedBug): { said: string; should: string; refuses: boolean } | null {
   if (bug.machine === "raffle") return null;
   const e = evaluate(MACHINES[bug.machine], bug.inputs, { today: new Date() });
-  const text = (t: string) => (t.trim() === "" ? "(blank)" : clean(t));
+  const text = shownText;
   return { said: text(e.buggy.text), should: text(e.reference.text), refuses: e.reference.type === "not_allowed" };
 }
 
