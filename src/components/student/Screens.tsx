@@ -207,8 +207,17 @@ export function GuiltyLine({
         {example ? (
           <>
             You type <b>{shown}</b>. It says <b className="text-danger">{example.said}</b>
-            {stop(example.said)} It should say <b className="text-teal">{example.should}</b>
-            {stop(example.should)}
+            {stop(example.said)}{" "}
+            {example.refuses ? (
+              <>
+                It should say no, like <b className="text-teal">&ldquo;{example.should}&rdquo;</b>
+              </>
+            ) : (
+              <>
+                It should say <b className="text-teal">{example.should}</b>
+                {stop(example.should)}
+              </>
+            )}
           </>
         ) : (
           raffleExample(bug)
@@ -318,11 +327,11 @@ export function GuiltyLine({
 const stop = (text: string) => (/[.!?]$/.test(text) ? "" : ".");
 
 /** What the app said and should say for this bug's input (the three apps; the raffle is random). */
-function exampleOf(bug: BustedBug): { said: string; should: string } | null {
+function exampleOf(bug: BustedBug): { said: string; should: string; refuses: boolean } | null {
   if (bug.machine === "raffle") return null;
   const e = evaluate(MACHINES[bug.machine], bug.inputs, { today: new Date() });
   const text = (t: string) => (t.trim() === "" ? "(blank)" : clean(t));
-  return { said: text(e.buggy.text), should: text(e.reference.text) };
+  return { said: text(e.buggy.text), should: text(e.reference.text), refuses: e.reference.type === "not_allowed" };
 }
 
 function raffleExample(bug: BustedBug): string {

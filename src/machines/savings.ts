@@ -37,9 +37,9 @@ function money(raw: string, what: string): Money {
 const FIXES: Partial<Record<Category, Fix>> = {
   zero: wrongLine(
     3,
-    'if price or saved is not a number, or saved is 0 or below → say "Invalid input"',
-    'if price or saved is not a number, or price is 0 or below → say "Invalid input"',
-    'if price or saved is not a number, or saved is above 0 → say "Invalid input"',
+    'if a box has no number, or saved is 0 or below → say "Invalid input"',
+    'if a box has no number, or price is 0 or below → say "Invalid input"',
+    'if a box has no number, or saved is above 0 → say "Invalid input"',
   ),
   rounding: wrongLine(
     4,

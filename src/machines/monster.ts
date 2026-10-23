@@ -27,8 +27,8 @@ const FIXES: Partial<Record<Category, Fix>> = {
   very_long: wrongLine(
     3,
     `if name is longer than ${MONSTER_MAX} letters → say "Up to ${MONSTER_MAX} letters."`,
-    `name = the first ${MONSTER_MAX + 1} letters of name`,
-    `name = the last ${MONSTER_MAX} letters of name`,
+    `if name is longer than ${MONSTER_MAX + 1} letters → say "Up to ${MONSTER_MAX} letters."`,
+    `if name is shorter than ${MONSTER_MAX} letters → say "Up to ${MONSTER_MAX} letters."`,
   ),
   empty: missingLine(
     [1, 2, 3],
