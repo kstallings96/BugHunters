@@ -18,12 +18,13 @@ export function parseMoney(raw: string): number | null {
 }
 
 /**
- * A number with symbols stuck after it ("4%", "5$", "20!"). The AI's code
- * reads just the number and ignores the rest, so these come out as a
- * normal-looking (wrong) answer: a Symbols bug.
+ * Not a number, no letters, but symbols ("4%", "5$", "2-3", "5!!", "(5)"):
+ * a Symbols bug. (With letters, like "20abc", or only dots, like "1.2.3",
+ * it's Not a number.) A sign at the very start is part of a number.
  */
-export function symbolAfterNumber(raw: string): boolean {
-  return /^[+-]?(\d+(\.\d*)?|\.\d+)[^\p{L}\d\s.]+$/u.test(raw.trim());
+export function symbolsNotNumber(raw: string): boolean {
+  const t = raw.trim();
+  return t !== "" && !/\p{L}/u.test(t) && /[^\d\s.]/u.test(t.replace(/^[+-]/, ""));
 }
 
 /** Percent: a number, optionally with a trailing "%". */
@@ -54,8 +55,8 @@ export function classifyNumberField(raw: string): Category[] {
   const n = parseNumber(t.replace(/^\$/, "").replace(/%$/, ""));
   if (n === null) {
     cats.push("wrong_type");
-    // Anything beyond letters, digits, signs, dots and spaces: "5!", "😀", "<b>"
-    if (!symbol && /[^\p{L}\d\s.+-]/u.test(t)) cats.push("special");
+    // Anything beyond letters, digits, dots and spaces (a sign only at the start): "5!", "2-3", "😀", "<b>"
+    if (!symbol && /[^\p{L}\d\s.]/u.test(t.replace(/^[+-]/, ""))) cats.push("special");
     if (t.length > LONG_TEXT) cats.push("very_long");
     return cats;
   }

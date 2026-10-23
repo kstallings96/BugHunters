@@ -12,6 +12,7 @@ import {
   debatableReason,
   evaluate,
   labelFor,
+  labelsFor,
   studentLabels,
   verdictFor,
   withArticle,
@@ -276,7 +277,7 @@ function BustedDialog({
     // Tries saved before bugKinds existed only have bugKind.
     const kinds = verdict === "real" ? (t.bugKinds ?? (t.bugKind ? [t.bugKind] : [])) : [];
     // The bug the student named, if the input really shows it; else the first one.
-    const named = kinds.filter((k) => labelFor(k, t.categories, machine) === label);
+    const named = kinds.filter((k) => labelsFor(k, t.categories, machine).includes(label));
     const kind = named.find(isNewKind) ?? named[0] ?? kinds.find(isNewKind) ?? kinds[0] ?? null;
     const counted = verdict === "real" && kind !== null && isNewKind(kind);
     const classifierLabel = labelFor(verdict === "real" ? t.bugKind : null, t.categories, machine);

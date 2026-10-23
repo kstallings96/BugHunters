@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { weeksToSave } from "./ai/savings";
-import { aiOutput, missingLine, parseMoney, symbolAfterNumber, wrongLine } from "./classify";
+import { aiOutput, missingLine, parseMoney, symbolsNotNumber, wrongLine } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
@@ -27,7 +27,7 @@ function money(raw: string, what: string): Money {
   if (raw === "") return no(`You left the ${what} blank.`, "empty");
   if (raw.trim() === "") return no(`You left the ${what} blank.`, "spaces_only");
   const n = parseMoney(raw);
-  if (n === null && symbolAfterNumber(raw)) return no("Type just the number, no symbols.", "special");
+  if (n === null && symbolsNotNumber(raw)) return no("Type just the number, no symbols.", "special");
   if (n === null) return no("That's not a number.", "wrong_type");
   if (n < 0) return no("Money can't be below zero.", "negative");
   return { ok: true, n };

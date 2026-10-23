@@ -67,6 +67,18 @@ const MAP: Record<Category, StudentLabel | null> = {
 const TEXT_MAP: Partial<Record<Category, StudentLabel>> = { wrong_type: "has_numbers" };
 
 /**
+ * Every label that fairly describes this bug on this input. Usually one;
+ * "2-3" is both Not a number and Symbols, so either counts.
+ */
+export function labelsFor(kind: Category | null, categories: Category[], machine?: Pick<Machine, "fields">): StudentLabel[] {
+  const main = labelFor(kind, categories, machine);
+  if (!main) return [];
+  const both = (kind === "wrong_type" || kind === "special") && categories.includes("wrong_type") && categories.includes("special");
+  if (both && machine && !isText(machine)) return [...new Set<StudentLabel>([main, "not_a_number", "symbols"])];
+  return [main];
+}
+
+/**
  * The label a careful student would pick: from the bug kind when there is
  * one, otherwise from the input's own categories (for false alarms and
  * debatable cases). Null for an ordinary input.

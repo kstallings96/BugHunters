@@ -166,6 +166,20 @@ describe("a machine", () => {
     expect(t.busted.map((b) => b.kind)).toEqual(["very_long", "wrong_type"]);
   });
 
+  it("2-3 is Symbols, and calling it Not a number also counts", () => {
+    setup({ machine: "sale" });
+    tryIt("2-3", "25");
+    bust(/not sure/, "Symbols ($ % !)");
+    expect(screen.getByText("Yes, a Symbols bug!")).toBeTruthy();
+    cleanup();
+    logged.length = 0;
+    setup({ machine: "sale" });
+    tryIt("2-3", "25");
+    bust(/not sure/, "Not a number");
+    expect(screen.getByText("Yes, a Symbols bug!")).toBeTruthy();
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ label_agreement: true, bug_kind: "special" });
+  });
+
   it("naming neither bug credits the first one", () => {
     setup({ machine: "monster" });
     tryIt("Grizzlemonster22");

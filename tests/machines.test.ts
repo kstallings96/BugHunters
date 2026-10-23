@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyNumberField, classifyTextField, finalize, HUGE, LONG_TEXT, parseNumber } from "@/machines/classify";
-import { answerChoices, bugLabel, debatableReason, evaluate, labelFor, MACHINES, studentLabels, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
+import { answerChoices, bugLabel, debatableReason, evaluate, labelFor, labelsFor, MACHINES, studentLabels, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
 
 // A fixed "today" for the evaluation context (no machine currently depends on the date).
 const ctx = { today: new Date(2025, 9, 14, 10, 30) };
@@ -244,6 +244,13 @@ describe("symbols after a number", () => {
   });
   it("words after a number are still Not a number", () => {
     expect(run("savings", { price: "20abc", saved: "5" }).bugKind).toBe("wrong_type");
+    expect(run("savings", { price: "1.2.3", saved: "1" }).bugKind).toBe("wrong_type");
+  });
+  it("symbols in the middle count too (2-3), and both labels are fair", () => {
+    const e = run("sale", { price: "2-3", off: "25" });
+    expect(e.bugKind).toBe("special");
+    expect(labelsFor(e.bugKind, e.categories, MACHINES.sale).sort()).toEqual(["not_a_number", "symbols"]);
+    expect(run("savings", { price: "-5", saved: "5" }).bugKind).toBe("negative");
   });
 });
 
