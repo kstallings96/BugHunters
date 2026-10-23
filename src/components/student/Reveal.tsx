@@ -47,13 +47,16 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
   const m = MACHINES[machine];
   const { found, hiding } = split(machine, busted);
   const tests = AI_TESTS[machine] ?? [];
-  useLogOnce({ scope: "machine", reveal_machine: machine, found: found.map((b) => b.kind), missed: hiding.map((b) => b.kind) });
+  const allFound = hiding.length === 0 && found.length > 0;
+  useLogOnce({ scope: "machine", reveal_machine: machine, found: found.map((b) => b.kind), missed: hiding.map((b) => b.kind), all_found: allFound });
 
   return (
     <main className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-6 py-3">
       <h1 className="text-3xl font-bold">
         {m.icon} {m.name}: what was hiding?
       </h1>
+      {/* Only here, after the app: saying it while they test would tell them when to stop. */}
+      {allFound && <AllFound name={m.name} />}
       <div className="grid min-h-0 flex-1 grid-cols-[1fr_1.4fr] gap-5">
         <section className="flex min-h-0 flex-col gap-2 rounded-3xl border-2 border-[#475569] bg-[#f1f5f9] p-4">
           <h2 className="text-xl font-bold">{AI_TESTS_SOURCE === "generated" ? "Here's what the AI tested." : "Tests an AI might write (example)"}</h2>
@@ -86,6 +89,7 @@ export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]
     scope: "all",
     found: Object.fromEntries(parts.map((p) => [p.id, p.found.map((b) => b.kind)])),
     missed: Object.fromEntries(parts.map((p) => [p.id, p.hiding.map((b) => b.kind)])),
+    all_found: parts.filter((p) => p.hiding.length === 0 && p.found.length > 0).map((p) => p.id),
   });
 
   return (
@@ -97,6 +101,9 @@ export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]
             <h2 className="text-xl font-bold">
               {MACHINES[p.id].icon} {MACHINES[p.id].name}
             </h2>
+            {p.hiding.length === 0 && p.found.length > 0 && (
+              <p className="rounded-xl border-2 border-teal bg-teal/10 px-3 py-1 text-base font-bold text-teal">You found every bug in this app!</p>
+            )}
             <BugList compact found={p.found.map((b) => bugLabel(p.id, b.kind))} hiding={p.hiding.map((b) => ({ label: bugLabel(p.id, b.kind), tryThis: b.tryThis }))} />
           </section>
         ))}
@@ -106,6 +113,15 @@ export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]
         Code questions →
       </BigButton>
     </main>
+  );
+}
+
+/** The banner for finding every bug the AI left in one app. */
+function AllFound({ name }: { name: string }) {
+  return (
+    <p className="rounded-2xl border-4 border-teal bg-teal/10 px-5 py-2 text-2xl font-bold text-teal" role="status">
+      You found every bug the AI left in {name}!
+    </p>
   );
 }
 

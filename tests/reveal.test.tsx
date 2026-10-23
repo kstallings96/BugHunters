@@ -32,6 +32,16 @@ describe("missed-bug reveal", () => {
     expect((logged[0].payload.missed as string[]).length).toBe(3);
   });
 
+  it("celebrates finding every bug in an app, only at the reveal", () => {
+    const all: BustedBug[] = ["zero", "negative", "wrong_type", "rounding"].map((kind) => ({ machine: "savings", kind: kind as BustedBug["kind"], inputs: {} }));
+    render(<MachineReveal machine="savings" busted={all} last={false} onNext={() => {}} />);
+    expect(screen.getByText("You found every bug the AI left in Savings Planner!")).toBeTruthy();
+    expect(logged[0].payload).toMatchObject({ all_found: true });
+    cleanup();
+    render(<MachineReveal machine="savings" busted={busted} last={false} onNext={() => {}} />);
+    expect(screen.queryByText(/You found every bug/)).toBeNull();
+  });
+
   it("all apps at once: one column per app", () => {
     render(<FullReveal machines={["sale", "savings", "monster"]} busted={busted} onNext={() => {}} />);
     for (const name of ["Sale Price", "Savings Planner", "Monster Namer"]) expect(screen.getByText(new RegExp(name))).toBeTruthy();
