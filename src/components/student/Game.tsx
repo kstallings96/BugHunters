@@ -217,7 +217,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   }
 
   return (
-    <div className={`flex flex-1 flex-col ${counter || game.screen === "tutorial" || game.screen === "between" ? "h-dvh" : "min-h-dvh"}`}>
+    <div className={`flex flex-col ${counter || game.screen === "tutorial" || game.screen === "between" ? "h-dvh" : "min-h-dvh flex-1"}`}>
       <header className="flex h-14 shrink-0 items-center gap-5 border-b-2 border-line bg-card px-5">
         <Logo />
         <ProgressBar stage={progressStage(game.screen, game.machineIndex)} />

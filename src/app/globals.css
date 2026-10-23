@@ -37,11 +37,18 @@ html {
   font-size: 18px;
 }
 
-/* A Chromebook at 1366x768 has ~650px of page once the browser bars are
-   drawn; everything is sized in rem, so this scales the whole game to fit. */
-@media (max-height: 760px) {
+/* Everything is sized in rem, so the root font size scales the whole game.
+   A 1366x768 laptop (the classroom Dell Latitude 3310) has only about
+   600px of page once Chrome's bars and the Windows taskbar are drawn. */
+@media (max-height: 700px) {
   html {
-    font-size: 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-height: 620px) {
+  html {
+    font-size: 13px;
   }
 }
 

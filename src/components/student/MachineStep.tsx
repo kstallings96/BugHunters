@@ -142,7 +142,7 @@ export function MachineStep({
   }
 
   return (
-    <main className="relative grid min-h-0 flex-1 grid-cols-[1fr_21rem] gap-5 px-5 py-4">
+    <main className="relative grid min-h-0 flex-1 grid-cols-[1fr_21rem] grid-rows-[minmax(0,1fr)] gap-5 px-5 py-4">
       <div className="flex min-h-0 flex-col gap-3">
         {coach}
         {nudge === "shown" && (
