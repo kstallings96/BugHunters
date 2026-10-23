@@ -7,6 +7,7 @@ import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
 import { BigButton, Modal } from "@/components/ui";
+import { clean } from "@/lib/clean";
 import { nicknameFor } from "@/lib/nickname";
 import { Briefing, Intro, Ready } from "./Intro";
 import { Leaderboard } from "./Leaderboard";
@@ -288,7 +289,7 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
   const coach: Record<number, string> = {
     1: "Type 10, then tap Try it.",
     2: "That one works. Now try to break it. Type a word.",
-    3: "That's a bug! The AI didn't plan for words. Tap Busted!",
+    3: bugCoach(tries.findLast((t) => t.revealsBug)),
   };
 
   return (
@@ -335,4 +336,21 @@ function ProgressBar({ stage }: { stage: number }) {
       ))}
     </ol>
   );
+}
+
+/**
+ * Says what just went wrong, in the student's own try, so they see that a
+ * wrong answer can look normal ("cat3" → $6), not only broken ($???).
+ */
+export function bugCoach(t: Try | undefined): string {
+  if (!t) return "That's a bug! Tap Busted!";
+  const typed = clean(t.inputs.allowance ?? "");
+  const said = clean(t.output.text);
+  const why =
+    t.bugKind === "empty" || t.bugKind === "spaces_only"
+      ? "You left it blank"
+      : t.bugKind === "negative"
+        ? `An allowance can't be below zero`
+        : `"${typed}" isn't a number`;
+  return `That's a bug! ${why}, but it said ${said}. Tap Busted!`;
 }
