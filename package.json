@@ -14,7 +14,9 @@
     "gen": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/generate.ts",
     "export": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/export.ts",
     "keys": "tsx --env-file=.env.local --tsconfig tsconfig.json scripts/keys.ts",
-    "pull": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/pull.ts"
+    "pull": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/pull.ts",
+    "data": "npm run pull && npm run export",
+    "data:names": "npm run pull && npm run export -- --names"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
