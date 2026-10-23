@@ -16,9 +16,10 @@ Per sample: sample-01 [negative]; sample-02 [negative]; sample-03 [wrong_type, e
 | Bug kind | Samples with it |
 |---|---|
 | wrong_type | 15 of 15 |
+| special | 15 of 15 |
 | negative | 7 of 15 |
 
-Per sample: sample-01 [wrong_type]; sample-02 [wrong_type]; sample-03 [negative, wrong_type]; sample-04 [wrong_type]; sample-05 [negative, wrong_type]; sample-06 [negative, wrong_type]; sample-07 [wrong_type]; sample-08 [wrong_type]; sample-09 [negative, wrong_type]; sample-10 [negative, wrong_type]; sample-11 [negative, wrong_type]; sample-12 [negative, wrong_type]; sample-13 [wrong_type]; sample-14 [wrong_type]; sample-15 [wrong_type]
+Per sample: sample-01 [wrong_type, special]; sample-02 [wrong_type, special]; sample-03 [negative, wrong_type, special]; sample-04 [wrong_type, special]; sample-05 [negative, wrong_type, special]; sample-06 [negative, wrong_type, special]; sample-07 [wrong_type, special]; sample-08 [wrong_type, special]; sample-09 [negative, wrong_type, special]; sample-10 [negative, wrong_type, special]; sample-11 [negative, wrong_type, special]; sample-12 [negative, wrong_type, special]; sample-13 [wrong_type, special]; sample-14 [wrong_type, special]; sample-15 [wrong_type, special]
 
 ## sale (15 samples)
 

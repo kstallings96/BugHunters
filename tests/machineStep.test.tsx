@@ -134,7 +134,7 @@ describe("a machine", () => {
     tryIt("Mega-Bob");
     bust(/not sure/);
     expect(screen.getByText("There's no right answer for this one.")).toBeTruthy();
-    expect(screen.getByText(/The request doesn't say if this is OK/)).toBeTruthy();
+    expect(screen.getByText(/The request doesn't say if a name can have a "-"/)).toBeTruthy();
     click("It should say no");
     expect(logged.find((e) => e.type === "debatable_vote")?.payload).toMatchObject({ unclear_message: false, vote: "should_say_no" });
   });

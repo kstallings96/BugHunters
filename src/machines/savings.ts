@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { weeksToSave } from "./ai/savings";
-import { aiOutput, classifyNumberField, missingLine, parseMoney, wrongLine } from "./classify";
+import { aiOutput, missingLine, parseMoney, symbolAfterNumber, wrongLine } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
@@ -27,6 +27,7 @@ function money(raw: string, what: string): Money {
   if (raw === "") return no(`You left the ${what} blank.`, "empty");
   if (raw.trim() === "") return no(`You left the ${what} blank.`, "spaces_only");
   const n = parseMoney(raw);
+  if (n === null && symbolAfterNumber(raw)) return no("Type just the number, no symbols.", "special");
   if (n === null) return no("That's not a number.", "wrong_type");
   if (n < 0) return no("Money can't be below zero.", "negative");
   return { ok: true, n };
@@ -104,7 +105,7 @@ export const savings: Machine = {
   debatable: () => false,
   // Both versions answer but disagree: the nearest-week rounding.
   resultBugKind: (_inputs, categories) => (categories.includes("wrong_type") ? "wrong_type" : "rounding"),
-  messages: ["You left the price blank.", "You left the amount saved blank.", "That's not a number.", "Money can't be below zero.", "You have to save more than $0 a week."],
+  messages: ["You left the price blank.", "You left the amount saved blank.", "That's not a number.", "Type just the number, no symbols.", "Money can't be below zero.", "You have to save more than $0 a week."],
   goodInputs: { price: "20", saved: "5" },
   otherAnswers: ({ price, saved }) => {
     const p = parseMoney(price);
@@ -120,8 +121,8 @@ export const savings: Machine = {
     'show weeks + " weeks"',
   ],
   fixFor: (kind, inputs) => {
-    // "1.2.3" gets read as 1.2: the guilty line reads that box.
-    if (kind === "wrong_type") return classifyNumberField(inputs.price ?? "").includes("wrong_type") ? misread(1, "price") : misread(2, "saved");
+    // "1.2.3" gets read as 1.2, "4%" as 4: the guilty line reads that box.
+    if (kind === "wrong_type" || kind === "special") return money(inputs.price ?? "", "price").ok ? misread(2, "saved") : misread(1, "price");
     return FIXES[kind] ?? FIXES.negative!;
   },
   bugs: [
@@ -129,5 +130,6 @@ export const savings: Machine = {
     { kind: "negative", example: { price: "-20", saved: "5" }, tryThis: "Try a price below zero." },
     { kind: "wrong_type", example: { price: "1.2.3", saved: "1" }, tryThis: "Try a price that isn't quite a number, like 1.2.3 or 20abc." },
     { kind: "rounding", example: { price: "10", saved: "3" }, tryThis: "Try $10 with $3 a week. That needs 4 weeks." },
+    { kind: "special", example: { price: "20%", saved: "5" }, tryThis: "Put a symbol after the price, like 20% or 20$. It ignores it." },
   ],
 };

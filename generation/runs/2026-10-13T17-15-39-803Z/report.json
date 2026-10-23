@@ -53,7 +53,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "empty"
         },
@@ -61,7 +61,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "spaces_only"
         },
@@ -87,7 +87,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "empty"
         },
@@ -95,7 +95,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "spaces_only"
         },
@@ -121,7 +121,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "empty"
         },
@@ -129,7 +129,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "spaces_only"
         },
@@ -196,7 +196,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "empty"
         },
@@ -204,7 +204,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "spaces_only"
         },
@@ -239,7 +239,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "empty"
         },
@@ -247,7 +247,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "spaces_only"
         },
@@ -282,7 +282,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "empty"
         },
@@ -290,7 +290,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "spaces_only"
         },
@@ -316,7 +316,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "empty"
         },
@@ -324,7 +324,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "spaces_only"
         },
@@ -350,7 +350,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "empty"
         },
@@ -358,7 +358,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "spaces_only"
         },
@@ -400,7 +400,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "empty"
         },
@@ -408,7 +408,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "NaN",
           "bug": "spaces_only"
         },
@@ -443,7 +443,7 @@
           "inputs": {
             "allowance": ""
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "empty"
         },
@@ -451,7 +451,7 @@
           "inputs": {
             "allowance": "   "
           },
-          "expected": "Please type a number.",
+          "expected": "You left it blank.",
           "got": "$NaN",
           "bug": "spaces_only"
         },
@@ -470,7 +470,8 @@
     {
       "sample": "sample-01.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -481,13 +482,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-02.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -498,6 +509,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -505,7 +525,8 @@
       "sample": "sample-03.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -525,13 +546,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-04.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -542,6 +573,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -549,7 +589,8 @@
       "sample": "sample-05.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -569,6 +610,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -576,7 +626,8 @@
       "sample": "sample-06.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -596,13 +647,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-07.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -613,13 +674,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-08.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -630,6 +701,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -637,7 +717,8 @@
       "sample": "sample-09.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -657,6 +738,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -664,7 +754,8 @@
       "sample": "sample-10.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -684,6 +775,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -691,7 +791,8 @@
       "sample": "sample-11.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -711,6 +812,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
@@ -718,7 +828,8 @@
       "sample": "sample-12.js",
       "bugs": [
         "negative",
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -738,13 +849,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-13.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -755,13 +876,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-14.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -772,13 +903,23 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     },
     {
       "sample": "sample-15.js",
       "bugs": [
-        "wrong_type"
+        "wrong_type",
+        "special"
       ],
       "findings": [
         {
@@ -789,6 +930,15 @@
           "expected": "That's not a number.",
           "got": "2 weeks",
           "bug": "wrong_type"
+        },
+        {
+          "inputs": {
+            "price": "20%",
+            "saved": "5"
+          },
+          "expected": "Type just the number, no symbols.",
+          "got": "4 weeks",
+          "bug": "special"
         }
       ]
     }
@@ -874,7 +1024,7 @@
             "price": "",
             "off": "25"
           },
-          "expected": "Please type the price.",
+          "expected": "You left the price blank.",
           "got": "Sale price: $NaN",
           "bug": "empty"
         },
@@ -883,7 +1033,7 @@
             "price": "40",
             "off": "   "
           },
-          "expected": "Please type the % off.",
+          "expected": "You left the % off blank.",
           "got": "Sale price: $NaN",
           "bug": "spaces_only"
         },

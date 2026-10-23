@@ -8,6 +8,7 @@ import { logEvent } from "@/lib/logger";
 import {
   answerChoices,
   bugLabel,
+  debatableReason,
   evaluate,
   labelFor,
   studentLabels,
@@ -344,7 +345,7 @@ function BustedDialog({
                     <span className="font-bold">Request:</span> &ldquo;{machine.request}&rdquo;
                   </p>
                 )}
-                <p className="text-2xl leading-snug">The request doesn&apos;t say if this is OK. What do you think?</p>
+                <p className="text-2xl leading-snug">{debatableReason(machine, t.inputs)} What do you think?</p>
               </>
             )}
             <div className="flex flex-wrap justify-center gap-3">

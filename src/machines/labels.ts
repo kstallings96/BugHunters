@@ -25,6 +25,7 @@ const NUMBER_LABELS: { id: StudentLabel; text: string }[] = [
   { id: "too_big", text: "Too big" },
   { id: "exact_limit", text: "Exactly the limit" },
   { id: "not_a_number", text: "Not a number" },
+  { id: "symbols", text: "Symbols ($ % !)" },
   { id: "something_else", text: "Something else" },
 ];
 
@@ -55,8 +56,7 @@ const MAP: Record<Category, StudentLabel | null> = {
   very_long: "too_big",
   boundary: "exact_limit",
   wrong_type: "not_a_number",
-  // "$20" in a number box isn't just a number.
-  special: "not_a_number",
+  special: "symbols",
   decimal: "something_else",
   rounding: "something_else",
   off_by_one: "exact_limit",
@@ -64,7 +64,7 @@ const MAP: Record<Category, StudentLabel | null> = {
   out_of_range: null,
 };
 
-const TEXT_MAP: Partial<Record<Category, StudentLabel>> = { wrong_type: "has_numbers", special: "symbols" };
+const TEXT_MAP: Partial<Record<Category, StudentLabel>> = { wrong_type: "has_numbers" };
 
 /**
  * The label a careful student would pick: from the bug kind when there is

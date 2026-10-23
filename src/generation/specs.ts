@@ -54,6 +54,7 @@ export const GEN_SPECS: GenSpec[] = [
       { price: "twenty", saved: "5" },
       { price: "$20", saved: "5" },
       { price: "1.2.3", saved: "1" },
+      { price: "20%", saved: "5" },
       { price: " 20", saved: "5" },
     ],
   },

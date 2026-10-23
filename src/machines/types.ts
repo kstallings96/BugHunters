@@ -114,6 +114,8 @@ export interface Machine {
   rulesBroken?: (inputs: Inputs, ctx: Context) => Category[];
   /** Machine-specific categories (boundary, out of range), added to the generic ones. */
   extraCategories?: (inputs: Inputs, ctx: Context) => Category[];
+  /** For a debatable input: what the request doesn't say ("if a name can have a "-""). */
+  debatableWhy?: (inputs: Inputs) => string;
   /** Inputs people could reasonably disagree about. */
   debatable: (inputs: Inputs, ctx: Context) => boolean;
   /**

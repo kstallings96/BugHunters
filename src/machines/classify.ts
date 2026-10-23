@@ -17,6 +17,15 @@ export function parseMoney(raw: string): number | null {
   return parseNumber(raw.trim().replace(/^\$/, ""));
 }
 
+/**
+ * A number with symbols stuck after it ("4%", "5$", "20!"). The AI's code
+ * reads just the number and ignores the rest, so these come out as a
+ * normal-looking (wrong) answer: a Symbols bug.
+ */
+export function symbolAfterNumber(raw: string): boolean {
+  return /^[+-]?(\d+(\.\d*)?|\.\d+)[^\p{L}\d\s.]+$/u.test(raw.trim());
+}
+
 /** Percent: a number, optionally with a trailing "%". */
 export function parsePercent(raw: string): number | null {
   return parseNumber(raw.trim().replace(/%$/, ""));

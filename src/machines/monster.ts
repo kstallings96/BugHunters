@@ -99,6 +99,7 @@ export const monster: Machine = {
     // 12 and 13 are the boundary; 11 is near it.
     return n >= MONSTER_MAX - 1 && n <= MONSTER_MAX + 1 ? ["boundary"] : [];
   },
+  debatableWhy: () => 'The request doesn\'t say if a name can have a "-" or an apostrophe (\').',
   debatable: ({ name }) => {
     const t = name.trim();
     return /^\p{L}[\p{L}\p{M} ]*['’-][\p{L}\p{M} '’-]*$/u.test(t) && length(t) <= MONSTER_MAX;

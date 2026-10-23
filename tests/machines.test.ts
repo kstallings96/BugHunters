@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyNumberField, classifyTextField, finalize, HUGE, LONG_TEXT, parseNumber } from "@/machines/classify";
-import { answerChoices, bugLabel, evaluate, labelFor, MACHINES, studentLabels, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
+import { answerChoices, bugLabel, debatableReason, evaluate, labelFor, MACHINES, studentLabels, verdictFor, type Category, type Inputs, type MachineId } from "@/machines";
 
 // A fixed "today" for the evaluation context (no machine currently depends on the date).
 const ctx = { today: new Date(2025, 9, 14, 10, 30) };
@@ -226,6 +226,27 @@ describe("the app's own vague refusal (\"Invalid input\")", () => {
   });
 });
 
+describe("symbols after a number", () => {
+  it("are read as just the number: a Symbols bug", () => {
+    for (const price of ["4%", "5$", "20!"]) {
+      const e = run("savings", { price, saved: "5" });
+      expect(e.bugKind).toBe("special");
+      expect(e.reference.text).toBe("Type just the number, no symbols.");
+    }
+    expect(run("sale", { price: "40%", off: "25" }).bugKind).toBe("special");
+    expect(MACHINES.savings.fixFor("special", { price: "4%", saved: "5" })).toMatchObject({ type: "wrong_line", line: 1 });
+  });
+  it("a dollar sign in front is still debatable (the app refuses it), and the pop-up says why", () => {
+    const e = run("savings", { price: "$5", saved: "5" });
+    expect(e.debatable).toBe(true);
+    expect(e.revealsBug).toBe(false);
+    expect(debatableReason(MACHINES.savings, { price: "$5", saved: "5" })).toBe('The request doesn\'t say if you can type a "$" sign.');
+  });
+  it("words after a number are still Not a number", () => {
+    expect(run("savings", { price: "20abc", saved: "5" }).bugKind).toBe("wrong_type");
+  });
+});
+
 describe("busted verdicts", () => {
   it("real, false alarm, debatable", () => {
     expect(verdictFor(run("savings", { price: "20", saved: "0" }))).toBe("real");
@@ -245,6 +266,7 @@ const BUGS: [MachineId, Inputs][] = [
   ["savings", { price: "-20", saved: "5" }],
   ["savings", { price: "1.2.3", saved: "1" }],
   ["savings", { price: "10", saved: "3" }],
+  ["savings", { price: "20%", saved: "5" }],
   ["sale", { price: "40", off: "150" }],
   ["sale", { price: "-40", off: "25" }],
   ["sale", { price: "", off: "25" }],
@@ -348,7 +370,8 @@ describe("student labels (What kind of input broke it?)", () => {
     expect(label("sale", { price: "40", off: "150" })).toBe("too_big");
     expect(label("monster", { name: "Abcdefghijklm" })).toBe("too_big");
     expect(label("sale", { price: "40", off: "half" })).toBe("not_a_number");
-    expect(label("sale", { price: "$40", off: "25" })).toBe("not_a_number");
+    expect(label("sale", { price: "$40", off: "25" })).toBe("symbols");
+    expect(label("savings", { price: "4%", saved: "5" })).toBe("symbols");
     expect(label("monster", { name: "Grizzle2" })).toBe("has_numbers");
     expect(label("monster", { name: "Grizzle😀" })).toBe("symbols");
     expect(label("savings", { price: "10", saved: "3" })).toBe("something_else");

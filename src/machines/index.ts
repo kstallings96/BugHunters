@@ -64,6 +64,12 @@ export function writesDollar(machine: Machine, inputs: Inputs): boolean {
   return machine.fields.some((f) => f.kind === "number" && /^\s*\$/.test(inputs[f.id] ?? "") && parseMoney(inputs[f.id]) !== null);
 }
 
+/** "The request doesn't say …": what exactly is open to debate for this input. */
+export function debatableReason(machine: Machine, inputs: Inputs): string {
+  if (writesDollar(machine, inputs)) return 'The request doesn\'t say if you can type a "$" sign.';
+  return machine.debatableWhy?.(inputs) ?? "The request doesn't say if this is OK.";
+}
+
 /** What a Busted! on this input means. */
 export function verdictFor(e: Pick<Evaluation, "revealsBug" | "debatable"> & { unclearMessage?: boolean }): BustedVerdict {
   // A vague refusal ("Invalid input") isn't wrong, but is it clear enough? The request doesn't say.

@@ -1,6 +1,6 @@
 import { specFor } from "@/generation/specs";
 import { salePrice as aiSalePrice } from "./ai/sale";
-import { aiOutput, classifyNumberField, missingLine, parseMoney, parsePercent, wrongLine } from "./classify";
+import { aiOutput, classifyNumberField, missingLine, parseMoney, parsePercent, symbolAfterNumber, wrongLine } from "./classify";
 import type { Category, Fix, Inputs, Machine, Output } from "./types";
 
 /**
@@ -64,6 +64,7 @@ function read(raw: string, what: string, parse: (s: string) => number | null): N
   if (raw === "") return no(`You left the ${what} blank.`, "empty");
   if (raw.trim() === "") return no(`You left the ${what} blank.`, "spaces_only");
   const n = parse(raw);
+  if (n === null && symbolAfterNumber(raw)) return no("Type just the number, no symbols.", "special");
   return n === null ? no("That's not a number.", "wrong_type") : { ok: true, n };
 }
 
@@ -110,7 +111,7 @@ export const sale: Machine = {
   debatable: () => false,
   // Both versions answer but disagree: "$40" ($???) or "1.2.3" read as 1.2.
   resultBugKind: (_inputs, categories) => (categories.includes("special") ? "special" : categories.includes("wrong_type") ? "wrong_type" : categories[0]),
-  messages: ["You left the price blank.", "You left the % off blank.", "That's not a number.", "Prices can't be below zero.", "Discounts go from 0% to 100%."],
+  messages: ["You left the price blank.", "You left the % off blank.", "That's not a number.", "Type just the number, no symbols.", "Prices can't be below zero.", "Discounts go from 0% to 100%."],
   goodInputs: { price: "40", off: "25" },
   otherAnswers: ({ price }) => {
     const p = parseMoney(price);
@@ -123,8 +124,10 @@ export const sale: Machine = {
     'show "Sale price: $" + sale, with 2 decimals',
   ],
   fixFor: (kind, inputs) => {
-    if (kind === "wrong_type") {
-      const box = classifyNumberField(inputs.price ?? "").includes("wrong_type") ? "price" : "off";
+    // A symbol after a number ("40%" as a price) is read as just the number, like "1.2.3".
+    const symbolBox = symbolAfterNumber(inputs.price ?? "") ? "price" : symbolAfterNumber(inputs.off ?? "") ? "off" : null;
+    if (kind === "wrong_type" || (kind === "special" && symbolBox)) {
+      const box = kind === "special" ? symbolBox! : classifyNumberField(inputs.price ?? "").includes("wrong_type") ? "price" : "off";
       // "1.2.3" starts like a number and gets read as 1.2: the line that reads it is guilty.
       // "half" can't be read at all: a check is missing.
       if (Number.isFinite(parseFloat(inputs[box] ?? "")))
