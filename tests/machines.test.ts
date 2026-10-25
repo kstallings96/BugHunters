@@ -158,7 +158,8 @@ describe("Monster Namer (the AI's code)", () => {
   table("monster", [
     [{ name: "Grizzle" }, ["normal"], null],
     [{ name: "grizzle" }, ["normal"], null],
-    [{ name: "Big Bob" }, ["normal"], null],
+    // The request doesn't say if a name can have a space in it.
+    [{ name: "Big Bob" }, ["normal"], null, true],
     [{ name: "" }, ["empty"], "empty"],
     [{ name: "    " }, ["spaces_only"], "spaces_only"],
     [{ name: "  Grizzle" }, ["extra_spaces"], "extra_spaces"],
@@ -178,6 +179,13 @@ describe("Monster Namer (the AI's code)", () => {
     expect(run("monster", { name: "" }).buggy.text).toBe("");
     expect(run("monster", { name: "Fluffernutterbob" }).buggy.text).toBe("FLUFFERNUTTE");
     expect(run("monster", { name: "  Grizzle" }).reference.text).toBe("GRIZZLE");
+  });
+  it("a space inside a name is debatable, and the pop-up says so", () => {
+    expect(run("monster", { name: "bad bot" }).debatable).toBe(true);
+    expect(debatableReason(MACHINES.monster, { name: "bad bot" })).toBe("The request doesn't say if a name can have a space in it.");
+    expect(debatableReason(MACHINES.monster, { name: "Mega-Bob" })).toMatch(/"-" or an apostrophe/);
+    // Spaces at the start or end are still the Extra spaces bug.
+    expect(run("monster", { name: "  Grizzle" }).bugKind).toBe("extra_spaces");
   });
   it("never calls a hyphen or apostrophe a bug", () => {
     for (const name of ["Mega-Bob", "Grr'ak", "Zog’mar"]) expect(run("monster", { name }).revealsBug).toBe(false);

@@ -99,10 +99,18 @@ export const monster: Machine = {
     // 12 and 13 are the boundary; 11 is near it.
     return n >= MONSTER_MAX - 1 && n <= MONSTER_MAX + 1 ? ["boundary"] : [];
   },
-  debatableWhy: () => 'The request doesn\'t say if a name can have a "-" or an apostrophe (\').',
+  debatableWhy: ({ name }) => {
+    const t = name.trim();
+    const marks = /['’-]/.test(t);
+    if (/ /.test(t) && !marks) return "The request doesn't say if a name can have a space in it.";
+    if (/ /.test(t)) return 'The request doesn\'t say if a name can have a space, a "-" or an apostrophe (\').';
+    return 'The request doesn\'t say if a name can have a "-" or an apostrophe (\').';
+  },
+  // Letters with a space, hyphen or apostrophe inside (BAD BOT, MEGA-BOB,
+  // GRR'AK): real name formats the request doesn't mention. Never a bug.
   debatable: ({ name }) => {
     const t = name.trim();
-    return /^\p{L}[\p{L}\p{M} ]*['’-][\p{L}\p{M} '’-]*$/u.test(t) && length(t) <= MONSTER_MAX;
+    return /^\p{L}[\p{L}\p{M} '’-]*\p{L}$/u.test(t) && /[ '’-]/.test(t) && length(t) <= MONSTER_MAX;
   },
   // Both show a name, but the buggy one kept the spaces.
   resultBugKind: (_inputs, categories) => (categories.includes("extra_spaces") ? "extra_spaces" : categories[0]),
