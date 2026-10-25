@@ -1,4 +1,5 @@
 import { bugVisibility } from "@/machines";
+import { possibleBugs } from "@/machines/visibility";
 import type { Category, MachineId } from "@/machines/types";
 
 /**
@@ -72,6 +73,9 @@ export interface MetricRow {
   loud_bugs_caught: number;
   silent_bugs_seen: number;
   silent_bugs_caught: number;
+  /** How many different loud / silent bugs this app can show at all (src/machines/visibility.ts). */
+  loud_bugs_possible: number | null;
+  silent_bugs_possible: number | null;
 }
 
 const isDiagnostic = (cats: Category[]) => !(cats.length === 1 && cats[0] === "normal");
@@ -157,6 +161,8 @@ export function computeMetrics(session: MetricSession, events: MetricEvent[]): M
       loud_bugs_caught: [...caught.loud].filter((k) => seen.loud.has(k)).length,
       silent_bugs_seen: seen.silent.size,
       silent_bugs_caught: [...caught.silent].filter((k) => seen.silent.has(k)).length,
+      loud_bugs_possible: possibleBugs(machine, "loud"),
+      silent_bugs_possible: possibleBugs(machine, "silent"),
     });
   });
   return rows;

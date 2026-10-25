@@ -111,6 +111,15 @@ const intakeText = (q: "coding_experience" | "ai_confidence", n: number | null) 
 const yes = (v: unknown) => (v === true ? "Yes" : v === false ? "No" : "");
 const pct = (v: number | null) => (v === null ? "" : Math.round(v * 100));
 
+/** "2 of 3 seen (4 possible)" across a student's apps. */
+function caughtOf(metrics: MetricRow[], v: "loud" | "silent"): string {
+  const sum = (f: (m: MetricRow) => number | null) => metrics.reduce((n, m) => n + (f(m) ?? 0), 0);
+  const caught = sum((m) => m[`${v}_bugs_caught`]);
+  const seen = sum((m) => m[`${v}_bugs_seen`]);
+  const possible = sum((m) => m[`${v}_bugs_possible`]);
+  return `${caught} of ${seen} seen (${possible} possible)`;
+}
+
 /** Points for one code question: logged directly, or worked out from its parts (older logs). */
 function codePointsOf(p: Record<string, unknown>): number {
   if (typeof p.points === "number") return p.points;
@@ -177,8 +186,8 @@ describe("Students", [
   ["AI confidence", "Intake question 2, 1 (Not at all) to 5 (Very confident)."],
   ["Bugs busted (3 apps)", "Different bugs found in the three apps (each kind counts once per app). The leaderboard score."],
   ["Bug kinds found", "Which kinds, by app."],
-  ["Loud bugs caught", 'Across the 3 apps: loud bugs caught of loud bugs seen. Loud = the answer itself looked broken ("$???", "Infinity weeks", a blank name).'],
-  ["Silent bugs caught", 'Across the 3 apps: silent bugs caught of silent bugs seen. Silent = a normal-looking answer that was wrong for the request ("3 weeks" instead of 4, "Sale price: $48.00" for -20% off).'],
+  ["Loud bugs caught", 'Across the 3 apps: loud bugs caught, of the ones they saw, and of all the game has. Loud = the answer itself looked broken ("$???", "Infinity weeks", a blank name).'],
+  ["Silent bugs caught", 'Across the 3 apps: silent bugs caught, of the ones they saw, and of all the game has. Silent = a normal-looking answer that was wrong for the request ("3 weeks" instead of 4, "Sale price: $48.00" for -20% off).'],
   ["Code points", "Code questions after the 3 apps (required): 1 point per part right, out of 6."],
   ["Score", "The leaderboard score: bugs busted in the 3 apps + code points."],
   ["Session ID", "Joins this row to the other sheets and the raw files."],
@@ -208,6 +217,8 @@ describe("Per app", [
   ["Loud bugs caught", "Of those, how many they called Busted! on."],
   ["Silent bugs seen", 'Different bugs it showed them with a normal-looking but wrong answer ("3 weeks" instead of 4, a name cut off at 12 letters).'],
   ["Silent bugs caught", "Of those, how many they called Busted! on. Seen but not caught = the wrong answer was on screen and went unnoticed."],
+  ["Loud bugs possible", "How many different loud bugs this app can show at all (Savings 1, Sale Price 4, Monster Namer 2; the same for every student). Caught ÷ possible compares students on one scale."],
+  ["Silent bugs possible", "How many different silent bugs this app can show at all (Savings 4, Sale Price 4, Monster Namer 4)."],
   ["Kinds reused (Monster only)", "Input kinds tried on the Monster Namer that they had first tried on a number app: does the testing transfer to text?"],
   ["Saw nudge", 'Yes if "Ready for the next machine?" appeared (3 minutes in). It never moves them on by itself.'],
   ["Used all 8 tries", "Yes if they ran out of tries on this app."],
@@ -326,8 +337,8 @@ async function main() {
         .filter((m) => m.real_bugs)
         .map((m) => `${appName(m.machine)}: ${kindsName(m.machine, m.bug_kinds)}`)
         .join("; "),
-      "Loud bugs caught": `${metrics.reduce((n, m) => n + m.loud_bugs_caught, 0)} of ${metrics.reduce((n, m) => n + m.loud_bugs_seen, 0)}`,
-      "Silent bugs caught": `${metrics.reduce((n, m) => n + m.silent_bugs_caught, 0)} of ${metrics.reduce((n, m) => n + m.silent_bugs_seen, 0)}`,
+      "Loud bugs caught": caughtOf(metrics, "loud"),
+      "Silent bugs caught": caughtOf(metrics, "silent"),
       "Code points": codes.length ? codes.reduce((n, c) => n + codePointsOf(c.payload), 0) : "",
       Score: measured.length + codes.reduce((n, c) => n + codePointsOf(c.payload), 0),
       "Session ID": s.id,
@@ -360,6 +371,8 @@ async function main() {
         "Loud bugs caught": m.loud_bugs_caught,
         "Silent bugs seen": m.silent_bugs_seen,
         "Silent bugs caught": m.silent_bugs_caught,
+        "Loud bugs possible": m.loud_bugs_possible ?? "",
+        "Silent bugs possible": m.silent_bugs_possible ?? "",
         "Kinds reused (Monster only)": m.transfer_categories === null ? "" : `${m.transfer_count}: ${kindsName(m.machine, m.transfer_categories)}`,
         "Saw nudge": yes(m.nudge_shown),
         "Used all 8 tries": yes(m.tries_used_up),
