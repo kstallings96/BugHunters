@@ -57,6 +57,22 @@ describe("code questions", () => {
         for (const g of fix.validAfter) expect(g >= 0 && g <= m.pseudocode.length).toBe(true);
       }
   });
+  it("the code calls every box by its label on screen", () => {
+    for (const id of ["savings", "sale", "monster"] as const) {
+      const m = MACHINES[id];
+      const labels = m.fields.map((f) => f.label.replace(/\s*\(.*\)$/, ""));
+      const lines = [...m.pseudocode, ...m.bugs.flatMap((b) => m.fixFor(b.kind, b.example).options)];
+      for (const line of lines) {
+        expect(line, `${id}: ${line}`).not.toMatch(/what you typed/);
+        for (const [, box] of line.matchAll(/\bthe ([A-Z%][\w% ]*?) box/g)) expect(labels, `${id}: ${line}`).toContain(box);
+        // Names in the code are the labels in lowercase ("% off", not "off").
+        for (const f of m.fields) {
+          const name = f.label.replace(/\s*\(.*\)$/, "").toLowerCase();
+          if (name !== f.id) expect(line.replace(new RegExp(name.replace(/[%$]/g, "\\$&"), "gi"), ""), `${id}: ${line}`).not.toMatch(new RegExp(`\\b${f.id}\\b`));
+        }
+      }
+    }
+  });
   it("the leaderboard counts only the three apps", () => {
     expect(measuredBugs([bug("savings", "zero"), bug("raffle", "off_by_one")])).toBe(1);
   });

@@ -38,31 +38,31 @@ function money(raw: string, what: string): Money {
 const FIXES: Partial<Record<Category, Fix>> = {
   zero: wrongLine(
     3,
-    'if a box has no number, or saved is 0 or below → say "Invalid input"',
+    'if a box has no number, or saved per week is 0 or below → say "Invalid input"',
     'if a box has no number, or price is 0 or below → say "Invalid input"',
-    'if a box has no number, or saved is above 0 → say "Invalid input"',
+    'if a box has no number, or saved per week is above 0 → say "Invalid input"',
   ),
   rounding: wrongLine(
     4,
-    "weeks = price ÷ saved, rounded UP to a whole week",
-    "weeks = price ÷ saved, rounded DOWN to a whole week",
-    "weeks = saved ÷ price, rounded UP to a whole week",
+    "weeks = price ÷ saved per week, rounded UP to a whole week",
+    "weeks = price ÷ saved per week, rounded DOWN to a whole week",
+    "weeks = saved per week ÷ price, rounded UP to a whole week",
   ),
   negative: missingLine(
     [1, 2, 3],
     'if price is below 0 → say "Invalid input"',
-    'if saved is below 0 → say "Invalid input"',
+    'if saved per week is below 0 → say "Invalid input"',
     'if price is above 0 → say "Invalid input"',
   ),
 };
 
 /** "1.2.3" gets read as 1.2: the line that reads that box should take the number only if it's ALL a number. */
-function misread(line: number, box: string): Fix {
+function misread(line: number, name: string, box: string): Fix {
   return wrongLine(
     line,
-    `${box} = what you typed, only if ALL of it is a number`,
-    `${box} = the last number in what you typed`,
-    `${box} = the first digit of what you typed`,
+    `${name} = what's in the ${box} box, only if ALL of it is a number`,
+    `${name} = the last number in the ${box} box`,
+    `${name} = the first digit in the ${box} box`,
   );
 }
 
@@ -114,15 +114,15 @@ export const savings: Machine = {
     return [weeks(0), weeks(1)];
   },
   pseudocode: [
-    "price = the first number in what you typed",
-    "saved = the first number in what you typed",
-    'if a box has no number, or saved is below 0 → say "Invalid input"',
-    "weeks = price ÷ saved, rounded to the nearest week",
+    "price = the first number in the Price box",
+    "saved per week = the first number in the Saved per week box",
+    'if a box has no number, or saved per week is below 0 → say "Invalid input"',
+    "weeks = price ÷ saved per week, rounded to the nearest whole week",
     'show weeks + " weeks"',
   ],
   fixFor: (kind, inputs) => {
     // "1.2.3" gets read as 1.2, "4%" as 4: the guilty line reads that box.
-    if (kind === "wrong_type" || kind === "special") return money(inputs.price ?? "", "price").ok ? misread(2, "saved") : misread(1, "price");
+    if (kind === "wrong_type" || kind === "special") return money(inputs.price ?? "", "price").ok ? misread(2, "saved per week", "Saved per week") : misread(1, "price", "Price");
     return FIXES[kind] ?? FIXES.negative!;
   },
   bugs: [

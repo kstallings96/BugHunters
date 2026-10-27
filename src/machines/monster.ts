@@ -69,7 +69,7 @@ export const monster: Machine = {
   purpose: "Make up a name for your monster.",
   request: `Monster names in ALL CAPS, up to ${MONSTER_MAX} letters.`,
   prompt: specFor("monster").kidPrompt,
-  fields: [{ id: "name", label: "Monster name", kind: "text", longAt: MONSTER_MAX }],
+  fields: [{ id: "name", label: "Name", kind: "text", longAt: MONSTER_MAX }],
   display: "monster",
   labels: { wrong_type: "Has numbers", very_long: "Too long", special: "Symbols or emoji" },
   buggy: ({ name }: Inputs): Output => aiOutput(monsterName(name)),
@@ -123,7 +123,7 @@ export const monster: Machine = {
     very_long: `Up to ${MONSTER_MAX} letters.`,
   },
   otherAnswers: ({ name }) => [name.trim() ? name.trim().toLowerCase() : "MONSTER", "NO NAME"],
-  pseudocode: ["name = what you typed", "name = name in ALL CAPS", `name = the first ${MONSTER_MAX} letters of name`, "show name with the monster"],
+  pseudocode: ["name = what's in the Name box", "name = name in ALL CAPS", `name = the first ${MONSTER_MAX} letters of name`, "show name with the monster"],
   fixFor: (kind) => FIXES[kind] ?? FIXES.empty!,
   bugs: [
     { kind: "empty", example: { name: "" }, tryThis: "Leave the name empty." },

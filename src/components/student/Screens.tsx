@@ -97,8 +97,10 @@ export function EndScreen({
 
 /**
  * Bonus code question for one bug, in two parts, depending on the bug:
- *   A line is wrong:     1. which line made that happen?  2. pick its fixed version.
- *   A check is missing:  1. which check is missing?        2. where does it go?
+ *   A line is wrong:    1. which line is wrong?    2. pick the right line.
+ *   A line is missing:  1. which line is missing?  2. where does it go?
+ * Same words throughout: "line" for code, "box" for an input (named as on
+ * screen), "Not quite." for every wrong answer.
  * Wrong choices are near misses. Every answer is a choice on screen. Each
  * part right is 1 point toward the leaderboard score.
  */
@@ -165,7 +167,7 @@ export function GuiltyLine({
   }
 
   const shown = machine.fields.map((f) => `${f.label.replace(/\s*\(.*\)$/, "")}: ${bug.inputs[f.id] === "" ? "(empty)" : `"${shownText(bug.inputs[f.id])}"`}`).join(", ");
-  const example = exampleOf(bug);
+  const example = exampleOf(bug, machine.pseudocode, fix.options[fix.answer]);
   const look = (state: "idle" | "right" | "wrong" | "dim") =>
     ({
       idle: "border-line bg-white hover:border-teal",
@@ -209,13 +211,7 @@ export function GuiltyLine({
         {example ? (
           <>
             You type <b>{shown}</b> → it says <b className="text-danger">{example.said}</b> → it should say{" "}
-            {example.refuses ? (
-              <>
-                no, like <b className="text-teal">&ldquo;{example.should}&rdquo;</b>
-              </>
-            ) : (
-              <b className="text-teal">{example.should}</b>
-            )}
+            <b className="text-teal">{example.should}</b>
           </>
         ) : (
           raffleExample(bug)
@@ -225,14 +221,14 @@ export function GuiltyLine({
       {missing ? (
         <div className="grid grid-cols-[1fr_1.1fr] gap-5">
           <section className="flex flex-col gap-2">
-            <h2 className="text-xl font-bold">1. Which check is missing?</h2>
+            <h2 className="text-xl font-bold">1. Which line is missing?</h2>
             {options(first, setFirst)}
-            {first !== null && <p className="text-lg font-bold">{firstRight ? "Yes!" : "Not that one. The green check is the one it needs."}</p>}
+            {first !== null && <p className="text-lg font-bold">{firstRight ? "Yes!" : "Not quite. The green line is right."}</p>}
           </section>
           <section className="flex flex-col gap-2">
-            <h2 className="text-xl font-bold">2. Where should it go?</h2>
+            <h2 className="text-xl font-bold">2. Where does it go?</h2>
             <p className="text-base text-ink-soft">
-              {first === null ? "Pick the check first." : "Tap a spot in the AI's code."}
+              {first === null ? "Answer 1 first." : "Tap + here where it goes."}
               {bug.machine === "raffle" && " Spots count from 0: names[0] is the first name."}
             </p>
             <ol className="flex flex-col">
@@ -273,7 +269,7 @@ export function GuiltyLine({
       ) : (
         <div className="grid grid-cols-[1.1fr_1fr] gap-5">
           <section className="flex flex-col gap-2">
-            <h2 className="text-xl font-bold">1. Which line made that happen?</h2>
+            <h2 className="text-xl font-bold">1. Which line is wrong?</h2>
             {bug.machine === "raffle" && <p className="text-base text-ink-soft">Spots count from 0: names[0] is the first name.</p>}
             <ol className="flex flex-col gap-1.5">
               {machine.pseudocode.map((code, i) => (
@@ -296,8 +292,8 @@ export function GuiltyLine({
           </section>
           <section className="flex flex-col gap-2">
             {/* Naming the line before part 1 is answered would give it away. */}
-            <h2 className="text-xl font-bold">2. {first === null ? "Fix it" : `Pick the fixed line ${fix.line}:`}</h2>
-            {first === null ? <p className="text-base text-ink-soft">Find the line first.</p> : options(second, answerSecond)}
+            <h2 className="text-xl font-bold">2. {first === null ? "Pick the right line" : `Pick the right line ${fix.line}`}</h2>
+            {first === null ? <p className="text-base text-ink-soft">Answer 1 first.</p> : options(second, answerSecond)}
           </section>
         </div>
       )}
@@ -307,11 +303,11 @@ export function GuiltyLine({
           <p className="flex-1 text-xl font-bold">
             {missing
               ? secondRight
-                ? "Yes! The check works there."
-                : `Not there. It goes ${range}.`
+                ? "Yes! That fixes it."
+                : `Not quite. It goes ${range}.`
               : secondRight
                 ? "Yes! That fixes it."
-                : "Not that one. The green one fixes it."}
+                : "Not quite. The green line fixes it."}
           </p>
           <BigButton onClick={onNext} className="min-h-12! shrink-0">
             {last ? "Done" : "Next bug →"}
@@ -322,12 +318,18 @@ export function GuiltyLine({
   );
 }
 
-/** What the app said and should say for this bug's input (the three apps; the raffle is random). */
-function exampleOf(bug: BustedBug): { said: string; should: string; refuses: boolean } | null {
+/**
+ * What the app said for this bug's input, and what the fixed code would say:
+ * the message in the right line, or the code's own "no" message, so the
+ * example always matches the code on screen (the raffle is random).
+ */
+function exampleOf(bug: BustedBug, code: string[], rightLine: string): { said: string; should: string } | null {
   if (bug.machine === "raffle") return null;
   const e = evaluate(MACHINES[bug.machine], bug.inputs, { today: new Date() });
-  const text = shownText;
-  return { said: text(e.buggy.text), should: text(e.reference.text), refuses: e.reference.type === "not_allowed" };
+  const say = (line: string) => /say (".*")$/.exec(line)?.[1];
+  const ownNo = code.map(say).find(Boolean);
+  const should = say(rightLine) ?? (e.reference.type === "not_allowed" && ownNo ? ownNo : shownText(e.reference.text));
+  return { said: shownText(e.buggy.text), should };
 }
 
 function raffleExample(bug: BustedBug): string {

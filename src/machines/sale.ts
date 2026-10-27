@@ -21,39 +21,39 @@ const salePrice = (p: number, off: number) => `Sale price: $${(p - p * (off / 10
 const FIXES: Partial<Record<Category, Fix>> = {
   out_of_range: missingLine(
     [2, 3],
-    'if off is below 0% or above 100% → say "Discounts go from 0% to 100%."',
-    'if off is above 0% or below 100% → say "Discounts go from 0% to 100%."',
+    'if % off is below 0 or above 100 → say "Discounts go from 0% to 100%."',
+    'if % off is above 0 or below 100 → say "Discounts go from 0% to 100%."',
     'if price is below 0 or above 100 → say "Discounts go from 0% to 100%."',
   ),
   negative: missingLine(
     [1, 2, 3],
     'if price is below 0 → say "Prices can\'t be below zero."',
-    'if off is below 0 → say "Prices can\'t be below zero."',
+    'if % off is below 0 → say "Prices can\'t be below zero."',
     'if price is 0 → say "Prices can\'t be below zero."',
   ),
   empty: missingLine(
     [2, 3],
-    'if price or off is blank → say "You left it blank."',
-    'if price or off is 0 → say "You left it blank."',
-    "if price or off is blank → sale = 0",
+    'if price or % off is blank → say "You left it blank."',
+    'if price or % off is 0 → say "You left it blank."',
+    "if price or % off is blank → sale = 0",
   ),
   spaces_only: missingLine(
     [2, 3],
-    'if price or off is blank or only spaces → say "You left it blank."',
-    'if price or off is blank → say "You left it blank."',
-    'if price or off has a space in it → say "You left it blank."',
+    'if price or % off is blank or only spaces → say "You left it blank."',
+    'if price or % off is blank → say "You left it blank."',
+    'if price or % off has a space in it → say "You left it blank."',
   ),
   wrong_type: missingLine(
     [2, 3],
-    'if price or off is not a number → say "That\'s not a number."',
-    'if price or off is a number → say "That\'s not a number."',
-    'if price or off is a word → say "That\'s not a number."',
+    'if price or % off is not a number → say "That\'s not a number."',
+    'if price or % off is a number → say "That\'s not a number."',
+    'if price or % off is a word → say "That\'s not a number."',
   ),
   special: wrongLine(
     1,
-    'price = the number in what you typed, after a "$" if there is one',
-    'price = "$" + the first number in what you typed',
-    "price = what you typed, without any numbers",
+    'price = the number in the Price box, after a "$" if there is one',
+    'price = "$" + the first number in the Price box',
+    "price = what's in the Price box, without any numbers",
   ),
 };
 
@@ -118,9 +118,9 @@ export const sale: Machine = {
     return [salePrice(0, 0), p !== null && p > 0 ? salePrice(p, 0) : "Sale price: $10.00"];
   },
   pseudocode: [
-    "price = the first number in what you typed",
-    "off = the first number in what you typed",
-    "sale = price − price × off ÷ 100",
+    "price = the first number in the Price box",
+    "% off = the first number in the % off box",
+    "sale = price − price × % off ÷ 100",
     'show "Sale price: $" + sale, with 2 decimals',
   ],
   fixFor: (kind, inputs) => {
@@ -130,12 +130,15 @@ export const sale: Machine = {
       const box = kind === "special" ? symbolBox! : classifyNumberField(inputs.price ?? "").includes("wrong_type") ? "price" : "off";
       // "1.2.3" starts like a number and gets read as 1.2: the line that reads it is guilty.
       // "half" can't be read at all: a check is missing.
+      // The code calls each box by its label: "price" and "% off".
+      const name = box === "price" ? "price" : "% off";
+      const label = box === "price" ? "Price" : "% off";
       if (Number.isFinite(parseFloat(inputs[box] ?? "")))
         return wrongLine(
           box === "price" ? 1 : 2,
-          `${box} = what you typed, only if ALL of it is a number`,
-          `${box} = the last number in what you typed`,
-          `${box} = the first digit of what you typed`,
+          `${name} = what's in the ${label} box, only if ALL of it is a number`,
+          `${name} = the last number in the ${label} box`,
+          `${name} = the first digit in the ${label} box`,
         );
     }
     return FIXES[kind] ?? FIXES.wrong_type!;
