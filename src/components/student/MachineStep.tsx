@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { blankInputs, MachineCard } from "@/components/MachineCard";
+import { Bubble } from "@/components/Bubble";
 import { BigButton, Modal, OptionButton } from "@/components/ui";
 import { Spaced, SpaceBox } from "@/components/Spaced";
 import { shownText, SPACE_MARK } from "@/lib/clean";
@@ -42,6 +43,18 @@ function describeInputs(machine: Machine, inputs: Inputs): string {
     .join(", ");
 }
 
+/** Practice only: speech bubbles saying what to do next, and Busted! held back until something breaks. */
+export interface PracticeGuide {
+  /** Beside the input: what to type next. */
+  inputTip?: ReactNode;
+  /** Above Busted!: what broke and to tap it. */
+  bustedTip?: ReactNode;
+  /** In Busted!, over "It should say…". */
+  answerTip: (t: Try) => string;
+  /** In Busted!, over "What kind of input broke it?". */
+  kindTip: (t: Try) => string;
+}
+
 export interface BustedResult {
   verdict: BustedVerdict;
   /** The app's vague refusal the student busted ("Invalid input"), if that's what it was. */
@@ -65,7 +78,7 @@ export function MachineStep({
   onAccept,
   nudgeAt,
   onNudge,
-  coach,
+  guide,
   highlightField,
   pulseBusted = false,
   locked = false,
@@ -82,8 +95,8 @@ export function MachineStep({
   /** Epoch ms when "Ready for the next app?" may appear; null for never. */
   nudgeAt?: number | null;
   onNudge?: () => void;
-  /** Tutorial guidance shown above the tools. */
-  coach?: ReactNode;
+  /** Practice speech bubbles (tutorial). */
+  guide?: PracticeGuide;
   highlightField?: string;
   pulseBusted?: boolean;
   /** Tutorial steps that wait for one specific action. */
@@ -145,7 +158,6 @@ export function MachineStep({
   return (
     <main className="relative grid min-h-0 flex-1 grid-cols-[1fr_21rem] grid-rows-[minmax(0,1fr)] gap-5 px-5 py-4">
       <div className="flex min-h-0 flex-col gap-3">
-        {coach}
         {nudge === "shown" && (
           <div className="flex items-center gap-4 rounded-2xl border-4 border-amber bg-amber-soft px-4 py-2">
             <p className="flex-1 text-xl font-bold">Ready for the next app?</p>
@@ -177,6 +189,7 @@ export function MachineStep({
           onTry={tryIt}
           output={last?.output ?? null}
           highlightField={highlightField}
+          inputTip={guide?.inputTip}
           disabled={locked || outOfTries}
         />
       </div>
@@ -207,9 +220,11 @@ export function MachineStep({
             </ol>
           )}
         </div>
+        {guide?.bustedTip && <Bubble point="down">{guide.bustedTip}</Bubble>}
         <BigButton
           variant="danger"
-          disabled={tries.length === 0}
+          // In practice, Busted! waits until a try actually breaks the app.
+          disabled={tries.length === 0 || (guide !== undefined && !tries.some((t) => t.revealsBug))}
           onClick={() => {
             logEvent("busted_open", { tries: tries.length });
             setBustOpen(true);
@@ -230,6 +245,7 @@ export function MachineStep({
           machine={machine}
           tries={tries}
           isNewKind={isNewKind}
+          guide={guide}
           onCancel={() => {
             logEvent("busted_cancel", {});
             setBustOpen(false);
@@ -250,16 +266,22 @@ function BustedDialog({
   machine,
   tries,
   isNewKind,
+  guide,
   onCancel,
   onDone,
 }: {
   machine: Machine;
   tries: Try[];
   isNewKind: (kind: Category) => boolean;
+  guide?: PracticeGuide;
   onCancel: () => void;
   onDone: (r: BustedResult) => void;
 }) {
-  const [pick, setPick] = useState(tries.length - 1);
+  // In practice, start on the try that broke it, not a later one that worked.
+  const [pick, setPick] = useState(() => {
+    const bug = guide ? tries.findLastIndex((tr) => tr.revealsBug) : -1;
+    return bug >= 0 ? bug : tries.length - 1;
+  });
   const [choosing, setChoosing] = useState(false);
   // Index into the choices, or "unsure".
   const [expect, setExpect] = useState<number | "unsure" | null>(null);
@@ -392,6 +414,7 @@ function BustedDialog({
           <p className="text-xl">
             <span className="font-bold"><Spaced>{describeInputs(machine, t.inputs)}</Spaced></span>
           </p>
+          {guide && <Bubble point="down" className="text-lg!">{guide.kindTip(t)}</Bubble>}
           <div className="grid grid-cols-2 gap-2">
             {studentLabels(machine).map((l) => (
               <OptionButton key={l.id} onClick={() => submit(l.id)}>
@@ -448,6 +471,7 @@ function BustedDialog({
           </div>
         )}
 
+        {guide && <Bubble point="down" className="text-lg!">{guide.answerTip(t)}</Bubble>}
         <h3 className="text-2xl font-bold">It should say…</h3>
         {[t.output.text, ...choices.options, ...Object.values(t.inputs)].some((x) => shownText(x).includes(SPACE_MARK)) && (
           <p className="-mt-2 text-base text-ink-soft">

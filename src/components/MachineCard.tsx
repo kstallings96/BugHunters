@@ -1,6 +1,7 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { Bubble } from "@/components/Bubble";
 import { clean } from "@/lib/clean";
 import type { Inputs, Machine, Output } from "@/machines";
 
@@ -17,6 +18,7 @@ export function MachineCard({
   output,
   disabled = false,
   highlightField,
+  inputTip,
 }: {
   machine: Machine;
   values: Inputs;
@@ -26,6 +28,8 @@ export function MachineCard({
   disabled?: boolean;
   /** Draws attention to one input (tutorial). */
   highlightField?: string;
+  /** A speech bubble beside the input row saying what to type (practice). */
+  inputTip?: ReactNode;
 }) {
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -103,6 +107,11 @@ export function MachineCard({
         >
           Try it ▶
         </button>
+        {inputTip && (
+          <Bubble point="left" className="ml-2 min-w-0 flex-1 basis-60">
+            {inputTip}
+          </Bubble>
+        )}
       </form>
 
       {machine.display === "monster" && output?.type === "result" ? (

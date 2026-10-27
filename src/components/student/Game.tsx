@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { INTAKE } from "@/config/survey";
 import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
@@ -271,9 +271,10 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
 // ----------------------------------------------------------- tutorial
 
 /**
- * Intro screen 3: a guided demo on the Allowance Doubler. Type 10 (it
- * works), type a word ($???), tap Busted! once. Each stage is worked out
- * from what the student has done so far.
+ * Intro screen 3: a guided demo on the Allowance Doubler. Speech bubbles
+ * walk through it: type 10 (it works), type a word ($???), then Busted!,
+ * with hints inside Busted! too. Each stage is worked out from what the
+ * student has done so far.
  */
 function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) => void; onDone: () => void }) {
   const tries = game.tries.allowance ?? [];
@@ -286,10 +287,18 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
     logEvent("tutorial_step", { stage });
   }, [stage]);
 
-  const coach: Record<number, string> = {
-    1: "Type 10, then tap Try it.",
-    2: "That one works. Now try to break it. Type a word.",
-    3: bugCoach(tries.findLast((t) => t.revealsBug)),
+  const inputTip: Record<number, ReactNode> = {
+    1: (
+      <>
+        First, let&apos;s check if it works! Type <b className="text-amber-soft">10</b> in the box, then tap Try it.
+      </>
+    ),
+    2: (
+      <>
+        It works! Now let&apos;s try to <b className="text-amber-soft">break</b> it. What might the AI not have planned for? Type a word, like{" "}
+        <b className="text-amber-soft">cat</b>.
+      </>
+    ),
   };
 
   return (
@@ -302,11 +311,12 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
       onBusted={(r) => r.verdict === "real" && onDone()}
       highlightField={stage <= 2 ? "allowance" : undefined}
       pulseBusted={stage === 3}
-      coach={
-        <div className="flex items-center gap-4 rounded-2xl border-4 border-teal bg-teal/5 px-5 py-3">
-          <p className="flex-1 text-2xl font-bold">{coach[stage]}</p>
-        </div>
-      }
+      guide={{
+        inputTip: inputTip[stage],
+        bustedTip: stage === 3 ? bugCoach(tries.findLast((t) => t.revealsBug)) : undefined,
+        answerTip: (t) => (t.revealsBug ? `${whyBug(t)}, so ${clean(t.output.text)} is wrong. What should the app say instead?` : "This one worked. Pick the try that broke it."),
+        kindTip: (t) => (t.revealsBug ? `${whyBug(t)}. Which kind of input is that?` : "What kind of input did you type?"),
+      }}
     />
   );
 }
@@ -343,14 +353,13 @@ function ProgressBar({ stage }: { stage: number }) {
  * wrong answer can look normal ("cat3" → $6), not only broken ($???).
  */
 export function bugCoach(t: Try | undefined): string {
-  if (!t) return "That's a bug! Tap Busted!";
-  const typed = clean(t.inputs.allowance ?? "");
-  const said = clean(t.output.text);
-  const why =
-    t.bugKind === "empty" || t.bugKind === "spaces_only"
-      ? "You left it blank"
-      : t.bugKind === "negative"
-        ? `An allowance can't be below zero`
-        : `"${typed}" isn't a number`;
-  return `That's a bug! ${why}, but it said ${said}. Tap Busted!`;
+  if (!t) return "You broke it! Tap Busted! to report it.";
+  return `You broke it! ${whyBug(t)}, but it said ${clean(t.output.text)}. Tap Busted! to report it.`;
+}
+
+/** Why a practice try is a bug, in a few words ("cat" isn't a number). */
+export function whyBug(t: Try): string {
+  if (t.bugKind === "empty" || t.bugKind === "spaces_only") return "You left it blank";
+  if (t.bugKind === "negative") return "An allowance can't be below zero";
+  return `"${clean(t.inputs.allowance ?? "")}" isn't a number`;
 }
