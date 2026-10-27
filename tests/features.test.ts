@@ -2,6 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { codeNames, codeParts } from "@/components/student/Screens";
 import { codeQuestions, MAX_CODE_QUESTIONS, measuredBugs, progressStage } from "@/components/student/state";
 import { dayKey } from "@/config/study";
 import { INTAKE } from "@/config/survey";
@@ -72,6 +73,21 @@ describe("code questions", () => {
         }
       }
     }
+  });
+  it("highlights the code's names, not quoted text or box names", () => {
+    const named = (id: MachineId, line: string) => {
+      const parts = codeParts(line, codeNames(MACHINES[id].pseudocode));
+      expect(parts.map((p) => p.text).join("")).toBe(line);
+      return parts.filter((p) => p.name).map((p) => p.text);
+    };
+    expect(codeNames(MACHINES.sale.pseudocode).sort()).toEqual(["% off", "price", "sale"]);
+    expect(named("sale", "% off = the first number in the % off box")).toEqual(["% off"]);
+    expect(named("sale", "sale = price − price × % off ÷ 100")).toEqual(["sale", "price", "price", "% off"]);
+    expect(named("sale", 'show "Sale price: $" + sale, with 2 decimals')).toEqual(["sale"]);
+    expect(named("savings", 'if a box has no number, or saved per week is below 0 → say "Invalid input"')).toEqual(["saved per week"]);
+    expect(named("savings", 'show weeks + " weeks"')).toEqual(["weeks"]);
+    expect(named("monster", "name = what's in the Name box")).toEqual(["name"]);
+    expect(named("monster", 'if name is blank → say "You left the name blank."')).toEqual(["name"]);
   });
   it("the leaderboard counts only the three apps", () => {
     expect(measuredBugs([bug("savings", "zero"), bug("raffle", "off_by_one")])).toBe(1);

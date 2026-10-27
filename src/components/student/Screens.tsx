@@ -188,13 +188,15 @@ export function GuiltyLine({
           onClick={() => onPick(i)}
           className={`flex min-h-12 w-full items-center rounded-2xl border-4 px-3 py-1 text-left font-mono text-base leading-snug ${look(optionState(i, chosen, fix.answer))}`}
         >
-          {o}
+          <span>{line(o)}</span>
         </button>
       ))}
     </div>
   );
 
   const lastGap = machine.pseudocode.length;
+  const names = codeNames(machine.pseudocode);
+  const line = (text: string) => <Code text={text} names={names} />;
   const range = missing ? `between line ${fix.validAfter[0]} and ${fix.validAfter.at(-1)! + 1 > lastGap ? "the end" : `line ${fix.validAfter.at(-1)! + 1}`}` : "";
 
   return (
@@ -250,7 +252,7 @@ export function GuiltyLine({
                         fix.validAfter.includes(gap) ? "bg-teal/15 text-teal" : "bg-danger/10 text-danger line-through"
                       }`}
                     >
-                      + {fix.options[fix.answer]}
+                      + {line(fix.options[fix.answer])}
                     </span>
                   ) : (
                     <span className="h-1.5" />
@@ -258,7 +260,7 @@ export function GuiltyLine({
                   {gap < lastGap && (
                     <span className="flex items-center gap-3 rounded-xl border-2 border-line bg-white px-3 py-1.5 font-mono text-base leading-snug">
                       <span className="w-5 opacity-60">{gap + 1}</span>
-                      {machine.pseudocode[gap]}
+                      <span>{line(machine.pseudocode[gap])}</span>
                     </span>
                   )}
                 </li>
@@ -283,7 +285,7 @@ export function GuiltyLine({
                     )}`}
                   >
                     <span className="w-5 opacity-60">{i + 1}</span>
-                    {code}
+                    <span>{line(code)}</span>
                   </button>
                 </li>
               ))}
@@ -315,6 +317,43 @@ export function GuiltyLine({
         </div>
       )}
     </main>
+  );
+}
+
+/** The names the code uses for things (left of "="), longest first so "saved per week" beats "week". */
+export function codeNames(code: string[]): string[] {
+  const names = code.map((l) => /^(.+?) = /.exec(l)?.[1]).filter((n): n is string => !!n);
+  return [...new Set(names)].sort((a, b) => b.length - a.length);
+}
+
+/**
+ * A line of code cut into plain text and names. Quoted text ("Sale price: $")
+ * and box names ("the Price box") stay plain: they aren't the code's names.
+ */
+export function codeParts(text: string, names: string[]): { text: string; name: boolean }[] {
+  if (!names.length) return [{ text, name: false }];
+  const escape = (n: string) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`("[^"]*"|\\bthe [A-Z%][\\w% ]*? box|${names.map((n) => `(?<![\\w%])${escape(n)}(?!\\w)`).join("|")})`);
+  return text
+    .split(pattern)
+    .filter(Boolean)
+    .map((t) => ({ text: t, name: names.includes(t) }));
+}
+
+/** A line of code with its names on an amber tag so they stand out. */
+function Code({ text, names }: { text: string; names: string[] }) {
+  return (
+    <>
+      {codeParts(text, names).map((p, i) =>
+        p.name ? (
+          <span key={i} className="rounded-md bg-amber-soft px-1 font-bold text-ink">
+            {p.text}
+          </span>
+        ) : (
+          p.text
+        ),
+      )}
+    </>
   );
 }
 
