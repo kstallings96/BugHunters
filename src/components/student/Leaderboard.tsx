@@ -61,15 +61,14 @@ export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: 
   return (
     <section className="flex min-h-0 w-full flex-col gap-2 rounded-3xl border-4 border-amber bg-card p-4 text-left" aria-label="Class leaderboard">
       <h2 className="text-2xl font-bold">Today&apos;s leaderboard</h2>
-      <p className="text-base text-ink-soft">All class periods. Score = bugs busted + code question points.</p>
       {board === null ? (
         <p className="text-lg text-ink-soft">Loading…</p>
       ) : (
-        <ol className="flex flex-col gap-1">
+        <ol className="flex flex-col gap-0.5">
           {board.rows.map((r) => (
             <li
               key={`${r.rank}-${r.nickname}`}
-              className={`flex items-center gap-3 rounded-xl px-3 py-1 text-lg ${r.you ? "bg-teal font-bold text-white" : "bg-paper"}`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-0.5 text-lg ${r.you ? "bg-teal font-bold text-white" : "bg-paper"}`}
             >
               <span className="w-8 tabular-nums">{r.rank}.</span>
               <span className="flex-1 truncate">

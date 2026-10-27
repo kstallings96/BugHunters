@@ -38,13 +38,13 @@ export function MachineCard({
 
   return (
     <section className="flex min-h-0 flex-col gap-3 overflow-hidden rounded-3xl border-4 border-ink bg-white p-5 shadow-[6px_6px_0_var(--ink)]">
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <span className="text-5xl leading-none" aria-hidden="true">
           {machine.icon}
         </span>
-        <div className="flex-1">
+        <div className="flex flex-1 flex-wrap items-baseline gap-x-4">
           <h2 className="text-3xl font-bold">{machine.name}</h2>
-          <p className="text-xl">{machine.purpose}</p>
+          <p className="text-xl text-ink-soft">{machine.purpose}</p>
         </div>
       </div>
 
@@ -130,9 +130,7 @@ export function MachineCard({
             >
               {clean(output.text)}
             </p>
-          ) : (
-            <p className="text-xl text-ink-soft">The answer shows up here.</p>
-          )}
+          ) : null}
         </div>
       )}
     </section>

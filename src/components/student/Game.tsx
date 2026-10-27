@@ -140,7 +140,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       break;
     case "briefing": {
       const id = session.machineOrder[game.machineIndex];
-      body = <Briefing key={id} machine={MACHINES[id]} index={game.machineIndex} total={session.machineOrder.length} onStart={() => go("machine")} />;
+      body = <Briefing key={id} machine={MACHINES[id]} tries={MAX_TRIES} onStart={() => go("machine")} />;
       break;
     }
     case "machine": {
@@ -152,7 +152,6 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
         <MachineStep
           key={id}
           machine={MACHINES[id]}
-          title={`App ${game.machineIndex + 1} of ${session.machineOrder.length}`}
           tries={game.tries[id] ?? []}
           onTry={(t) => addTry(id, t)}
           isNewKind={isNewKind(id)}
@@ -289,13 +288,13 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
   const inputTip: Record<number, ReactNode> = {
     1: (
       <>
-        First, let&apos;s check if it works! Type <b className="text-amber-soft">10</b> in the box, then tap Try it.
+        First, let&apos;s check if it works! Type <b className="rounded-md bg-white px-1.5">10</b> in the box, then tap Try it.
       </>
     ),
     2: (
       <>
-        It works! Now let&apos;s try to <b className="text-amber-soft">break</b> it. What might the AI not have planned for? Type a word, like{" "}
-        <b className="text-amber-soft">cat</b>.
+        It works! Now let&apos;s try to <b className="rounded-md bg-white px-1.5">break</b> it. What might the AI not have planned for? Type a word, like{" "}
+        <b className="rounded-md bg-white px-1.5">cat</b>.
       </>
     ),
   };
@@ -303,7 +302,6 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
   return (
     <MachineStep
       machine={MACHINES.allowance}
-      title="Practice"
       tries={tries}
       onTry={onTry}
       isNewKind={() => true}

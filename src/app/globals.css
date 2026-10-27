@@ -30,11 +30,29 @@
   --color-line: var(--line);
   --color-danger: var(--danger);
   --font-sans: var(--font-atkinson);
+  --animate-bob: bh-bob 1.6s ease-in-out infinite;
+}
+
+/* Practice speech bubbles bob gently so students notice them. */
+@keyframes bh-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bob {
+    animation: none;
+  }
 }
 
 html {
   color-scheme: light;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 /* Everything is sized in rem, so the root font size scales the whole game.
@@ -42,19 +60,19 @@ html {
    600px of page once Chrome's bars and the Windows taskbar are drawn. */
 @media (max-height: 700px) {
   html {
-    font-size: 14px;
+    font-size: 16px;
   }
 }
 
 @media (max-height: 620px) {
   html {
-    font-size: 13px;
+    font-size: 15px;
   }
 }
 
 @media (min-height: 1000px) and (min-width: 1600px) {
   html {
-    font-size: 20px;
+    font-size: 22px;
   }
 }
 

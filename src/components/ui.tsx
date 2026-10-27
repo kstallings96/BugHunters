@@ -29,7 +29,7 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 export function Modal({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4">
-      <div className="max-h-full w-full max-w-2xl overflow-auto rounded-3xl border-4 border-teal bg-card p-6 shadow-2xl">{children}</div>
+      <div className="max-h-full w-full max-w-3xl overflow-auto rounded-3xl border-4 border-teal bg-card p-6 shadow-2xl">{children}</div>
     </div>
   );
 }

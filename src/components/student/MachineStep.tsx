@@ -69,7 +69,6 @@ export interface BustedResult {
 
 export function MachineStep({
   machine,
-  title,
   tries,
   onTry,
   isNewKind,
@@ -85,7 +84,6 @@ export function MachineStep({
   maxTries,
 }: {
   machine: Machine;
-  title: string;
   tries: Try[];
   onTry: (t: Try) => void;
   isNewKind: (kind: Category) => boolean;
@@ -158,30 +156,6 @@ export function MachineStep({
   return (
     <main className="relative grid min-h-0 flex-1 grid-cols-[1fr_21rem] grid-rows-[minmax(0,1fr)] gap-5 px-5 py-4">
       <div className="flex min-h-0 flex-col gap-3">
-        {nudge === "shown" && (
-          <div className="flex items-center gap-4 rounded-2xl border-4 border-amber bg-amber-soft px-4 py-2">
-            <p className="flex-1 text-xl font-bold">Ready for the next app?</p>
-            <BigButton
-              className="min-h-12! px-5! text-lg!"
-              onClick={() => {
-                logEvent("nudge_response", { choice: "next" });
-                onAccept?.("nudge");
-              }}
-            >
-              Next app →
-            </BigButton>
-            <BigButton
-              variant="secondary"
-              className="min-h-12! px-5! text-lg!"
-              onClick={() => {
-                logEvent("nudge_response", { choice: "keep_testing" });
-                setNudge("dismissed");
-              }}
-            >
-              Keep testing
-            </BigButton>
-          </div>
-        )}
         <MachineCard
           machine={machine}
           values={values}
@@ -195,20 +169,11 @@ export function MachineStep({
       </div>
 
       <aside className="flex min-h-0 flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-bold text-ink-soft">{title}</p>
-          {maxTries !== undefined && (
-            <p className="rounded-full bg-paper px-3 py-0.5 text-lg font-bold" aria-live="polite">
-              Tries: {tries.length} of {maxTries}
-            </p>
-          )}
-        </div>
+        {maxTries !== undefined && <TriesLeft used={tries.length} max={maxTries} />}
         <div className="flex min-h-0 flex-1 flex-col rounded-3xl border-2 border-line bg-card p-3">
           <p className="mb-1 text-lg font-bold">Your tries</p>
           {outOfTries && <p className="mb-1 rounded-xl bg-amber-soft px-3 py-1 text-base font-bold">That was your last try! Bust a bug, or move on.</p>}
-          {tries.length === 0 ? (
-            <p className="text-base text-ink-soft">Nothing yet. Try lots of different inputs!</p>
-          ) : (
+          {tries.length > 0 && (
             <ol className="flex min-h-0 flex-col gap-1 overflow-y-auto">
               {[...tries].reverse().map((t) => (
                 <li key={t.n} className="rounded-xl bg-paper px-3 py-1 text-base leading-snug">
@@ -220,6 +185,32 @@ export function MachineStep({
             </ol>
           )}
         </div>
+        {nudge === "shown" && (
+          <div className="flex flex-col gap-2 rounded-2xl border-4 border-amber bg-amber-soft p-3">
+            <p className="text-xl font-bold">Ready for the next app?</p>
+            <div className="flex gap-2">
+              <BigButton
+                className="min-h-12! flex-1 px-3! text-lg!"
+                onClick={() => {
+                  logEvent("nudge_response", { choice: "next" });
+                  onAccept?.("nudge");
+                }}
+              >
+                Next app →
+              </BigButton>
+              <BigButton
+                variant="secondary"
+                className="min-h-12! flex-1 px-3! text-lg!"
+                onClick={() => {
+                  logEvent("nudge_response", { choice: "keep_testing" });
+                  setNudge("dismissed");
+                }}
+              >
+                Keep testing
+              </BigButton>
+            </div>
+          </div>
+        )}
         {guide?.bustedTip && <Bubble point="down">{guide.bustedTip}</Bubble>}
         <BigButton
           variant="danger"
@@ -257,6 +248,28 @@ export function MachineStep({
         />
       )}
     </main>
+  );
+}
+
+/** How many tries are left, big enough to notice: a number and a dot per try, red near the end. */
+function TriesLeft({ used, max }: { used: number; max: number }) {
+  const left = Math.max(0, max - used);
+  const low = left <= 2;
+  return (
+    <div
+      aria-live="polite"
+      className={`flex items-center gap-3 rounded-2xl border-4 px-3 py-1.5 ${low ? "border-danger bg-danger/10" : "border-amber bg-amber-soft"}`}
+    >
+      <p className={`text-4xl leading-none font-bold ${low ? "text-danger" : ""}`}>{left}</p>
+      <div className="flex flex-col gap-1">
+        <p className="text-xl leading-none font-bold">{left === 1 ? "try" : "tries"} left</p>
+        <div className="flex gap-1" aria-hidden="true">
+          {Array.from({ length: max }, (_, i) => (
+            <span key={i} className={`size-3 rounded-full ${i < left ? (low ? "bg-danger" : "bg-amber") : "border-2 border-ink-soft/40"}`} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -478,7 +491,7 @@ function BustedDialog({
             <SpaceBox /> means a space.
           </p>
         )}
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {choices.options.map((o, i) => (
             <OptionButton key={o} selected={expect === i} onClick={() => setExpect(i)}>
               <span className="break-words whitespace-pre-wrap"><Spaced>{shownText(o)}</Spaced></span>

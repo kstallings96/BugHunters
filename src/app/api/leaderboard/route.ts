@@ -92,8 +92,8 @@ export async function POST(request: Request) {
       if (i === 0 || s.points !== scores[i - 1].points) rank = i + 1;
       rows.push({ rank, nickname: s.nickname, period: s.class_period, points: s.points, you: s.session_id === sessionId });
     });
-    // The top 10, plus your own row if you're further down.
-    const top = rows.slice(0, 10);
+    // The top 8, plus your own row if you're further down (fits a 768px-tall laptop).
+    const top = rows.slice(0, 8);
     const mine = rows.find((r) => r.you);
     if (mine && !top.includes(mine)) top.push(mine);
     return Response.json({ nickname, rows: top, players: rows.length });

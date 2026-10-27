@@ -92,12 +92,9 @@ export function Ready({ count, nickname, onStart }: { count: number; nickname: s
  * Before each app: what was asked of the AI (the exact prompt the model
  * got), and its confident reply, like the intro's chat. Then check it.
  */
-export function Briefing({ machine, index, total, onStart }: { machine: Machine; index: number; total: number; onStart: () => void }) {
+export function Briefing({ machine, tries, onStart }: { machine: Machine; tries: number; onStart: () => void }) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6 py-6">
-      <p className="text-xl font-bold text-ink-soft">
-        App {index + 1} of {total}
-      </p>
       <h1 className="text-4xl font-bold">
         {machine.icon} {machine.name}
       </h1>
@@ -114,7 +111,8 @@ export function Briefing({ machine, index, total, onStart }: { machine: Machine;
         </div>
       </div>
       <p className="rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-2xl font-bold">
-        Your job: try lots of different inputs. Can you make it break?
+        Your job: try lots of different inputs. Can you make it break? You get{" "}
+        <span className="rounded-lg bg-white px-2">{tries} tries</span>.
       </p>
       <BigButton onClick={onStart} className="self-end">
         Start testing →

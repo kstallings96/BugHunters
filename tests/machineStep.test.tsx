@@ -21,7 +21,6 @@ function setup(opts: { nudgeAt?: number | null; maxTries?: number; machine?: Mac
   const view = () => (
     <MachineStep
       machine={MACHINES[id]}
-      title="Machine 1 of 3"
       tries={tries}
       onTry={(t) => {
         tries = [...tries, t];
@@ -232,8 +231,11 @@ describe("a machine", () => {
 
   it("caps tries: after the 8th, Try it is off but Busted! still works", () => {
     setup({ maxTries: 8 });
-    for (let i = 1; i <= 8; i++) tryIt(String(i * 10), "5");
-    expect(screen.getByText("Tries: 8 of 8")).toBeTruthy();
+    tryIt("10", "5");
+    expect(screen.getByText("7")).toBeTruthy();
+    expect(screen.getByText("tries left")).toBeTruthy();
+    for (let i = 2; i <= 8; i++) tryIt(String(i * 10), "5");
+    expect(screen.getByText("0")).toBeTruthy();
     expect((screen.getByRole("button", { name: /Try it/ }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText(/That was your last try/)).toBeTruthy();
     expect((screen.getByRole("button", { name: /^💥 Busted!$/ }) as HTMLButtonElement).disabled).toBe(false);

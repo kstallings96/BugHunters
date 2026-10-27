@@ -196,34 +196,31 @@ export function GuiltyLine({
   const range = missing ? `between line ${fix.validAfter[0]} and ${fix.validAfter.at(-1)! + 1 > lastGap ? "the end" : `line ${fix.validAfter.at(-1)! + 1}`}` : "";
 
   return (
-    <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
-      <p className="text-lg font-bold text-ink-soft">
-        Code question {index + 1} of {total}: 1 point for each part you get right
-      </p>
-      <h1 className="text-3xl leading-snug font-bold">
-        {machine.icon} A bug you {studentFound ? "found" : "didn't find"} in {machine.name}: {bugLabel(bug.machine, bug.kind)}
-      </h1>
-      <div className="rounded-2xl border-2 border-line bg-card px-4 py-2 text-lg leading-snug">
+    <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-2.5 overflow-y-auto px-6 py-3">
+      <div className="flex items-start gap-4">
+        <h1 className="flex-1 text-3xl leading-snug font-bold">
+          {machine.icon} A bug you {studentFound ? "found" : "didn't find"} in {machine.name}: {bugLabel(bug.machine, bug.kind)}
+        </h1>
+        <p className="shrink-0 rounded-full bg-paper px-4 py-1 text-lg font-bold text-ink-soft">
+          Question {index + 1} of {total}
+        </p>
+      </div>
+      <p className="rounded-2xl border-2 border-line bg-card px-4 py-2 text-xl leading-snug">
         {example ? (
           <>
-            You type <b>{shown}</b>. It says <b className="text-danger">{example.said}</b>
-            {stop(example.said)}{" "}
+            You type <b>{shown}</b> → it says <b className="text-danger">{example.said}</b> → it should say{" "}
             {example.refuses ? (
               <>
-                It should say no, like <b className="text-teal">&ldquo;{example.should}&rdquo;</b>
+                no, like <b className="text-teal">&ldquo;{example.should}&rdquo;</b>
               </>
             ) : (
-              <>
-                It should say <b className="text-teal">{example.should}</b>
-                {stop(example.should)}
-              </>
+              <b className="text-teal">{example.should}</b>
             )}
           </>
         ) : (
           raffleExample(bug)
-        )}{" "}
-        {missing ? "The AI's code never checks for this." : "One line of the AI's code is wrong."}
-      </div>
+        )}
+      </p>
 
       {missing ? (
         <div className="grid grid-cols-[1fr_1.1fr] gap-5">
@@ -247,7 +244,7 @@ export function GuiltyLine({
                       disabled={first === null}
                       onClick={() => answerSecond(gap)}
                       aria-label={gap === 0 ? "Before line 1" : `After line ${gap}`}
-                      className="my-0.5 min-h-9 rounded-lg border-2 border-dashed border-amber/70 px-3 text-left text-sm font-bold text-ink-soft enabled:hover:bg-amber-soft disabled:opacity-30"
+                      className="my-0.5 min-h-8 rounded-lg border-2 border-dashed border-amber/70 px-3 text-left text-sm font-bold text-ink-soft enabled:hover:bg-amber-soft disabled:opacity-30"
                     >
                       + here
                     </button>
@@ -311,20 +308,19 @@ export function GuiltyLine({
             {missing
               ? secondRight
                 ? "Yes! The check works there."
-                : `Not there. It has to go ${range}: after the code has what it needs to check, and before the answer.`
+                : `Not there. It goes ${range}.`
               : secondRight
                 ? "Yes! That fixes it."
                 : "Not that one. The green one fixes it."}
           </p>
-          <BigButton onClick={onNext}>{last ? "Done" : "Next bug →"}</BigButton>
+          <BigButton onClick={onNext} className="min-h-12! shrink-0">
+            {last ? "Done" : "Next bug →"}
+          </BigButton>
         </div>
       )}
     </main>
   );
 }
-
-/** A full stop after quoted output, unless it already ends a sentence. */
-const stop = (text: string) => (/[.!?]$/.test(text) ? "" : ".");
 
 /** What the app said and should say for this bug's input (the three apps; the raffle is random). */
 function exampleOf(bug: BustedBug): { said: string; should: string; refuses: boolean } | null {
