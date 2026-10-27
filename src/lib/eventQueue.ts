@@ -3,7 +3,7 @@
  *
  * School wifi drops, so the game never waits on the network. Every event is
  * appended in memory and mirrored to storage at once; batches go out every
- * few seconds; nothing leaves the queue until the server confirms it. Events
+ * minute; nothing leaves the queue until the server confirms it. Events
  * stranded by a crash or a closed tab are sent on the next load.
  *
  * This module has no browser globals so it can be unit-tested; logger.ts
@@ -48,7 +48,7 @@ function read<T>(store: KeyValueStore, key: string, fallback: T): T {
   }
 }
 
-export function createEventQueue({ store, send, now = Date.now, batchSize = 25 }: QueueOptions) {
+export function createEventQueue({ store, send, now = Date.now, batchSize = 100 }: QueueOptions) {
   let queue: QueuedEvent[] = read(store, QUEUE_KEY, []);
   const tokens: Record<string, string> = read(store, TOKENS_KEY, {});
   const seqs: Record<string, number> = read(store, SEQ_KEY, {});
@@ -156,14 +156,14 @@ export function createEventQueue({ store, send, now = Date.now, batchSize = 25 }
    * stay queued because a beacon gives no confirmation; if they did arrive,
    * the resend on next load is ignored as a duplicate.
    */
-  function beaconPayloads(maxBytes = 60_000): { token: string; events: Omit<QueuedEvent, "sid">[] }[] {
+  function beaconPayloads(maxBytes = 60_000, chunkSize = Math.min(batchSize, 25)): { token: string; events: Omit<QueuedEvent, "sid">[] }[] {
     const out: { token: string; events: Omit<QueuedEvent, "sid">[] }[] = [];
     let used = 0;
     const sids = [...new Set(queue.map((e) => e.sid))].filter((s) => !blocked.has(s) && tokens[s]);
     for (const sid of sids) {
       const events = queue.filter((e) => e.sid === sid);
-      for (let i = 0; i < events.length; i += batchSize) {
-        const chunk = { token: tokens[sid], events: strip(events.slice(i, i + batchSize)) };
+      for (let i = 0; i < events.length; i += chunkSize) {
+        const chunk = { token: tokens[sid], events: strip(events.slice(i, i + chunkSize)) };
         const size = JSON.stringify(chunk).length;
         if (used + size > maxBytes) return out;
         used += size;

@@ -7,7 +7,7 @@ import type { ClientSession, Step } from "./types";
 
 /**
  * Browser wiring for the event queue: localStorage for durability, fetch for
- * regular batches, sendBeacon when the page is hidden. Logging failures are
+ * a batch once a minute, sendBeacon when the page is hidden. Logging failures are
  * swallowed; the game must keep working without a network.
  *
  * The current session lives in sessionStorage: a reload resumes it, and
@@ -16,7 +16,10 @@ import type { ClientSession, Step } from "./types";
  */
 
 const SESSION_KEY = "bh_session";
-const FLUSH_MS = 4000;
+// Every send is a paid storage write (one file per batch), so send rarely:
+// events are safe on the device (queue + backup) until the server has them.
+const FLUSH_MS = 60_000;
+const BACKUP_MS = 4000;
 
 export type EventType =
   | "session_start"
@@ -49,7 +52,7 @@ let queue: EventQueue | null = null;
 let session: ClientSession | null = null;
 let currentStep: Step = "setup";
 let currentMachine: MachineId | "raffle" | null = null;
-let timer: number | null = null;
+let timers: number[] = [];
 
 function storage(): KeyValueStore {
   try {
@@ -94,10 +97,7 @@ function onHide(): void {
 export function startLogger(): void {
   if (queue || typeof window === "undefined") return;
   queue = createEventQueue({ store: storage(), send });
-  timer = window.setInterval(() => {
-    void queue?.flush();
-    void saveBackup();
-  }, FLUSH_MS);
+  timers = [window.setInterval(() => void queue?.flush(), FLUSH_MS), window.setInterval(() => void saveBackup(), BACKUP_MS)];
   document.addEventListener("visibilitychange", onHide);
   window.addEventListener("pagehide", onHide);
   window.addEventListener("online", () => void queue?.flush());
@@ -105,8 +105,8 @@ export function startLogger(): void {
 }
 
 export function stopLogger(): void {
-  if (timer !== null) window.clearInterval(timer);
-  timer = null;
+  for (const t of timers) window.clearInterval(t);
+  timers = [];
 }
 
 /** The session saved on this device, if a student is mid-game (survives reloads). */

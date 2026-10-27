@@ -2,7 +2,8 @@
  * Brings study data home to this laptop's data folder (outside OneDrive),
  * decrypting names with the private key from npm run keys.
  *
- *   npm run pull                          from the cloud (Vercel Blob)
+ *   npm run pull                          from the cloud (Vercel Blob), new files only
+ *   npm run pull -- --all                 from the cloud, every file again
  *   npm run pull -- --backup a.json b.json  from Chromebook backup files
  *
  * Both can be run any number of times, in any order: events are merged by
@@ -66,7 +67,14 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T) => Promise<R>): Prom
   return out;
 }
 
-async function fromCloud(pem: string) {
+/**
+ * Every file read from the cloud is a paid storage read, and cloud files
+ * never change once written, so the names of files already brought home are
+ * kept here and skipped next time. --all reads everything again.
+ */
+const pulledPath = path.join(dir, "pulled-files.json");
+
+async function fromCloud(pem: string, all: boolean) {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) throw new Error("Set BLOB_READ_WRITE_TOKEN in .env.local (vercel env pull) to pull from the cloud.");
   const blobs: string[] = [];
@@ -76,30 +84,46 @@ async function fromCloud(pem: string) {
     blobs.push(...page.blobs.map((b) => b.pathname));
     cursor = page.hasMore ? page.cursor : undefined;
   } while (cursor);
+  const pulled = new Set<string>(!all && existsSync(pulledPath) ? JSON.parse(await readFile(pulledPath, "utf8")) : []);
+  const fresh = blobs.filter((b) => !pulled.has(b));
   const fetchJson = async (pathname: string) => {
     const r = await get(pathname, { access: "private", token });
-    return r && r.statusCode === 200 ? await new Response(r.stream).json() : null;
+    if (!r || r.statusCode !== 200) return null;
+    const json = await new Response(r.stream).json();
+    pulled.add(pathname);
+    return json;
   };
 
+  // A new session needs its end time even if that file came home before.
+  const sessionPaths = fresh.filter((b) => b.startsWith("sessions/"));
+  const endedPaths = new Set(fresh.filter((b) => b.startsWith("ended/")));
+  for (const p of sessionPaths) if (blobs.includes(`ended/${p.slice(9)}`)) endedPaths.add(`ended/${p.slice(9)}`);
   const ended = new Map<string, string>();
-  for (const p of blobs.filter((b) => b.startsWith("ended/"))) {
+  for (const p of endedPaths) {
     const e = await fetchJson(p);
     ended.set(p.slice(6, -5), e?.ended_at);
   }
   let students = 0;
-  await pool(blobs.filter((b) => b.startsWith("students/")), 12, async (p) => {
+  await pool(fresh.filter((b) => b.startsWith("students/")), 12, async (p) => {
     const s = await fetchJson(p);
     const name = decryptName(s.name_enc, pem);
     const row: StudentRow = { id: s.id, ...name, class_period: s.class_period, created_at: s.created_at };
     await writeJson("students", row);
     students++;
   });
-  const sessionPaths = blobs.filter((b) => b.startsWith("sessions/"));
   await pool(sessionPaths, 12, async (p) => {
     const s = (await fetchJson(p)) as SessionRow;
     await writeJson("sessions", { ...s, ended_at: ended.get(s.id) ?? s.ended_at ?? null });
   });
-  const eventFiles = blobs.filter((b) => b.startsWith("events/"));
+  // Sessions brought home earlier that have finished since.
+  const newSessions = new Set(sessionPaths.map((p) => p.slice(9, -5)));
+  for (const [id, endedAt] of ended) {
+    const p = path.join(dir, "sessions", `${id}.json`);
+    if (newSessions.has(id) || !existsSync(p)) continue;
+    const s = JSON.parse(await readFile(p, "utf8")) as SessionRow;
+    if (!s.ended_at) await writeJson("sessions", { ...s, ended_at: endedAt });
+  }
+  const eventFiles = fresh.filter((b) => b.startsWith("events/"));
   const bySession = new Map<string, string[]>();
   for (const p of eventFiles) {
     const sid = p.split("/")[1];
@@ -110,7 +134,11 @@ async function fromCloud(pem: string) {
     const rows = (await pool(files, 12, fetchJson)).flat() as EventRow[];
     added += await mergeEvents(sid, rows);
   }
-  console.log(`cloud: ${students} students, ${sessionPaths.length} sessions, ${added} new events (${eventFiles.length} batch files)`);
+  await mkdir(dir, { recursive: true });
+  await writeFile(pulledPath, JSON.stringify([...pulled]));
+  console.log(
+    `cloud: ${students} new students, ${sessionPaths.length} new sessions, ${added} new events (${eventFiles.length} new batch files; ${blobs.length - fresh.length} files already here were skipped)`,
+  );
 }
 
 /** A stable UUID-shaped id from text (for sessions only known from a device backup). */
@@ -171,7 +199,7 @@ async function main() {
   const pem = await readFile(keyPath, "utf8");
   const i = process.argv.indexOf("--backup");
   if (i >= 0) await fromBackups(process.argv.slice(i + 1), pem);
-  else await fromCloud(pem);
+  else await fromCloud(pem, process.argv.includes("--all"));
   console.log(`Saved to ${dir}. Next: npm run export`);
 }
 

@@ -1,12 +1,30 @@
 import { dayKey, readStudySettings } from "@/config/study";
 import { nicknameFor } from "@/lib/nickname";
-import { dataStore } from "@/lib/server/storage";
+import { dataStore, type DataStore, type ScoreRow } from "@/lib/server/storage";
 import { verifyToken } from "@/lib/server/token";
 import { MAX_CODE_POINTS } from "@/components/student/state";
 import { MACHINES, NUMBER_MACHINES } from "@/machines";
 
 /** The most bugs anyone can bust in the three measured apps. */
 const MAX_BUGS = [...NUMBER_MACHINES, "monster" as const].reduce((n, id) => n + MACHINES[id].bugs.length, 0);
+
+/**
+ * Every student on the end screen asks for the board once a minute, and a
+ * fresh read lists and opens every score file (paid storage reads). So
+ * this server keeps one copy, re-read at most every 30 seconds, and adds a
+ * student's new score to it straight away. Who's who is kept the same way.
+ */
+const BOARD_TTL_MS = 30_000;
+let board: { day: string; at: number; scores: Map<string, ScoreRow> } | null = null;
+const sessions = new Map<string, { period: string; isTest: boolean }>();
+
+async function todaysScores(store: DataStore, day: string): Promise<ScoreRow[]> {
+  if (!board || board.day !== day || Date.now() - board.at > BOARD_TTL_MS) {
+    const rows = await store.listScores(day);
+    board = { day, at: Date.now(), scores: new Map(rows.map((r) => [r.session_id, r])) };
+  }
+  return [...board.scores.values()];
+}
 
 export interface LeaderboardRow {
   rank: number;
@@ -34,17 +52,21 @@ export async function POST(request: Request) {
   if (store.kind === "none") return Response.json({ error: "not_configured" }, { status: 503 });
 
   try {
-    const found = await store.getSession(sessionId);
-    if (!found) return Response.json({ error: "session" }, { status: 404 });
-    const period = found.student.class_period;
-    const isTest = found.session.is_test;
+    let who = sessions.get(sessionId);
+    if (!who) {
+      const found = await store.getSession(sessionId);
+      if (!found) return Response.json({ error: "session" }, { status: 404 });
+      who = { period: found.student.class_period, isTest: found.session.is_test };
+      sessions.set(sessionId, who);
+    }
+    const { period, isTest } = who;
     const day = dayKey(readStudySettings().timeZone);
     const nickname = nicknameFor(sessionId);
 
     if (Number.isInteger(body?.bugs)) {
       const bugs = Math.max(0, Math.min(MAX_BUGS, body.bugs as number));
       const code = Number.isInteger(body?.codePoints) ? Math.max(0, Math.min(MAX_CODE_POINTS, body.codePoints as number)) : 0;
-      await store.putScore({
+      const row: ScoreRow = {
         session_id: sessionId,
         nickname,
         bugs,
@@ -54,10 +76,12 @@ export async function POST(request: Request) {
         day,
         is_test: isTest,
         updated_at: new Date().toISOString(),
-      });
+      };
+      await store.putScore(row);
+      if (board?.day === day) board.scores.set(sessionId, row);
     }
 
-    const scores = (await store.listScores(day))
+    const scores = (await todaysScores(store, day))
       .filter((s) => s.is_test === isTest)
       // Most points first; ties go to whoever got there first. (Older rows only have bugs.)
       .map((s) => ({ ...s, points: s.points ?? s.bugs }))

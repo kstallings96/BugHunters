@@ -66,6 +66,16 @@ describe("event queue", () => {
     expect(calls.map((c) => c.seqs.length)).toEqual([10, 10, 5]);
   });
 
+  it("sends a minute of play as one file by default, but keeps beacons small", async () => {
+    const { calls, send } = recorder([]);
+    const q = createEventQueue({ store: memoryStore(), send });
+    q.register("s1", "tok1");
+    for (let i = 0; i < 60; i++) q.append("s1", "machine", "input_submit");
+    expect(q.beaconPayloads().map((p) => p.events.length)).toEqual([25, 25, 10]);
+    await q.flush();
+    expect(calls.map((c) => c.seqs.length)).toEqual([60]);
+  });
+
   it("drops a malformed batch instead of retrying it forever", async () => {
     const { send } = recorder([400]);
     const q = createEventQueue({ store: memoryStore(), send });

@@ -3,7 +3,7 @@
 import { Logo } from "@/components/Logo";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { INTAKE } from "@/config/survey";
-import { endSession, flushNow, logEvent, setStep } from "@/lib/logger";
+import { endSession, logEvent, setStep } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { MACHINES, type Category, type MachineId } from "@/machines";
 import { BigButton, Modal } from "@/components/ui";
@@ -76,7 +76,6 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     setStep(STEP_OF[screen], machineFor(next));
     logEvent("step_enter", { screen, machine_index: next.machineIndex });
     setGame(next);
-    void flushNow();
   }
 
   function addTry(machine: MachineId, t: Try) {
@@ -314,7 +313,7 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
       guide={{
         inputTip: inputTip[stage],
         bustedTip: stage === 3 ? bugCoach(tries.findLast((t) => t.revealsBug)) : undefined,
-        answerTip: (t) => (t.revealsBug ? `${whyBug(t)}, so ${clean(t.output.text)} is wrong. What should the app say instead?` : "This one worked. Pick the try that broke it."),
+        answerTip: (t) => (t.revealsBug ? `${whyBug(t)}. What should the app say instead?` : "This one worked. Pick the try that broke it."),
         kindTip: (t) => (t.revealsBug ? `${whyBug(t)}. Which kind of input is that?` : "What kind of input did you type?"),
       }}
     />
@@ -348,13 +347,10 @@ function ProgressBar({ stage }: { stage: number }) {
   );
 }
 
-/**
- * Says what just went wrong, in the student's own try, so they see that a
- * wrong answer can look normal ("cat3" → $6), not only broken ($???).
- */
+/** Says what just went wrong, in the student's own try. */
 export function bugCoach(t: Try | undefined): string {
   if (!t) return "You broke it! Tap Busted! to report it.";
-  return `You broke it! ${whyBug(t)}, but it said ${clean(t.output.text)}. Tap Busted! to report it.`;
+  return `You broke it! ${whyBug(t)}. Tap Busted! to report it.`;
 }
 
 /** Why a practice try is a bug, in a few words ("cat" isn't a number). */

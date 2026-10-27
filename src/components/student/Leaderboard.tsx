@@ -20,7 +20,7 @@ interface Board {
 /**
  * Today's leaderboard on the end screen, all class periods together:
  * nicknames only. Saves this
- * student's score once, then refreshes every 15 seconds as classmates
+ * student's score once, then refreshes every minute as classmates
  * finish. Hidden if the server can't keep scores.
  */
 export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: number; codePoints: number }) {
@@ -50,7 +50,7 @@ export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: 
       }
     }
     void load();
-    const timer = window.setInterval(load, 15_000);
+    const timer = window.setInterval(load, 60_000);
     return () => {
       alive = false;
       window.clearInterval(timer);
