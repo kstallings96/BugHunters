@@ -10,7 +10,7 @@ export function Bubble({ children, point, className = "" }: { children: ReactNod
     <div role="status" className={`relative animate-bob rounded-2xl bg-amber px-4 py-2 text-xl leading-snug font-bold text-ink shadow-md ${className}`}>
       <span
         aria-hidden="true"
-        className={`absolute size-4 rotate-45 bg-amber ${point === "left" ? "bottom-5 -left-2" : "-bottom-2 left-1/2 -translate-x-1/2"}`}
+        className={`absolute size-4 rotate-45 bg-amber ${point === "left" ? "top-1/2 -left-2 -translate-y-1/2" : "-bottom-2 left-1/2 -translate-x-1/2"}`}
       />
       <span className="relative">{children}</span>
     </div>

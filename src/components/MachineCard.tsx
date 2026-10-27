@@ -149,14 +149,14 @@ export function blankInputs(machine: Machine): Inputs {
 
 /**
  * The Monster Namer's output: a friendly monster with its name on a tag
- * underneath. The tag keeps every space the app printed (whitespace-pre),
+ * beside it. The tag keeps every space the app printed (whitespace-pre),
  * so stray spaces and a blank name are visible bugs.
  */
 export function Monster({ name }: { name: string }) {
   const shown = clean(name);
   return (
-    <div className="flex flex-col items-center gap-1 py-1" aria-live="polite" aria-label={name.trim() ? `The monster is named ${shown}` : "A monster with no name"}>
-      <svg viewBox="0 0 160 120" className="h-32 w-44" aria-hidden="true">
+    <div className="flex items-center gap-4" aria-live="polite" aria-label={name.trim() ? `The monster is named ${shown}` : "A monster with no name"}>
+      <svg viewBox="0 0 160 120" className="h-28 w-36 shrink-0" aria-hidden="true">
         <path d="M44 30 L36 6 L58 24 Z M116 30 L124 6 L102 24 Z" fill="#f59e0b" />
         <path d="M24 112 Q14 40 80 22 Q146 40 136 112 Z" fill="#7c3aed" stroke="#5b21b6" strokeWidth="4" />
         <circle cx="80" cy="58" r="20" fill="#fff" stroke="#5b21b6" strokeWidth="3" />

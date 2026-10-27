@@ -166,6 +166,26 @@ export function MachineStep({
           inputTip={guide?.inputTip}
           disabled={locked || outOfTries}
         />
+        {/* Under the app, where students are looking when something breaks. */}
+        <div className="flex shrink-0 items-center justify-center gap-5">
+          <BigButton
+            variant="danger"
+            // In practice, Busted! waits until a try actually breaks the app.
+            disabled={tries.length === 0 || (guide !== undefined && !tries.some((t) => t.revealsBug))}
+            onClick={() => {
+              logEvent("busted_open", { tries: tries.length });
+              setBustOpen(true);
+            }}
+            className={`min-h-20! w-[22rem] shrink-0 text-4xl! ${pulseBusted && tries.length ? "animate-pulse ring-4 ring-amber" : ""}`}
+          >
+            💥 Busted!
+          </BigButton>
+          {guide?.bustedTip && (
+            <Bubble point="left" className="max-w-md">
+              {guide.bustedTip}
+            </Bubble>
+          )}
+        </div>
       </div>
 
       <aside className="flex min-h-0 flex-col gap-3">
@@ -211,19 +231,6 @@ export function MachineStep({
             </div>
           </div>
         )}
-        {guide?.bustedTip && <Bubble point="down">{guide.bustedTip}</Bubble>}
-        <BigButton
-          variant="danger"
-          // In practice, Busted! waits until a try actually breaks the app.
-          disabled={tries.length === 0 || (guide !== undefined && !tries.some((t) => t.revealsBug))}
-          onClick={() => {
-            logEvent("busted_open", { tries: tries.length });
-            setBustOpen(true);
-          }}
-          className={`min-h-20! text-2xl! ${pulseBusted && tries.length ? "animate-pulse ring-4 ring-amber" : ""}`}
-        >
-          💥 Busted!
-        </BigButton>
         {onAccept && acceptLabel && (
           <BigButton variant="secondary" onClick={() => onAccept("button")} className="min-h-14! text-lg!">
             {acceptLabel}
