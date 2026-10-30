@@ -60,6 +60,8 @@ export interface GameState {
   /** Points per code question (1 per part right), by question number. */
   codeScores: number[];
   guiltyIndex: number;
+  /** Practice bugs busted, by kind (never scored; absent on games saved before it existed). */
+  practiceFound?: Category[];
 }
 
 export function newGame(now = Date.now()): GameState {
@@ -89,6 +91,43 @@ export function gameFromProgress(p: Progress, now = Date.now()): GameState {
             ? "end"
             : "intake_coding";
   return { ...newGame(now), screen, machineIndex: Math.min(2, Math.max(0, p.machineIndex)), busted: p.busted };
+}
+
+// ------------------------------------------------------------ practice
+
+/** Practice bug kinds as students would name them: blank and only spaces are both "blank". */
+const PRACTICE_KIND: Partial<Record<Category, string>> = {
+  wrong_type: "a word",
+  special: "a word",
+  empty: "blank",
+  spaces_only: "blank",
+  zero: "zero",
+  negative: "a negative number",
+};
+export const practiceKind = (k: Category): string => PRACTICE_KIND[k] ?? k;
+
+/** Practice ends after this many different kinds of bug. */
+export const PRACTICE_BUGS = 2;
+
+/** Bug kinds this try shows (tries saved before bugKinds existed only have bugKind). */
+const kindsOf = (t: Try): Category[] => t.bugKinds ?? (t.bugKind ? [t.bugKind] : []);
+
+/**
+ * Where a student is in practice, from what they've done:
+ * 1 nothing yet · 2 tried, nothing broke · 3 broke it · 4 busted one, look
+ * for a different kind · 5 broke it with a different kind.
+ */
+export function practiceStage(tries: Try[], found: Category[]): 1 | 2 | 3 | 4 | 5 {
+  const done = new Set(found.map(practiceKind));
+  const newBug = tries.some((t) => t.revealsBug && kindsOf(t).some((k) => !done.has(practiceKind(k))));
+  if (!found.length) return newBug ? 3 : tries.length ? 2 : 1;
+  return newBug ? 5 : 4;
+}
+
+/** The kinds of input from the practice hint that the student hasn't tried yet. */
+export function untriedKinds(tries: Try[]): string[] {
+  const tried = new Set(tries.flatMap((t) => t.categories.map(practiceKind)));
+  return ["a word", "blank", "zero", "a negative number"].filter((k) => !tried.has(k));
 }
 
 /** Does this real bug add to the counter? Not if the same kind was already busted on this machine. */

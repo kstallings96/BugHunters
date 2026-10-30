@@ -53,6 +53,8 @@ export interface PracticeGuide {
   answerTip: (t: Try) => string;
   /** In Busted!, over "What kind of input broke it?". */
   kindTip: (t: Try) => string;
+  /** The next new bug ends practice. */
+  finishing?: boolean;
 }
 
 export interface BustedResult {
@@ -297,10 +299,12 @@ function BustedDialog({
   onCancel: () => void;
   onDone: (r: BustedResult) => void;
 }) {
-  // In practice, start on the try that broke it, not a later one that worked.
+  // In practice, start on the try that broke it in a new way, not a later one that worked.
   const [pick, setPick] = useState(() => {
-    const bug = guide ? tries.findLastIndex((tr) => tr.revealsBug) : -1;
-    return bug >= 0 ? bug : tries.length - 1;
+    const shows = (tr: Try) => (tr.bugKinds ?? (tr.bugKind ? [tr.bugKind] : [])).some(isNewKind);
+    const bug = guide ? tries.findLastIndex((tr) => tr.revealsBug && shows(tr)) : -1;
+    const any = guide ? tries.findLastIndex((tr) => tr.revealsBug) : -1;
+    return bug >= 0 ? bug : any >= 0 ? any : tries.length - 1;
   });
   const [choosing, setChoosing] = useState(false);
   // Index into the choices, or "unsure".
@@ -353,7 +357,9 @@ function BustedDialog({
   if (result) {
     const bug = result.kind ? withArticle(bugLabel(machine, result.kind)) : "";
     const message =
-      result.verdict === "real"
+      guide && result.verdict === "real" && !result.counted
+        ? "You already found that kind. Try a different kind of input!"
+        : result.verdict === "real"
         ? result.labelAgrees
           ? `Yes, ${bug} bug!`
           : `We'd call that ${bug} bug.`
@@ -415,7 +421,7 @@ function BustedDialog({
       <Modal label="Busted result">
         <div className="flex flex-col items-center gap-5 py-2 text-center">
           <p className="text-3xl leading-snug font-bold">{message}</p>
-          <BigButton onClick={() => onDone(result)}>Keep testing</BigButton>
+          <BigButton onClick={() => onDone(result)}>{guide?.finishing && result.verdict === "real" && result.counted ? "Done with practice →" : "Keep testing"}</BigButton>
         </div>
       </Modal>
     );

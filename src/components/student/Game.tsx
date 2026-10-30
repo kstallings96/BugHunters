@@ -29,9 +29,13 @@ import {
   MAX_CODE_POINTS,
   measuredBugs,
   newGame,
+  PRACTICE_BUGS,
+  practiceKind,
+  practiceStage,
   progressStage,
   saveGame,
   STEP_OF,
+  untriedKinds,
   type GameState,
   type Screen,
   type Try,
@@ -133,7 +137,14 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       body = <Intro onDone={() => go("tutorial")} />;
       break;
     case "tutorial":
-      body = <Tutorial game={game} onTry={(t) => addTry("allowance", t)} onDone={() => go("ready")} />;
+      body = (
+        <Tutorial
+          game={game}
+          onTry={(t) => addTry("allowance", t)}
+          onBug={(kind) => setGame((g) => ({ ...g, practiceFound: [...(g.practiceFound ?? []), kind] }))}
+          onDone={() => go("ready")}
+        />
+      );
       break;
     case "ready":
       body = <Ready count={session.machineOrder.length} nickname={nicknameFor(session.id)} onStart={() => go("briefing", { machineIndex: 0 })} />;
@@ -270,13 +281,30 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
 
 /**
  * Intro screen 3: a guided demo on the Allowance Doubler. Speech bubbles
- * walk through it: type 10 (it works), type a word ($???), then Busted!,
- * with hints inside Busted! too. Each stage is worked out from what the
- * student has done so far.
+ * walk through it: type 10 (it works), try different kinds of input until
+ * it breaks, Busted!, then find a second, different kind of bug, so
+ * students learn that apps usually have more than one. Hints show inside
+ * Busted! too. Each stage is worked out from what the student has done.
  */
-function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) => void; onDone: () => void }) {
+function Tutorial({
+  game,
+  onTry,
+  onBug,
+  onDone,
+}: {
+  game: GameState;
+  onTry: (t: Try) => void;
+  /** A new kind of practice bug busted (not the last one). */
+  onBug: (kind: Category) => void;
+  onDone: () => void;
+}) {
   const tries = game.tries.allowance ?? [];
-  const stage = tries.some((t) => t.revealsBug) ? 3 : tries.some((t) => !t.revealsBug) ? 2 : 1;
+  const found = game.practiceFound ?? [];
+  const stage = practiceStage(tries, found);
+  const isNew = (k: Category) => !found.some((f) => practiceKind(f) === practiceKind(k));
+  const tag = (text: string) => <b className="rounded-md bg-white px-1.5">{text}</b>;
+  const kinds = (list: string[]) => list.map((k, i) => <span key={k}>{i ? (i === list.length - 1 ? " or " : ", ") : ""}{tag(k)}</span>);
+  const untried = untriedKinds(tries);
   const logged = useRef(0);
 
   useEffect(() => {
@@ -293,8 +321,12 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
     ),
     2: (
       <>
-        It works! Now let&apos;s try to <b className="rounded-md bg-white px-1.5">break</b> it. What might the AI not have planned for? Type a word, like{" "}
-        <b className="rounded-md bg-white px-1.5">cat</b>.
+        It works! Now try to {tag("break")} it. Try a different kind of input each time: {kinds(["a word", "blank", "zero", "a negative number"])}.
+      </>
+    ),
+    4: (
+      <>
+        Nice! Apps usually have more than one bug. Try a different kind of input{untried.length ? <>: {kinds(untried)}</> : null}.
       </>
     ),
   };
@@ -304,15 +336,26 @@ function Tutorial({ game, onTry, onDone }: { game: GameState; onTry: (t: Try) =>
       machine={MACHINES.allowance}
       tries={tries}
       onTry={onTry}
-      isNewKind={() => true}
-      onBusted={(r) => r.verdict === "real" && onDone()}
-      highlightField={stage <= 2 ? "allowance" : undefined}
-      pulseBusted={stage === 3}
+      isNewKind={isNew}
+      onBusted={(r) => {
+        if (r.verdict !== "real" || !r.kind || !isNew(r.kind)) return;
+        if (found.length + 1 >= PRACTICE_BUGS) onDone();
+        else onBug(r.kind);
+      }}
+      highlightField={stage === 3 || stage === 5 ? undefined : "allowance"}
+      pulseBusted={stage === 3 || stage === 5}
       guide={{
         inputTip: inputTip[stage],
-        bustedTip: stage === 3 ? bugCoach(tries.findLast((t) => t.revealsBug)) : undefined,
+        bustedTip:
+          stage === 3 || stage === 5
+            ? bugCoach(
+                tries.findLast((t) => t.revealsBug && (t.bugKinds ?? [t.bugKind]).some((k) => k && isNew(k))),
+                stage === 5,
+              )
+            : undefined,
         answerTip: (t) => (t.revealsBug ? `${whyBug(t)}. What should the app say instead?` : "This one worked. Pick the try that broke it."),
         kindTip: (t) => (t.revealsBug ? `${whyBug(t)}. Which kind of input is that?` : "What kind of input did you type?"),
+        finishing: found.length + 1 >= PRACTICE_BUGS,
       }}
     />
   );
@@ -346,9 +389,10 @@ function ProgressBar({ stage }: { stage: number }) {
 }
 
 /** Says what just went wrong, in the student's own try. */
-export function bugCoach(t: Try | undefined): string {
-  if (!t) return "You broke it! Tap Busted! to report it.";
-  return `You broke it! ${whyBug(t)}. Tap Busted! to report it.`;
+export function bugCoach(t: Try | undefined, again = false): string {
+  const broke = again ? "You broke it again!" : "You broke it!";
+  if (!t) return `${broke} Tap Busted! to report it.`;
+  return `${broke} ${whyBug(t)}. Tap Busted! to report it.`;
 }
 
 /** Why a practice try is a bug, in a few words ("cat" isn't a number). */
