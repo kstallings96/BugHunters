@@ -40,7 +40,8 @@ export interface SessionRow {
   order_assignment: "random" | "url";
   /** Missed-bug reveal after every app, or only once at the end. */
   reveal_condition: "reveal" | "end_only";
-  reveal_assignment: "random" | "url";
+  /** "all" since Oct 29, 2026 (everyone gets the reveal after each app). */
+  reveal_assignment: "random" | "url" | "all";
   app_version: string;
   config_version: string;
   started_at: string;

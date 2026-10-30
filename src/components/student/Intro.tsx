@@ -92,7 +92,7 @@ export function Ready({ count, nickname, onStart }: { count: number; nickname: s
  * Before each app: what was asked of the AI (the exact prompt the model
  * got), and its confident reply, like the intro's chat. Then check it.
  */
-export function Briefing({ machine, tries, onStart }: { machine: Machine; tries: number; onStart: () => void }) {
+export function Briefing({ machine, onStart }: { machine: Machine; onStart: () => void }) {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-6 px-6 py-6">
       <h1 className="text-4xl font-bold">
@@ -111,8 +111,7 @@ export function Briefing({ machine, tries, onStart }: { machine: Machine; tries:
         </div>
       </div>
       <p className="rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-2xl font-bold">
-        Your job: try lots of different inputs. Can you make it break? You get{" "}
-        <span className="rounded-lg bg-white px-2">{tries} tries</span>.
+        Your job: try lots of different inputs. Can you make it break?
       </p>
       <BigButton onClick={onStart} className="self-end">
         Start testing →

@@ -4,8 +4,8 @@ import { parseBatch } from "@/lib/eventBatch";
 import { isTestName, normalizeName, sameName } from "@/lib/identity";
 
 describe("study settings", () => {
-  it("defaults: periods 1-8, 180 s nudge, Central time", () => {
-    expect(readStudySettings({})).toEqual({ periods: ["1", "2", "3", "4", "5", "6", "7", "8"], nudgeSeconds: 180, timeZone: "America/Chicago" });
+  it("defaults: periods 1-8, 5-minute nudge, Central time", () => {
+    expect(readStudySettings({})).toEqual({ periods: ["1", "2", "3", "4", "5", "6", "7", "8"], nudgeSeconds: 300, timeZone: "America/Chicago" });
   });
   it("reads env values", () => {
     expect(readStudySettings({ CLASS_PERIODS: " 2, 4 ,6A ", NUDGE_SECONDS: "5", SCHOOL_TIMEZONE: "America/New_York" })).toEqual({
@@ -29,11 +29,8 @@ describe("machine order", () => {
 });
 
 describe("reveal condition", () => {
-  it("is 50/50 unless forced with ?reveal=on|off", () => {
-    expect(revealCondition(null, () => 0.1)).toEqual({ condition: "reveal", assignment: "random" });
-    expect(revealCondition(null, () => 0.9)).toEqual({ condition: "end_only", assignment: "random" });
-    expect(revealCondition("on")).toEqual({ condition: "reveal", assignment: "url" });
-    expect(revealCondition("OFF")).toEqual({ condition: "end_only", assignment: "url" });
+  it("everyone sees the reveal after each app", () => {
+    expect(revealCondition()).toEqual({ condition: "reveal", assignment: "all" });
   });
 });
 

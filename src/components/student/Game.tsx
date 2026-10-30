@@ -11,11 +11,8 @@ import { clean } from "@/lib/clean";
 import { nicknameFor } from "@/lib/nickname";
 import { Briefing, Intro, Ready } from "./Intro";
 import { Leaderboard } from "./Leaderboard";
-import { FullReveal, MachineReveal, NextApp } from "./Reveal";
+import { MachineReveal } from "./Reveal";
 import { MachineStep, type BustedResult } from "./MachineStep";
-
-/** Tries per measured machine. Scarcity makes probes deliberate (as in AlwaysNever). */
-const MAX_TRIES = 8;
 import { EndScreen, GuiltyLine, SurveyScreen } from "./Screens";
 import {
   categoryCounts,
@@ -111,8 +108,6 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
   }
 
   const isNewKind = (machine: MachineId) => (kind: Category) => isNewBug(game.busted, machine, kind);
-  // Sessions saved before the reveal condition existed get the full reveal at the end.
-  const revealCondition = session.revealCondition ?? "end_only";
   const counter = game.screen === "machine";
   // Students can stop any time before the end.
   const canStop = game.screen !== "end";
@@ -151,7 +146,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       break;
     case "briefing": {
       const id = session.machineOrder[game.machineIndex];
-      body = <Briefing key={id} machine={MACHINES[id]} tries={MAX_TRIES} onStart={() => go("machine")} />;
+      body = <Briefing key={id} machine={MACHINES[id]} onStart={() => go("machine")} />;
       break;
     }
     case "machine": {
@@ -168,7 +163,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
           isNewKind={isNewKind(id)}
           onBusted={(r) => busted(id, r, true)}
           acceptLabel={lastMachine ? "Looks good, I'm done →" : "Looks good, next app →"}
-          maxTries={MAX_TRIES}
+          countTries
           onAccept={(via) => accept(id, via, advance)}
           nudgeAt={game.machineStartedAt + session.nudgeSeconds * 1000}
           onNudge={() => {
@@ -185,14 +180,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
       const lastMachine = game.machineIndex >= session.machineOrder.length - 1;
       // After the last app: the code questions, then the end.
       const next = () => (lastMachine ? go("code", { guiltyIndex: 0 }) : go("briefing", { machineIndex: game.machineIndex + 1 }));
-      body =
-        revealCondition === "reveal" ? (
-          <MachineReveal key={id} machine={id} busted={game.busted} last={lastMachine} onNext={next} />
-        ) : lastMachine ? (
-          <FullReveal machines={session.machineOrder} busted={game.busted} onNext={next} />
-        ) : (
-          <NextApp key={id} onNext={next} />
-        );
+      body = <MachineReveal key={id} machine={id} busted={game.busted} last={lastMachine} onNext={next} />;
       break;
     }
     case "code": {

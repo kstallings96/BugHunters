@@ -58,6 +58,12 @@ html {
 /* Everything is sized in rem, so the root font size scales the whole game.
    A 1366x768 laptop (the classroom Dell Latitude 3310) has only about
    600px of page once Chrome's bars and the Windows taskbar are drawn. */
+@media (max-height: 820px) {
+  html {
+    font-size: 17px;
+  }
+}
+
 @media (max-height: 700px) {
   html {
     font-size: 16px;

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FullReveal, MachineReveal, NextApp } from "@/components/student/Reveal";
+import { MachineReveal } from "@/components/student/Reveal";
 import type { BustedBug } from "@/lib/types";
 
 const logged: { type: string; payload: Record<string, unknown> }[] = [];
@@ -40,18 +40,5 @@ describe("missed-bug reveal", () => {
     cleanup();
     render(<MachineReveal machine="savings" busted={busted} last={false} onNext={() => {}} />);
     expect(screen.queryByText(/You found every bug/)).toBeNull();
-  });
-
-  it("all apps at once: one column per app", () => {
-    render(<FullReveal machines={["sale", "savings", "monster"]} busted={busted} onNext={() => {}} />);
-    for (const name of ["Sale Price", "Savings Planner", "Monster Namer"]) expect(screen.getByText(new RegExp(name))).toBeTruthy();
-    expect(screen.getAllByText(/you found it!/)).toHaveLength(2);
-    expect(logged[0]).toMatchObject({ type: "reveal_view", payload: { scope: "all" } });
-  });
-
-  it("the no-reveal group just sees Next app", () => {
-    render(<NextApp onNext={() => {}} />);
-    expect(screen.getByRole("button", { name: /Next app/ })).toBeTruthy();
-    expect(screen.queryByText(/hiding/)).toBeNull();
   });
 });

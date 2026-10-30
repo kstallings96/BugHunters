@@ -82,40 +82,6 @@ export function MachineReveal({ machine, busted, last, onNext }: { machine: Mach
   );
 }
 
-/** Reveal for all three apps at once, after the last one (end-only condition). */
-export function FullReveal({ machines, busted, onNext }: { machines: MachineId[]; busted: BustedBug[]; onNext: () => void }) {
-  const parts = machines.map((id) => ({ id, ...split(id, busted) }));
-  useLogOnce({
-    scope: "all",
-    found: Object.fromEntries(parts.map((p) => [p.id, p.found.map((b) => b.kind)])),
-    missed: Object.fromEntries(parts.map((p) => [p.id, p.hiding.map((b) => b.kind)])),
-    all_found: parts.filter((p) => p.hiding.length === 0 && p.found.length > 0).map((p) => p.id),
-  });
-
-  return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 px-6 py-4">
-      <h1 className="text-3xl font-bold">Here&apos;s what was hiding in each app.</h1>
-      <div className="grid min-h-0 flex-1 grid-cols-3 gap-4">
-        {parts.map((p) => (
-          <section key={p.id} className="flex min-h-0 flex-col gap-2 overflow-y-auto rounded-3xl border-2 border-line bg-card p-3">
-            <h2 className="text-xl font-bold">
-              {MACHINES[p.id].icon} {MACHINES[p.id].name}
-            </h2>
-            {p.hiding.length === 0 && p.found.length > 0 && (
-              <p className="rounded-xl border-2 border-teal bg-teal/10 px-3 py-1 text-base font-bold text-teal">You found every bug in this app!</p>
-            )}
-            <BugList compact found={p.found.map((b) => bugLabel(p.id, b.kind))} hiding={p.hiding.map((b) => ({ label: bugLabel(p.id, b.kind), tryThis: b.tryThis }))} />
-          </section>
-        ))}
-      </div>
-      {machines.every(onlyOrdinary) && <p className="text-lg">The AI&apos;s own tests only tried ordinary inputs.</p>}
-      <BigButton onClick={onNext} className="self-end">
-        Code questions →
-      </BigButton>
-    </main>
-  );
-}
-
 /** The banner for finding every bug the AI left in one app. */
 function AllFound({ name }: { name: string }) {
   return (
@@ -125,8 +91,8 @@ function AllFound({ name }: { name: string }) {
   );
 }
 
-function BugList({ found, hiding, compact = false }: { found: string[]; hiding: { label: string; tryThis: string }[]; compact?: boolean }) {
-  const size = compact ? "text-base" : "text-lg";
+function BugList({ found, hiding }: { found: string[]; hiding: { label: string; tryThis: string }[] }) {
+  const size = "text-lg";
   return (
     <ul className="flex flex-col gap-1.5">
       {found.map((label) => (
@@ -140,15 +106,5 @@ function BugList({ found, hiding, compact = false }: { found: string[]; hiding: 
         </li>
       ))}
     </ul>
-  );
-}
-
-/** Between apps in the end-only condition: no feedback, just move on. */
-export function NextApp({ onNext }: { onNext: () => void }) {
-  return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 px-6 py-6 text-center">
-      <h1 className="text-4xl font-bold">Next app!</h1>
-      <BigButton onClick={onNext}>Next app →</BigButton>
-    </main>
   );
 }

@@ -83,7 +83,7 @@ export function MachineStep({
   highlightField,
   pulseBusted = false,
   locked = false,
-  maxTries,
+  countTries = false,
 }: {
   machine: Machine;
   tries: Try[];
@@ -101,14 +101,13 @@ export function MachineStep({
   pulseBusted?: boolean;
   /** Tutorial steps that wait for one specific action. */
   locked?: boolean;
-  /** Tries allowed on this machine; scarcity makes each one a choice. Unlimited if absent. */
-  maxTries?: number;
+  /** Show how many tries so far (no limit; until Oct 29, 2026 there were 8). */
+  countTries?: boolean;
 }) {
   const [values, setValues] = useState<Inputs>(() => blankInputs(machine));
   const [bustOpen, setBustOpen] = useState(false);
   const [nudge, setNudge] = useState<"hidden" | "shown" | "dismissed">("hidden");
   const last = tries.at(-1) ?? null;
-  const outOfTries = maxTries !== undefined && tries.length >= maxTries;
 
   useEffect(() => {
     if (nudgeAt == null) return;
@@ -152,7 +151,6 @@ export function MachineStep({
       unclear_message: e.unclearMessage,
     });
     onTry(t);
-    if (maxTries !== undefined && t.n === maxTries) logEvent("tries_used_up", { max: maxTries });
   }
 
   return (
@@ -166,7 +164,7 @@ export function MachineStep({
           output={last?.output ?? null}
           highlightField={highlightField}
           inputTip={guide?.inputTip}
-          disabled={locked || outOfTries}
+          disabled={locked}
         />
         {/* Under the app, where students are looking when something breaks. */}
         <div className="flex shrink-0 items-center justify-center gap-5">
@@ -191,10 +189,9 @@ export function MachineStep({
       </div>
 
       <aside className="flex min-h-0 flex-col gap-3">
-        {maxTries !== undefined && <TriesLeft used={tries.length} max={maxTries} />}
+        {countTries && <TryCount tries={tries.length} />}
         <div className="flex min-h-0 flex-1 flex-col rounded-3xl border-2 border-line bg-card p-3">
           <p className="mb-1 text-lg font-bold">Your tries</p>
-          {outOfTries && <p className="mb-1 rounded-xl bg-amber-soft px-3 py-1 text-base font-bold">That was your last try! Bust a bug, or move on.</p>}
           {tries.length > 0 && (
             <ol className="flex min-h-0 flex-col gap-1 overflow-y-auto">
               {[...tries].reverse().map((t) => (
@@ -260,24 +257,12 @@ export function MachineStep({
   );
 }
 
-/** How many tries are left, big enough to notice: a number and a dot per try, red near the end. */
-function TriesLeft({ used, max }: { used: number; max: number }) {
-  const left = Math.max(0, max - used);
-  const low = left <= 2;
+/** How many tries so far, big enough to notice. */
+function TryCount({ tries }: { tries: number }) {
   return (
-    <div
-      aria-live="polite"
-      className={`flex items-center gap-3 rounded-2xl border-4 px-3 py-1.5 ${low ? "border-danger bg-danger/10" : "border-amber bg-amber-soft"}`}
-    >
-      <p className={`text-4xl leading-none font-bold ${low ? "text-danger" : ""}`}>{left}</p>
-      <div className="flex flex-col gap-1">
-        <p className="text-xl leading-none font-bold">{left === 1 ? "try" : "tries"} left</p>
-        <div className="flex gap-1" aria-hidden="true">
-          {Array.from({ length: max }, (_, i) => (
-            <span key={i} className={`size-3 rounded-full ${i < left ? (low ? "bg-danger" : "bg-amber") : "border-2 border-ink-soft/40"}`} />
-          ))}
-        </div>
-      </div>
+    <div aria-live="polite" className="flex items-center gap-3 rounded-2xl border-4 border-amber bg-amber-soft px-3 py-1.5">
+      <p className="text-4xl leading-none font-bold">{tries}</p>
+      <p className="text-xl leading-none font-bold">{tries === 1 ? "try" : "tries"}</p>
     </div>
   );
 }

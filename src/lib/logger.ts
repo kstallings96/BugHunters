@@ -30,7 +30,6 @@ export type EventType =
   | "survey_response"
   | "tutorial_step"
   | "input_submit"
-  | "tries_used_up"
   | "busted_open"
   | "busted"
   | "busted_cancel"

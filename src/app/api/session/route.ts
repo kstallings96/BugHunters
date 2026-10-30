@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const params = typeof body.params === "object" && body.params !== null ? body.params : {};
     const order = machineOrder(params.order);
-    const reveal = revealCondition(params.reveal);
+    const reveal = revealCondition();
     const student: StudentRow = {
       id: randomUUID(),
       first_name: name.firstName,

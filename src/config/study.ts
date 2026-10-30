@@ -27,7 +27,7 @@ export function readStudySettings(env: Record<string, string | undefined> = proc
     .filter(Boolean);
   return {
     periods: periods.length ? periods : ["1"],
-    nudgeSeconds: number(env.NUDGE_SECONDS, 180, 30, 3600),
+    nudgeSeconds: number(env.NUDGE_SECONDS, 300, 30, 3600),
     timeZone: env.SCHOOL_TIMEZONE?.trim() || "America/Chicago",
   };
 }
@@ -48,15 +48,12 @@ export function machineOrder(param: string | null | undefined, random: () => num
 export type RevealCondition = "reveal" | "end_only";
 
 /**
- * Missed-bug reveal condition, 50/50 per student unless forced with
- * ?reveal=on or ?reveal=off. "reveal": after every app. "end_only": a full
- * reveal of all three apps after the last one, so everyone gets the lesson.
+ * Missed-bug reveal: everyone sees what they missed after each app. Until
+ * Oct 29, 2026 it was 50/50 with "end_only" (one reveal after the last app);
+ * those sessions keep their recorded condition.
  */
-export function revealCondition(param: string | null | undefined, random: () => number = Math.random): { condition: RevealCondition; assignment: "random" | "url" } {
-  const forced = param?.trim().toLowerCase();
-  if (forced === "on") return { condition: "reveal", assignment: "url" };
-  if (forced === "off") return { condition: "end_only", assignment: "url" };
-  return { condition: random() < 0.5 ? "reveal" : "end_only", assignment: "random" };
+export function revealCondition(): { condition: RevealCondition; assignment: "all" } {
+  return { condition: "reveal", assignment: "all" };
 }
 
 /** Start of "today" in the school's time zone, as an ISO instant. */

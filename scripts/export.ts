@@ -180,7 +180,7 @@ describe("Students", [
   ["Finished", 'When they tapped "I\'m finished". Blank if they never did (closed the tab, ran out of time).'],
   ["Minutes", "From start to finish (or to their last event, if they never finished)."],
   ["Stopped early", 'Where they tapped "Stop" to leave before the end (blank if they didn\'t).'],
-  ["Reveal group", '"After each app": saw what they missed after every app. "Only at the end": saw it once, after the last app. Assigned at random.'],
+  ["Reveal group", '"After each app": saw what they missed after every app. "Only at the end": saw it once, after the last app. Assigned at random until Oct 29, 2026; since then everyone is "After each app".'],
   ["App order", "Which number app came first (random). The Monster Namer is always third."],
   ["Coding experience", "Intake question 1, 1 (Never) to 5 (A lot)."],
   ["AI confidence", "Intake question 2, 1 (Not at all) to 5 (Very confident)."],
@@ -198,7 +198,7 @@ describe("Per app", [
   ["App", "Savings Planner, Sale Price or Monster Namer."],
   ["Position", "1st, 2nd or 3rd app this student saw."],
   ["Reveal group", "As on Students."],
-  ["Tries", 'Inputs tried ("Try it" taps), up to 8.'],
+  ["Tries", 'Inputs tried ("Try it" taps). No limit since Oct 29, 2026 (before that, up to 8).'],
   ["Ordinary tries", "Tries with only everyday inputs (like 20 and 5). These confirm the app works but can't find bugs."],
   ["Edge-case tries", "Tries with at least one unusual input: zero, blank, negative, too big, not a number, symbols, the limit..."],
   ["Ordinary per edge case", "Ordinary tries ÷ edge-case tries. Lower means more deliberate testing. Blank if no edge cases."],
@@ -206,7 +206,7 @@ describe("Per app", [
   ["Input kinds tried", "How many different kinds of input they tried, and which."],
   ["Tries before moving on", 'Tries before "Looks good, next" (or the nudge).'],
   ["Moved on with no edge cases", "Yes if they accepted the AI's claim without trying a single unusual input."],
-  ["Moved on by", '"Button" (Looks good) or "Nudge" (the "Ready for the next machine?" prompt after 3 minutes). Blank if they never moved on.'],
+  ["Moved on by", '"Button" (Looks good) or "Nudge" (the "Ready for the next app?" prompt: after 3 minutes until Oct 29, 2026, 5 minutes since). Blank if they never moved on.'],
   ["Bugs busted", "Different real bugs found in this app, and which kinds."],
   ["False alarms", "Busted! on an input the app handled correctly."],
   ["Debatable", 'Busted! on an input the request doesn\'t cover (like "$20" or a hyphenated name).'],
@@ -220,8 +220,8 @@ describe("Per app", [
   ["Loud bugs possible", "How many different loud bugs this app can show at all (Savings 1, Sale Price 4, Monster Namer 2; the same for every student). Caught ÷ possible compares students on one scale."],
   ["Silent bugs possible", "How many different silent bugs this app can show at all (Savings 4, Sale Price 4, Monster Namer 4)."],
   ["Kinds reused (Monster only)", "Input kinds tried on the Monster Namer that they had first tried on a number app: does the testing transfer to text?"],
-  ["Saw nudge", 'Yes if "Ready for the next machine?" appeared (3 minutes in). It never moves them on by itself.'],
-  ["Used all 8 tries", "Yes if they ran out of tries on this app."],
+  ["Saw nudge", 'Yes if "Ready for the next app?" appeared (3 minutes in until Oct 29, 2026; 5 minutes since). It never moves them on by itself.'],
+  ["Used all 8 tries", "Yes if they ran out of tries on this app. Only sessions before Oct 29, 2026, when there was an 8-try limit."],
 ]);
 
 describe("Tries", [
