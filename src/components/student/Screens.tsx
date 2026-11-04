@@ -84,7 +84,7 @@ export function EndScreen({
       <p className="text-2xl">
         Code questions: <b>{codePoints}</b> of {codeMax} points. Your score: <b>{bugPointsFor(busted) + codePoints}</b>
       </p>
-      <p className="text-xl text-ink-soft">Bugs that looked normal count double.</p>
+      <p className="text-xl text-ink-soft">Obvious bugs: 1 point. Sneaky bugs: 2 points.</p>
       <p className="text-2xl">Thank you for testing the AI&apos;s tools!</p>
       <div className="mt-2 flex flex-wrap justify-center gap-4">
         <BigButton onClick={onFinish}>I&apos;m finished</BigButton>

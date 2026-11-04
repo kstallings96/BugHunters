@@ -83,9 +83,18 @@ export function Ready({ count, nickname, onStart }: { count: number; nickname: s
       <p className="text-xl">
         Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on today&apos;s leaderboard at the end.
       </p>
-      <p className="rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-xl font-bold">
-        A bug that looks broken is worth 1 point. A bug that looks normal but is wrong is worth 2.
-      </p>
+      <dl className="flex w-full flex-col gap-2 rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-left text-xl">
+        <div className="flex items-center gap-4">
+          <dt className="w-24 shrink-0 font-bold">Obvious</dt>
+          <dd className="flex-1">The answer looks broken, like $???</dd>
+          <dd className="shrink-0 font-bold">1 point</dd>
+        </div>
+        <div className="flex items-center gap-4">
+          <dt className="w-24 shrink-0 font-bold">Sneaky</dt>
+          <dd className="flex-1">The answer looks fine, but it&apos;s wrong</dd>
+          <dd className="shrink-0 font-bold">2 points</dd>
+        </div>
+      </dl>
       <BigButton onClick={onStart}>Start →</BigButton>
     </main>
   );
