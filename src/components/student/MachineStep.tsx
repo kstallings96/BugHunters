@@ -59,8 +59,6 @@ export interface PracticeGuide {
 
 export interface BustedResult {
   verdict: BustedVerdict;
-  /** The app's vague refusal the student busted ("Invalid input"), if that's what it was. */
-  unclearMessage?: string;
   kind: Category | null;
   inputs: Inputs;
   /** A real bug of a kind not yet busted on this machine. */
@@ -336,7 +334,37 @@ function BustedDialog({
       // Busted! on the app's vague refusal ("Invalid input"): Debatable, counted apart.
       unclear_message: t.unclearMessage === true,
     });
-    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: agrees, unclearMessage: t.unclearMessage === true ? t.output.text : undefined });
+    setResult({ verdict, kind, inputs: t.inputs, counted, labelAgrees: agrees });
+  }
+
+  /**
+   * Busted! on the app's vague refusal ("Invalid input"). Saying no was right,
+   * so "It should say" and "What kind broke it?" don't fit: just ask if the
+   * message is clear. Debatable, counted apart, never scored.
+   */
+  function voteUnclear(vote: string) {
+    const verdict = verdictFor(t);
+    logEvent("busted", {
+      input_n: t.n,
+      inputs: t.inputs,
+      output_shown: t.output.text,
+      expected_options: [],
+      expected_choice: null,
+      expected_unsure: false,
+      expected_correct: null,
+      expected_right_options: [],
+      student_label: null,
+      classifier_label: null,
+      classifier_labels: [],
+      label_agreement: null,
+      verdict,
+      bug_kind: null,
+      bug_kinds: [],
+      counted: false,
+      unclear_message: true,
+    });
+    logEvent("debatable_vote", { input_n: t.n, inputs: t.inputs, unclear_message: true, vote });
+    onDone({ verdict, kind: null, inputs: t.inputs, counted: false, labelAgrees: false });
   }
 
   if (result) {
@@ -352,44 +380,28 @@ function BustedDialog({
 
     // No right answer: explain why in plain words, then ask what the student thinks (not scored).
     if (result.verdict === "debatable") {
-      const unclear = result.unclearMessage;
-      const choices = unclear
-        ? [
-            { id: "clear", text: "Yes, it's clear" },
-            { id: "not_clear", text: "No, it should say what's wrong" },
-            { id: "unsure", text: "Not sure" },
-          ]
-        : [
-            { id: "should_work", text: "It should work" },
-            { id: "should_say_no", text: "It should say no" },
-            { id: "unsure", text: "Not sure" },
-          ];
+      const choices = [
+        { id: "should_work", text: "It should work" },
+        { id: "should_say_no", text: "It should say no" },
+        { id: "unsure", text: "Not sure" },
+      ];
       return (
         <Modal label="Busted result">
           <div className="flex flex-col items-center gap-4 py-2 text-center">
-            {unclear ? (
-              <>
-                <p className="text-3xl leading-snug font-bold">It said no, which is fine.</p>
-                <p className="text-2xl leading-snug">But does &ldquo;{unclear}&rdquo; tell you what&apos;s wrong?</p>
-              </>
-            ) : (
-              <>
-                <p className="text-3xl leading-snug font-bold">There&apos;s no right answer for this one.</p>
-                {machine.request && (
-                  <p className="rounded-2xl bg-amber-soft px-4 py-2 text-xl">
-                    <span className="font-bold">Request:</span> &ldquo;{machine.request}&rdquo;
-                  </p>
-                )}
-                <p className="text-2xl leading-snug">{debatableReason(machine, t.inputs)} What do you think?</p>
-              </>
+            <p className="text-3xl leading-snug font-bold">There&apos;s no right answer for this one.</p>
+            {machine.request && (
+              <p className="rounded-2xl bg-amber-soft px-4 py-2 text-xl">
+                <span className="font-bold">Request:</span> &ldquo;{machine.request}&rdquo;
+              </p>
             )}
+            <p className="text-2xl leading-snug">{debatableReason(machine, t.inputs)} What do you think?</p>
             <div className="flex flex-wrap justify-center gap-3">
               {choices.map((c) => (
                 <BigButton
                   key={c.id}
                   variant={c.id === "unsure" ? "secondary" : "primary"}
                   onClick={() => {
-                    logEvent("debatable_vote", { input_n: t.n, inputs: t.inputs, unclear_message: !!unclear, vote: c.id });
+                    logEvent("debatable_vote", { input_n: t.n, inputs: t.inputs, unclear_message: false, vote: c.id });
                     onDone(result);
                   }}
                 >
@@ -482,6 +494,20 @@ function BustedDialog({
           </div>
         )}
 
+        {t.unclearMessage ? (
+          <div className="flex flex-col items-center gap-4 py-2 text-center">
+            <p className="text-3xl leading-snug font-bold">The app was right to say no.</p>
+            <p className="text-2xl leading-snug">But does &ldquo;{t.output.text}&rdquo; tell you what&apos;s wrong?</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <BigButton onClick={() => voteUnclear("clear")}>Yes, it&apos;s clear</BigButton>
+              <BigButton onClick={() => voteUnclear("not_clear")}>No, it should say what&apos;s wrong</BigButton>
+              <BigButton variant="secondary" onClick={() => voteUnclear("unsure")}>
+                Not sure
+              </BigButton>
+            </div>
+          </div>
+        ) : (
+          <>
         {guide && <Bubble point="down" className="text-lg!">{guide.answerTip(t)}</Bubble>}
         <h3 className="text-2xl font-bold">It should say…</h3>
         {[t.output.text, ...choices.options, ...Object.values(t.inputs)].some((x) => shownText(x).includes(SPACE_MARK)) && (
@@ -502,6 +528,8 @@ function BustedDialog({
         <BigButton onClick={() => setLabeling(true)} disabled={expect === null} className="self-end">
           Next →
         </BigButton>
+          </>
+        )}
       </div>
     </Modal>
   );

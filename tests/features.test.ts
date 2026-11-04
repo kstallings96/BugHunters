@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { codeNames, codeParts } from "@/components/student/Screens";
-import { codeQuestions, MAX_CODE_QUESTIONS, measuredBugs, progressStage } from "@/components/student/state";
+import { bugPointsFor, codeQuestions, MAX_CODE_QUESTIONS, measuredBugs, progressStage } from "@/components/student/state";
 import { dayKey } from "@/config/study";
 import { INTAKE } from "@/config/survey";
 import { hasBadWords } from "@/lib/clean";
@@ -88,6 +88,18 @@ describe("code questions", () => {
     expect(named("savings", 'show weeks + " weeks"')).toEqual(["weeks"]);
     expect(named("monster", "name = what's in the Name box")).toEqual(["name"]);
     expect(named("monster", 'if name is blank → say "You left the name blank."')).toEqual(["name"]);
+  });
+  it("silent bugs count double on the leaderboard", () => {
+    const of = (machine: MachineId, kind: BustedBug["kind"], inputs: Record<string, string>) => bugPointsFor([{ machine, kind, inputs }]);
+    expect(of("savings", "zero", { price: "20", saved: "0" })).toBe(1); // Infinity weeks
+    expect(of("savings", "rounding", { price: "10", saved: "3" })).toBe(2); // 3 weeks
+    expect(of("monster", "empty", { name: "" })).toBe(1);
+    expect(of("monster", "very_long", { name: "Fluffernutterbob" })).toBe(2);
+    // The same kind can be either, depending on what the app showed.
+    expect(of("sale", "wrong_type", { price: "40", off: "half" })).toBe(1);
+    expect(of("sale", "wrong_type", { price: "1.2.3", off: "10" })).toBe(2);
+    // Practice-style or raffle entries never add up here.
+    expect(bugPointsFor([{ machine: "raffle", kind: "off_by_one", inputs: { names: "a" } }])).toBe(0);
   });
   it("the leaderboard counts only the three apps", () => {
     expect(measuredBugs([bug("savings", "zero"), bug("raffle", "off_by_one")])).toBe(1);

@@ -18,7 +18,7 @@ import { readStudySettings } from "@/config/study";
 import { computeMetrics, type MetricEvent, type MetricRow } from "@/lib/metrics";
 import { nicknameFor } from "@/lib/nickname";
 import { defaultLogDir, type SessionRow, type StudentRow } from "@/lib/server/storage";
-import { bugLabel, bugVisibility, CATEGORY_LABEL, MACHINES, type Category, type MachineId } from "@/machines";
+import { bugLabel, bugPointValue, bugVisibility, CATEGORY_LABEL, MACHINES, type Category, type MachineId } from "@/machines";
 
 const withNames = process.argv.includes("--names");
 const dir = process.env.LOG_DIR || defaultLogDir();
@@ -108,6 +108,9 @@ const intakeText = (q: "coding_experience" | "ai_confidence", n: number | null) 
   return choice ? `${n} = ${choice.label}` : String(n);
 };
 
+/** Silent bugs count double on the leaderboard from this day on. */
+const WEIGHTED_SCORE_SINCE = "2026-11-04";
+
 const yes = (v: unknown) => (v === true ? "Yes" : v === false ? "No" : "");
 const pct = (v: number | null) => (v === null ? "" : Math.round(v * 100));
 
@@ -184,12 +187,13 @@ describe("Students", [
   ["App order", "Which number app came first (random). The Monster Namer is always third."],
   ["Coding experience", "Intake question 1, 1 (Never) to 5 (A lot)."],
   ["AI confidence", "Intake question 2, 1 (Not at all) to 5 (Very confident)."],
-  ["Bugs busted (3 apps)", "Different bugs found in the three apps (each kind counts once per app). The leaderboard score."],
+  ["Bugs busted (3 apps)", "Different bugs found in the three apps (each kind counts once per app)."],
+  ["Bug points", "Those bugs weighted: 2 points for a silent bug, 1 for a loud one, going by what the app showed for the input they busted."],
   ["Bug kinds found", "Which kinds, by app."],
   ["Loud bugs caught", 'Across the 3 apps: loud bugs caught, of the ones they saw, and of all the game has. Loud = the answer itself looked broken ("$???", "Infinity weeks", a blank name).'],
   ["Silent bugs caught", 'Across the 3 apps: silent bugs caught, of the ones they saw, and of all the game has. Silent = a normal-looking answer that was wrong for the request ("3 weeks" instead of 4, "Sale price: $48.00" for -20% off).'],
   ["Code points", "Code questions after the 3 apps (required): 1 point per part right, out of 6."],
-  ["Score", "The leaderboard score: bugs busted in the 3 apps + code points."],
+  ["Score", `The leaderboard score the student saw: Bug points + code points. Before ${WEIGHTED_SCORE_SINCE}, every bug counted 1 point, so it was Bugs busted + code points.`],
   ["Session ID", "Joins this row to the other sheets and the raw files."],
 ]);
 
@@ -250,7 +254,7 @@ describe("Busted", [
   ["Verdict", '"Real bug", "Not a bug" (false alarm) or "Debatable".'],
   ["Bug credited", "Which bug got credit."],
   ["Counted", "Yes if it added to their score (not a kind they had already found on this app)."],
-  ["Their opinion", 'Debatable ones only: what they thought. For "Invalid input": clear / not clear. Otherwise: it should work / it should say no. Not scored.'],
+  ["Their opinion", 'Debatable ones only: what they thought. For "Invalid input": clear / not clear. Otherwise: it should work / it should say no. Not scored. Since Nov 4, 2026, Busted! on "Invalid input" goes straight to this question, so its "It should say" and "Kind" columns are blank.'],
 ]);
 
 describe("Code questions", [
@@ -321,6 +325,7 @@ async function main() {
     const counted = busts.filter((b) => b.payload.counted === true);
     const measured = counted.filter((b) => b.step === "machine");
     const codes = ev.filter((e) => e.event_type === "guilty_line_attempt");
+    const bugPoints = measured.reduce((n, b) => n + bugPointValue(String(b.payload.output_shown ?? "")), 0);
 
     studentRows.push({
       ...who(s),
@@ -333,6 +338,7 @@ async function main() {
       "Coding experience": intakeText("coding_experience", metrics[0]?.coding_experience ?? null),
       "AI confidence": intakeText("ai_confidence", metrics[0]?.ai_confidence ?? null),
       "Bugs busted (3 apps)": measured.length,
+      "Bug points": bugPoints,
       "Bug kinds found": metrics
         .filter((m) => m.real_bugs)
         .map((m) => `${appName(m.machine)}: ${kindsName(m.machine, m.bug_kinds)}`)
@@ -340,7 +346,7 @@ async function main() {
       "Loud bugs caught": caughtOf(metrics, "loud"),
       "Silent bugs caught": caughtOf(metrics, "silent"),
       "Code points": codes.length ? codes.reduce((n, c) => n + codePointsOf(c.payload), 0) : "",
-      Score: measured.length + codes.reduce((n, c) => n + codePointsOf(c.payload), 0),
+      Score: (s.started_at >= WEIGHTED_SCORE_SINCE ? bugPoints : measured.length) + codes.reduce((n, c) => n + codePointsOf(c.payload), 0),
       "Session ID": s.id,
     });
 

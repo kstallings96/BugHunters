@@ -83,6 +83,9 @@ export function Ready({ count, nickname, onStart }: { count: number; nickname: s
       <p className="text-xl">
         Your bug-hunter name is <span className="font-bold text-teal">{nickname}</span>. That&apos;s you on today&apos;s leaderboard at the end.
       </p>
+      <p className="rounded-2xl border-4 border-amber bg-amber-soft px-5 py-3 text-xl font-bold">
+        A bug that looks broken is worth 1 point. A bug that looks normal but is wrong is worth 2.
+      </p>
       <BigButton onClick={onStart}>Start →</BigButton>
     </main>
   );

@@ -23,7 +23,7 @@ interface Board {
  * student's score once, then refreshes every minute as classmates
  * finish. Hidden if the server can't keep scores.
  */
-export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: number; codePoints: number }) {
+export function Leaderboard({ token, bugs, bugPoints, codePoints }: { token: string; bugs: number; bugPoints: number; codePoints: number }) {
   const [board, setBoard] = useState<Board | "off" | null>(null);
   const saved = useRef(false);
 
@@ -34,7 +34,7 @@ export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: 
         const res = await fetch("/api/leaderboard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(saved.current ? { token } : { token, bugs, codePoints }),
+          body: JSON.stringify(saved.current ? { token } : { token, bugs, bugPoints, codePoints }),
         });
         if (!res.ok) {
           if (alive && !saved.current) setBoard("off");
@@ -42,7 +42,7 @@ export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: 
         }
         const data = (await res.json()) as Board;
         if (!alive) return;
-        if (!saved.current) logEvent("leaderboard_view", { bugs, code_points: codePoints, rank: data.rows.find((r) => r.you)?.rank ?? null, players: data.players });
+        if (!saved.current) logEvent("leaderboard_view", { bugs, bug_points: bugPoints, code_points: codePoints, rank: data.rows.find((r) => r.you)?.rank ?? null, players: data.players });
         saved.current = true;
         setBoard(data);
       } catch {
@@ -55,7 +55,7 @@ export function Leaderboard({ token, bugs, codePoints }: { token: string; bugs: 
       alive = false;
       window.clearInterval(timer);
     };
-  }, [token, bugs, codePoints]);
+  }, [token, bugs, bugPoints, codePoints]);
 
   if (board === "off") return null;
   return (

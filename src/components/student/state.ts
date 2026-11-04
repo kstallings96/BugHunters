@@ -1,6 +1,6 @@
 import type { BustedBug, Progress, Step } from "@/lib/types";
 import { RAFFLE } from "@/bonus/raffle";
-import { MACHINES } from "@/machines";
+import { bugPointValue, evaluate, MACHINES } from "@/machines";
 import type { Category, Inputs, MachineId, Output } from "@/machines/types";
 
 /** Screens in order. Each maps to a logged `step`. */
@@ -173,6 +173,19 @@ export function codeQuestions(busted: BustedBug[], machineOrder: MachineId[]): C
 
 /** Bugs busted in the three apps (older sessions also had a bonus app, which doesn't count). */
 export const measuredBugs = (busted: BustedBug[]) => busted.filter((b) => b.machine !== "raffle").length;
+
+/**
+ * Leaderboard points for the bugs busted: 2 for a silent bug, 1 for a loud
+ * one, going by what the app showed for the input they busted. Each kind
+ * counts once per app, at the value it had when first busted.
+ */
+export function bugPointsFor(busted: BustedBug[]): number {
+  return busted.reduce((n, b) => {
+    if (b.machine === "raffle") return n;
+    if (!Object.keys(b.inputs).length) return n + 1;
+    return n + bugPointValue(evaluate(MACHINES[b.machine], b.inputs, { today: new Date() }).buggy.text);
+  }, 0);
+}
 
 /** Where the progress bar is: 0 questions, 1 practice, 2–4 the apps, 5 code questions, 6 done. */
 export function progressStage(screen: Screen, machineIndex: number): number {

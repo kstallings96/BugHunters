@@ -135,3 +135,6 @@ export function bugLabel(machine: Machine | MachineId | "raffle", kind: Category
 export function bugVisibility(shown: string): "loud" | "silent" {
   return shown.trim() === "" || /\?\?\?|Infinity/.test(shown) ? "loud" : "silent";
 }
+
+/** Leaderboard points for a bug: silent ones are harder to notice, so they count double. */
+export const bugPointValue = (shown: string): number => (bugVisibility(shown) === "silent" ? 2 : 1);

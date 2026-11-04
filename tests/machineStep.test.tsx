@@ -190,11 +190,16 @@ describe("a machine", () => {
   it("busting the app's vague 'Invalid input' asks if the message is clear enough", () => {
     setup();
     tryIt("", "5");
-    bust(/^Invalid input$/, "Blank");
-    expect(screen.getByText("It said no, which is fine.")).toBeTruthy();
+    click(/^💥 Busted!$/);
+    // Straight to the question: saying no was right, so nothing about what it should say or what broke it.
+    expect(screen.getByText("The app was right to say no.")).toBeTruthy();
+    expect(screen.queryByText("It should say…")).toBeNull();
     click("No, it should say what's wrong");
+    const types = logged.map((e) => e.type);
+    expect(types.indexOf("debatable_vote")).toBe(types.indexOf("busted") + 1);
     expect(logged.find((e) => e.type === "debatable_vote")?.payload).toMatchObject({ unclear_message: true, vote: "not_clear" });
-    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "debatable", unclear_message: true, expected_correct: true, counted: false });
+    expect(logged.find((e) => e.type === "busted")?.payload).toMatchObject({ verdict: "debatable", unclear_message: true, expected_correct: null, label_agreement: null, counted: false });
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("Busted! can point at an earlier try", () => {

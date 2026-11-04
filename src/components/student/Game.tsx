@@ -15,6 +15,7 @@ import { MachineReveal } from "./Reveal";
 import { MachineStep, type BustedResult } from "./MachineStep";
 import { EndScreen, GuiltyLine, SurveyScreen } from "./Screens";
 import {
+  bugPointsFor,
   categoryCounts,
   clearGame,
   codeQuestions,
@@ -118,7 +119,7 @@ export function Game({ session, onFinish }: { session: ClientSession; onFinish: 
     setStopping(false);
     go("end");
   }
-  const board = <Leaderboard token={session.token} bugs={measuredBugs(game.busted)} codePoints={codePoints(game)} />;
+  const board = <Leaderboard token={session.token} bugs={measuredBugs(game.busted)} bugPoints={bugPointsFor(game.busted)} codePoints={codePoints(game)} />;
 
   let body: React.ReactNode;
   switch (game.screen) {

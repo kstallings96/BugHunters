@@ -31,15 +31,15 @@ export interface LeaderboardRow {
   nickname: string;
   /** Class period, shown beside the nickname. */
   period: string;
-  /** Bugs busted + code question points. */
+  /** Bug points (silent bugs count double) + code question points. */
   points: number;
   you: boolean;
 }
 
 /**
  * Today's leaderboard, every class period together: nicknames, periods and
- * points (bugs busted + code question points), never names or ids.
- * POST { token, bugs, codePoints } saves this session's score and returns the
+ * points (bug points + code question points), never names or ids.
+ * POST { token, bugs, bugPoints, codePoints } saves this session's score and returns the
  * board; POST { token } only reads it. Test sessions see a board of test
  * sessions, so trying the site never shows up in a real class.
  */
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         nickname,
         bugs,
         code_points: code,
-        points: bugs + code,
+        points: Math.max(0, Math.min(MAX_BUGS * 2, Number.isInteger(body?.bugPoints) ? (body.bugPoints as number) : bugs)) + code,
         class_period: period,
         day,
         is_test: isTest,
