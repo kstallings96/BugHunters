@@ -26,9 +26,12 @@ export interface StudentRow {
   id: string;
   first_name: string;
   last_initial: string;
-  class_period: string;
+  /** The code on the student's card (the same one in the other apps). */
+  student_code?: string;
+  /** Sessions before Nov 5, 2026 picked a class period instead of a code. */
+  class_period?: string;
   created_at: string;
-  /** Blob store only: keyed fingerprint of name + period (names are encrypted). */
+  /** Blob store only: keyed fingerprint of name + code (names are encrypted). */
   name_key?: string;
 }
 
@@ -80,7 +83,8 @@ export interface ScoreRow {
   code_points?: number;
   /** The leaderboard score: bugs + code points. Absent on older rows (use bugs). */
   points?: number;
-  class_period: string;
+  /** Scores before Nov 5, 2026 only. */
+  class_period?: string;
   /** "2026-10-13" in the school's time zone. */
   day: string;
   is_test: boolean;
@@ -92,10 +96,10 @@ export interface DataStore {
   createStudent(row: StudentRow): Promise<void>;
   /** `student` is the row just created for it (the blob store indexes its name). */
   createSession(row: SessionRow, student: StudentRow): Promise<void>;
-  /** Is this stored student the person with this name and period? */
-  isStudent(student: StudentRow, name: StudentName, period: string): boolean;
-  /** Latest unfinished session today for this name and period, if any. */
-  findResumable(name: StudentName, period: string, sinceIso: string): Promise<{ sessionId: string; startedAt: string } | null>;
+  /** Is this stored student the person with this name and code? */
+  isStudent(student: StudentRow, name: StudentName, code: string): boolean;
+  /** Latest unfinished session today for this name and code, if any. */
+  findResumable(name: StudentName, code: string, sinceIso: string): Promise<{ sessionId: string; startedAt: string } | null>;
   getSession(id: string): Promise<{ session: SessionRow; student: StudentRow } | null>;
   /** Must ignore events already stored (same session_id + seq). */
   insertEvents(sessionId: string, rows: EventRow[]): Promise<void>;
@@ -105,7 +109,7 @@ export interface DataStore {
   progressEvents(sessionId: string): Promise<Pick<EventRow, "step" | "machine" | "event_type" | "payload">[]>;
   /** Leaderboard: saves this session's score (the latest one wins). */
   putScore(row: ScoreRow): Promise<void>;
-  /** Leaderboard: every score on one day, all class periods together. */
+  /** Leaderboard: every score on one day, everyone together. */
   listScores(day: string): Promise<ScoreRow[]>;
 }
 
@@ -142,12 +146,12 @@ function supabaseStore(): DataStore | null {
     async createSession(row) {
       fail("session insert", (await db.from("sessions").insert(row)).error);
     },
-    isStudent: (st, name, period) => st.class_period === period && sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name),
-    async findResumable(name, period, sinceIso) {
+    isStudent: (st, name, code) => st.student_code === code && sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name),
+    async findResumable(name, code, sinceIso) {
       const { data, error } = await db
         .from("sessions")
-        .select("id, started_at, students!inner(first_name, last_initial, class_period)")
-        .eq("students.class_period", period)
+        .select("id, started_at, students!inner(first_name, last_initial, student_code)")
+        .eq("students.student_code", code)
         .ilike("students.first_name", name.firstName)
         .ilike("students.last_initial", name.lastInitial)
         .gte("started_at", sinceIso)
@@ -285,10 +289,10 @@ export function fileStore(dir: string = process.env.LOG_DIR || defaultLogDir()):
       await mkdir(path.join(dir, "sessions"), { recursive: true });
       await writeFile(file("sessions", row.id), JSON.stringify(row, null, 2), { flag: "wx" });
     },
-    isStudent: (st, name, period) => st.class_period === period && sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name),
-    async findResumable(name, period, sinceIso) {
+    isStudent: (st, name, code) => st.student_code === code && sameName({ firstName: st.first_name, lastInitial: st.last_initial }, name),
+    async findResumable(name, code, sinceIso) {
       const students = (await readAll<StudentRow>("students")).filter(
-        (s) => s.class_period === period && sameName({ firstName: s.first_name, lastInitial: s.last_initial }, name),
+        (s) => s.student_code === code && sameName({ firstName: s.first_name, lastInitial: s.last_initial }, name),
       );
       if (!students.length) return null;
       const ids = new Set(students.map((s) => s.id));
@@ -388,17 +392,17 @@ function blobStore(): DataStore | null {
       await putJson(`students/${row.id}.json`, {
         id: row.id,
         name_enc: encryptName(name, pem),
-        name_key: nameKey(name, row.class_period),
-        class_period: row.class_period,
+        name_key: nameKey(name, row.student_code ?? ""),
+        student_code: row.student_code,
         created_at: row.created_at,
       });
     },
     async createSession(row, student) {
       await putJson(`sessions/${row.id}.json`, row);
-      const key = nameKey({ firstName: student.first_name, lastInitial: student.last_initial }, student.class_period);
+      const key = nameKey({ firstName: student.first_name, lastInitial: student.last_initial }, student.student_code ?? "");
       await putJson(`index/${key}/${row.started_at.replace(/:/g, "-")}__${row.id}.json`, {});
     },
-    isStudent: (st, name, period) => st.class_period === period && st.name_key === nameKey(name, period),
+    isStudent: (st, name, code) => st.student_code === code && st.name_key === nameKey(name, code),
     async findResumable(name, period, sinceIso) {
       const since = sinceIso.replace(/:/g, "-");
       const hits = (await listAll(`index/${nameKey(name, period)}/`))

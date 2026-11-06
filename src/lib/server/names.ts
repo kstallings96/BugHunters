@@ -24,11 +24,11 @@ export function encryptName(name: StudentName, pem: string): string {
   return publicEncrypt({ key: pem, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" }, plain).toString("base64");
 }
 
-/** Keyed fingerprint of a name and period, case-insensitive. */
-export function nameKey(name: StudentName, period: string): string {
+/** Keyed fingerprint of a name and student code, case-insensitive. */
+export function nameKey(name: StudentName, code: string): string {
   const secret = process.env.SESSION_SECRET ?? "";
   return createHmac("sha256", secret)
-    .update(`${name.firstName.toLowerCase()}|${name.lastInitial.toUpperCase()}|${period}`)
+    .update(`${name.firstName.toLowerCase()}|${name.lastInitial.toUpperCase()}|${code}`)
     .digest("hex")
     .slice(0, 32);
 }

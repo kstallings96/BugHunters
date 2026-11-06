@@ -42,7 +42,7 @@ export interface ClientSession {
   nudgeSeconds: number;
   firstName: string;
   lastInitial: string;
-  period: string;
+  studentCode: string;
   /** Present when the student chose "Keep going" on a session from earlier today. */
   progress: Progress | null;
 }

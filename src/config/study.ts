@@ -1,3 +1,4 @@
+import { normalizeCode } from "@/lib/identity";
 import type { MachineId } from "@/machines/types";
 
 /**
@@ -7,8 +8,8 @@ import type { MachineId } from "@/machines/types";
  */
 
 export interface StudySettings {
-  /** Class periods students pick from. */
-  periods: string[];
+  /** The class's student codes. Empty: any code-shaped code is accepted. */
+  studentCodes: string[];
   /** Seconds on one machine before "Ready for the next app?" appears. Never auto-advances. */
   nudgeSeconds: number;
   /** Used to decide what "today" means when resuming a session by name. */
@@ -21,12 +22,13 @@ function number(value: string | undefined, fallback: number, min: number, max: n
 }
 
 export function readStudySettings(env: Record<string, string | undefined> = process.env): StudySettings {
-  const periods = (env.CLASS_PERIODS ?? "1,2,3,4,5,6,7,8")
+  // Set on the server only: the repo is public and these are live login codes.
+  const studentCodes = (env.STUDENT_CODES ?? "")
     .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
+    .map(normalizeCode)
+    .filter((c): c is string => c !== null);
   return {
-    periods: periods.length ? periods : ["1"],
+    studentCodes,
     nudgeSeconds: number(env.NUDGE_SECONDS, 300, 30, 3600),
     timeZone: env.SCHOOL_TIMEZONE?.trim() || "America/Chicago",
   };
@@ -43,6 +45,11 @@ export function machineOrder(param: string | null | undefined, random: () => num
     return { order: [first, first === "savings" ? "sale" : "savings", "monster"], assignment: "url" };
   }
   return { order: random() < 0.5 ? ["savings", "sale", "monster"] : ["sale", "savings", "monster"], assignment: "random" };
+}
+
+/** May this (normalized) code sign in? */
+export function codeAllowed(code: string, settings: Pick<StudySettings, "studentCodes">): boolean {
+  return !settings.studentCodes.length || settings.studentCodes.includes(code);
 }
 
 export type RevealCondition = "reveal" | "end_only";

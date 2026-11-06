@@ -23,7 +23,7 @@ export interface BackupRecord {
 }
 
 export interface BackupContents {
-  meta: { session_id: string; first_name: string; last_initial: string; class_period: string; machine_order: string[]; reveal_condition: string };
+  meta: { session_id: string; first_name: string; last_initial: string; student_code?: string; class_period?: string; machine_order: string[]; reveal_condition: string };
   events: { sid: string; seq: number; client_ts: string; step: string; machine: string | null; event_type: string; payload: Record<string, unknown> }[];
 }
 

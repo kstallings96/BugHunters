@@ -1,7 +1,8 @@
 import { hasBadWords } from "./clean";
 /**
- * Students sign in with a first name, last initial and class period. These
- * rules are shared by the login screen and the server so both agree.
+ * Students sign in with a first name, last initial and the student code on
+ * their card. These rules are shared by the login screen and the server so
+ * both agree.
  */
 
 export interface StudentName {
@@ -34,6 +35,17 @@ export function normalizeName(firstName: unknown, lastInitial: unknown): Student
 /** Same person? Case-insensitive, after normalizing. */
 export function sameName(a: StudentName, b: StudentName): boolean {
   return a.firstName.toLowerCase() === b.firstName.toLowerCase() && a.lastInitial.toUpperCase() === b.lastInitial.toUpperCase();
+}
+
+// Same shape as VibeBuilder, CTx3 and RowdyRoboVac, so one student's data joins
+// across the week on this code. Real codes never go in this repo: it's public.
+const CODE = /^[A-Z]{3}[0-9]{2}$/;
+
+/** What the student typed, as a code, or null if it could never be one. Lowercase, spaces and dashes are forgiven. */
+export function normalizeCode(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return CODE.test(cleaned) ? cleaned : null;
 }
 
 /** Pilot sessions: a first name starting with "Test" (any capitalization), or ?test=1. */

@@ -16,7 +16,7 @@ const MAX_BUGS = [...NUMBER_MACHINES, "monster" as const].reduce((n, id) => n + 
  */
 const BOARD_TTL_MS = 30_000;
 let board: { day: string; at: number; scores: Map<string, ScoreRow> } | null = null;
-const sessions = new Map<string, { period: string; isTest: boolean }>();
+const sessions = new Map<string, { isTest: boolean }>();
 
 async function todaysScores(store: DataStore, day: string): Promise<ScoreRow[]> {
   if (!board || board.day !== day || Date.now() - board.at > BOARD_TTL_MS) {
@@ -29,15 +29,13 @@ async function todaysScores(store: DataStore, day: string): Promise<ScoreRow[]> 
 export interface LeaderboardRow {
   rank: number;
   nickname: string;
-  /** Class period, shown beside the nickname. */
-  period: string;
   /** Bug points (silent bugs count double) + code question points. */
   points: number;
   you: boolean;
 }
 
 /**
- * Today's leaderboard, every class period together: nicknames, periods and
+ * Today's leaderboard, everyone together: nicknames and
  * points (bug points + code question points), never names or ids.
  * POST { token, bugs, bugPoints, codePoints } saves this session's score and returns the
  * board; POST { token } only reads it. Test sessions see a board of test
@@ -56,10 +54,10 @@ export async function POST(request: Request) {
     if (!who) {
       const found = await store.getSession(sessionId);
       if (!found) return Response.json({ error: "session" }, { status: 404 });
-      who = { period: found.student.class_period, isTest: found.session.is_test };
+      who = { isTest: found.session.is_test };
       sessions.set(sessionId, who);
     }
-    const { period, isTest } = who;
+    const { isTest } = who;
     const day = dayKey(readStudySettings().timeZone);
     const nickname = nicknameFor(sessionId);
 
@@ -72,7 +70,6 @@ export async function POST(request: Request) {
         bugs,
         code_points: code,
         points: Math.max(0, Math.min(MAX_BUGS * 2, Number.isInteger(body?.bugPoints) ? (body.bugPoints as number) : bugs)) + code,
-        class_period: period,
         day,
         is_test: isTest,
         updated_at: new Date().toISOString(),
@@ -90,7 +87,7 @@ export async function POST(request: Request) {
     let rank = 0;
     scores.forEach((s, i) => {
       if (i === 0 || s.points !== scores[i - 1].points) rank = i + 1;
-      rows.push({ rank, nickname: s.nickname, period: s.class_period, points: s.points, you: s.session_id === sessionId });
+      rows.push({ rank, nickname: s.nickname, points: s.points, you: s.session_id === sessionId });
     });
     // The top 8, plus your own row if you're further down (fits a 768px-tall laptop).
     const top = rows.slice(0, 8);

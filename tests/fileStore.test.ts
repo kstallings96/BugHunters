@@ -6,7 +6,7 @@ import { fileStore, progressFrom, type EventRow, type SessionRow, type StudentRo
 
 const sid = "6f1c2c1e-0000-4000-8000-000000000001";
 const stid = "6f1c2c1e-0000-4000-8000-0000000000aa";
-const student: StudentRow = { id: stid, first_name: "Jayden", last_initial: "R", class_period: "3", created_at: "2026-10-14T15:00:00.000Z" };
+const student: StudentRow = { id: stid, first_name: "Jayden", last_initial: "R", student_code: "ABC23", created_at: "2026-10-14T15:00:00.000Z" };
 const session: SessionRow = {
   id: sid,
   student_id: stid,
@@ -65,16 +65,16 @@ describe("file store", () => {
     expect(lines.map((l) => JSON.parse(l).seq)).toEqual([1, 2, 3, 4]);
   });
 
-  it("finds today's unfinished session by name and period, ignoring case", async () => {
+  it("finds today's unfinished session by name and code, ignoring case", async () => {
     const store = fileStore(dir);
     await store.createStudent(student);
     await store.createSession(session, student);
     const since = "2026-10-14T05:00:00.000Z";
-    expect(await store.findResumable({ firstName: "jayden", lastInitial: "r" }, "3", since)).toEqual({ sessionId: sid, startedAt: session.started_at });
-    expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "4", since)).toBeNull();
-    expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "3", "2026-10-15T05:00:00.000Z")).toBeNull();
+    expect(await store.findResumable({ firstName: "jayden", lastInitial: "r" }, "ABC23", since)).toEqual({ sessionId: sid, startedAt: session.started_at });
+    expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "DEF45", since)).toBeNull();
+    expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "ABC23", "2026-10-15T05:00:00.000Z")).toBeNull();
     await store.markEnded(sid, "2026-10-14T15:10:00.000Z");
-    expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "3", since)).toBeNull();
+    expect(await store.findResumable({ firstName: "Jayden", lastInitial: "R" }, "ABC23", since)).toBeNull();
   });
 
   it("tracks the current step and machine for the facilitator view", async () => {

@@ -4,6 +4,7 @@
  *
  *   npm run pull                          from the cloud (Vercel Blob), new files only
  *   npm run pull -- --all                 from the cloud, every file again
+ *   npm run pull -- --since 2026-11-06    from the cloud, only files saved on or after that day
  *   npm run pull -- --backup a.json b.json  from Chromebook backup files
  *
  * Both can be run any number of times, in any order: events are merged by
@@ -16,6 +17,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { get, list } from "@vercel/blob";
+import { readStudySettings, startOfToday } from "@/config/study";
 import { isTestName } from "@/lib/identity";
 import { decryptBackupRecord, decryptName, type BackupRecord } from "@/lib/researcher/decrypt";
 import { defaultLogDir, type EventRow, type SessionRow, type StudentRow } from "@/lib/server/storage";
@@ -74,14 +76,14 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T) => Promise<R>): Prom
  */
 const pulledPath = path.join(dir, "pulled-files.json");
 
-async function fromCloud(pem: string, all: boolean) {
+async function fromCloud(pem: string, all: boolean, since: string | null) {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (!token) throw new Error("Set BLOB_READ_WRITE_TOKEN in .env.local (vercel env pull) to pull from the cloud.");
   const blobs: string[] = [];
   let cursor: string | undefined;
   do {
     const page = await list({ token, cursor });
-    blobs.push(...page.blobs.map((b) => b.pathname));
+    blobs.push(...page.blobs.filter((b) => !since || b.uploadedAt.toISOString() >= since).map((b) => b.pathname));
     cursor = page.hasMore ? page.cursor : undefined;
   } while (cursor);
   const pulled = new Set<string>(!all && existsSync(pulledPath) ? JSON.parse(await readFile(pulledPath, "utf8")) : []);
@@ -107,7 +109,7 @@ async function fromCloud(pem: string, all: boolean) {
   await pool(fresh.filter((b) => b.startsWith("students/")), 12, async (p) => {
     const s = await fetchJson(p);
     const name = decryptName(s.name_enc, pem);
-    const row: StudentRow = { id: s.id, ...name, class_period: s.class_period, created_at: s.created_at };
+    const row: StudentRow = { id: s.id, ...name, student_code: s.student_code, class_period: s.class_period, created_at: s.created_at };
     await writeJson("students", row);
     students++;
   });
@@ -160,7 +162,7 @@ async function fromBackups(files: string[], pem: string) {
         const studentId = uuidFrom(`backup-student:${meta.session_id}`);
         const first = [...events].sort((a, b) => a.seq - b.seq)[0];
         const end = events.find((e) => e.event_type === "session_end");
-        const student: StudentRow = { id: studentId, first_name: meta.first_name, last_initial: meta.last_initial, class_period: meta.class_period, created_at: first?.client_ts ?? r.saved_at };
+        const student: StudentRow = { id: studentId, first_name: meta.first_name, last_initial: meta.last_initial, student_code: meta.student_code, class_period: meta.class_period, created_at: first?.client_ts ?? r.saved_at };
         await writeJson("students", student);
         await writeJson("sessions", {
           id: meta.session_id,
@@ -194,12 +196,21 @@ async function fromBackups(files: string[], pem: string) {
   console.log(`backups: ${files.length} file(s), ${created} session(s) only on devices, ${added} new events`);
 }
 
+/** --since 2026-11-06 as the start of that day at school, or null. */
+function sinceArg(): string | null {
+  const i = process.argv.indexOf("--since");
+  if (i < 0) return null;
+  const day = process.argv[i + 1] ?? "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("--since needs a date like 2026-11-06.");
+  return startOfToday(readStudySettings().timeZone, new Date(`${day}T12:00:00Z`));
+}
+
 async function main() {
   if (!existsSync(keyPath)) throw new Error(`No private key at ${keyPath}. It was made by npm run keys on the researcher's laptop.`);
   const pem = await readFile(keyPath, "utf8");
   const i = process.argv.indexOf("--backup");
   if (i >= 0) await fromBackups(process.argv.slice(i + 1), pem);
-  else await fromCloud(pem, process.argv.includes("--all"));
+  else await fromCloud(pem, process.argv.includes("--all"), sinceArg());
   console.log(`Saved to ${dir}. Next: npm run export`);
 }
 

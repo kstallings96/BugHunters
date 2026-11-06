@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
-import { isTestName, normalizeName } from "@/lib/identity";
+import { codeAllowed, machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
+import { isTestName, normalizeCode, normalizeName } from "@/lib/identity";
 import { dataStore, progressFrom, type SessionRow, type StudentRow } from "@/lib/server/storage";
 import { issueToken } from "@/lib/server/token";
 import { APP_VERSION, configVersion } from "@/lib/server/version";
@@ -20,8 +20,9 @@ export async function POST(request: Request) {
   if (!body) return Response.json({ error: "name" }, { status: 400 });
   const name = normalizeName(body.firstName, body.lastInitial);
   const settings = readStudySettings();
-  const period = typeof body.period === "string" ? body.period : "";
-  if (!name || !settings.periods.includes(period)) return Response.json({ error: "name" }, { status: 400 });
+  const code = normalizeCode(body.code);
+  if (!name) return Response.json({ error: "name" }, { status: 400 });
+  if (!code || !codeAllowed(code, settings)) return Response.json({ error: "code" }, { status: 400 });
 
   const store = dataStore();
   // Names come from what the student typed (stored copies may be encrypted).
@@ -36,14 +37,14 @@ export async function POST(request: Request) {
       nudgeSeconds: settings.nudgeSeconds,
       firstName: name.firstName,
       lastInitial: name.lastInitial,
-      period,
+      studentCode: code,
       progress,
     };
     return Response.json(out);
   };
 
   try {
-    // Resume: only a session from today, unfinished, for this same name and period.
+    // Resume: only a session from today, unfinished, for this same name and code.
     if (typeof body.resume === "string") {
       const found = await store.getSession(body.resume);
       const s = found?.session;
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
         st &&
         !s.ended_at &&
         s.started_at >= startOfToday(settings.timeZone) &&
-        store.isStudent(st, name, period)
+        store.isStudent(st, name, code)
       ) {
         return reply(s, progressFrom(await store.progressEvents(s.id)));
       }
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
       id: randomUUID(),
       first_name: name.firstName,
       last_initial: name.lastInitial,
-      class_period: period,
+      student_code: code,
       created_at: now,
     };
     const session: SessionRow = {

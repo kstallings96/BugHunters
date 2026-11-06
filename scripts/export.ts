@@ -172,7 +172,8 @@ const WHO: [string, string][] = [
         ["Last initial", "As typed at login."],
       ] as [string, string][])
     : []),
-  ["Period", "Class period picked at login."],
+  ["Student code", "The code on the student's card, typed at login. The same code is used in the other apps, so this joins their data. Blank before Nov 5, 2026."],
+  ["Period", "Class period picked at login. Only sessions before Nov 5, 2026; the column is left out if there are none."],
   ["Nickname", "The bug-hunter nickname shown on screen and on the leaderboard (made from the session, never the name)."],
   ["Test login", 'Yes if the first name started with "Test" (or the link had ?test=1). Filter these out for analysis.'],
 ];
@@ -295,11 +296,13 @@ async function main() {
   // Real students first, then test logins; oldest first within each.
   sessions.sort((a, b) => Number(a.is_test) - Number(b.is_test) || a.started_at.localeCompare(b.started_at));
 
+  const anyPeriod = sessions.some((s) => students.get(s.student_id)?.class_period);
   const who = (s: SessionRow): Row => {
     const st = students.get(s.student_id);
     return {
       ...(withNames ? { "First name": st?.first_name ?? "", "Last initial": st?.last_initial ?? "" } : {}),
-      Period: st?.class_period ?? "",
+      "Student code": st?.student_code ?? "",
+      ...(anyPeriod ? { Period: st?.class_period ?? "" } : {}),
       Nickname: nicknameFor(s.id),
       "Test login": yes(s.is_test),
     };
@@ -384,7 +387,7 @@ async function main() {
         "Used all 8 tries": yes(m.tries_used_up),
         "Session ID": s.id,
       });
-      rawMetrics.push({ ...m, student_id: s.student_id, ...(withNames ? { first_name: students.get(s.student_id)?.first_name, last_initial: students.get(s.student_id)?.last_initial } : {}), class_period: students.get(s.student_id)?.class_period ?? "" });
+      rawMetrics.push({ ...m, student_id: s.student_id, ...(withNames ? { first_name: students.get(s.student_id)?.first_name, last_initial: students.get(s.student_id)?.last_initial } : {}), student_code: students.get(s.student_id)?.student_code ?? "", class_period: students.get(s.student_id)?.class_period ?? "" });
     }
 
     for (const e of ev) {
@@ -446,6 +449,7 @@ async function main() {
       session_id: s.id,
       student_id: s.student_id,
       ...(withNames ? { first_name: st?.first_name ?? "", last_initial: st?.last_initial ?? "" } : {}),
+      student_code: st?.student_code ?? "",
       class_period: st?.class_period ?? "",
       nickname: nicknameFor(s.id),
       is_test: s.is_test,

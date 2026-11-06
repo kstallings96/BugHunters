@@ -128,7 +128,7 @@ export function beginSession(s: ClientSession, publicKey: string | null = null):
     session_id: s.id,
     first_name: s.firstName,
     last_initial: s.lastInitial,
-    class_period: s.period,
+    student_code: s.studentCode,
     machine_order: s.machineOrder,
     reveal_condition: s.revealCondition,
   });

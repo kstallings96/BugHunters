@@ -3,15 +3,15 @@
 import { Logo } from "./Logo";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { hasBadWords } from "@/lib/clean";
-import { normalizeName, type StudentName } from "@/lib/identity";
+import { normalizeCode, normalizeName, type StudentName } from "@/lib/identity";
 import { beginSession, logEvent, savedSession, setStep, startLogger } from "@/lib/logger";
 import type { ClientSession } from "@/lib/types";
 import { Game } from "./student/Game";
 import { BigButton, Card } from "./ui";
 
 /**
- * Log in: first name, last initial, class period → "Is this you?" → "Keep
- * going where you left off?" if this name and period already started today
+ * Log in: first name, last initial, student code → "Is this you?" → "Keep
+ * going where you left off?" if this name and code already started today
  * → the game.
  */
 
@@ -37,12 +37,12 @@ async function post(url: string, body: object): Promise<{ status: number; data: 
   return { status: 0, data: null };
 }
 
-export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey: string | null }) {
+export function StartFlow({ publicKey }: { publicKey: string | null }) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [session, setSession] = useState<ClientSession | null>(null);
   const [first, setFirst] = useState("");
   const [initial, setInitial] = useState("");
-  const [period, setPeriod] = useState("");
+  const [code, setCode] = useState("");
   const [name, setName] = useState<StudentName | null>(null);
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -71,10 +71,10 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function fail(status: number) {
+  function fail(status: number, data: Record<string, unknown> | null) {
     if (status === 400) {
       setPhase("name");
-      setProblem("Please check your name and period.");
+      setProblem(data?.error === "code" ? "We don't have that student code. Check your card." : "Please check your name.");
     } else {
       setProblem("We can't connect. Ask your teacher.");
     }
@@ -85,8 +85,10 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
     if (hasBadWords(first)) return setProblem("Please type your real first name.");
     const n = normalizeName(first, initial);
     if (!n) return setProblem("Use letters only, please.");
-    if (!period) return setProblem("Pick your class period.");
+    const c = normalizeCode(code);
+    if (!c) return setProblem("Check your student code. It looks like ABC12.");
     setProblem(null);
+    setCode(c);
     setName(n);
     setPhase("confirm");
   }
@@ -95,9 +97,9 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
     if (!name || busy) return;
     setBusy(true);
     setProblem(null);
-    const { status, data } = await post("/api/login", { ...name, period });
+    const { status, data } = await post("/api/login", { ...name, code });
     setBusy(false);
-    if (status !== 200) return fail(status);
+    if (status !== 200) return fail(status, data);
     const found = (data?.resume as { sessionId: string } | null) ?? null;
     if (found) {
       setResumeId(found.sessionId);
@@ -113,7 +115,7 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
     setProblem(null);
     const { status, data } = await post("/api/session", {
       ...name,
-      period,
+      code,
       resume,
       params: urlParams(),
       screen: { width: window.screen.width, height: window.screen.height },
@@ -121,7 +123,7 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
     });
     setBusy(false);
     if (status === 409) return start(null); // that session can't be resumed: start fresh
-    if (status !== 200 || !data) return fail(status);
+    if (status !== 200 || !data) return fail(status, data);
     const s = data as unknown as ClientSession;
     beginSession(s, publicKey);
     setStep("setup");
@@ -142,7 +144,7 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
           setSession(null);
           setFirst("");
           setInitial("");
-          setPeriod("");
+          setCode("");
           setName(null);
           setPhase("name");
         }}
@@ -180,18 +182,11 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
               </label>
             </div>
             <label className="flex flex-col gap-1">
-              <span className="text-lg font-bold text-ink-soft">Class period</span>
-              <select className={input} value={period} onChange={(e) => setPeriod(e.target.value)}>
-                <option value="">Pick one</option>
-                {periods.map((p) => (
-                  <option key={p} value={p}>
-                    Period {p}
-                  </option>
-                ))}
-              </select>
+              <span className="text-lg font-bold text-ink-soft">Student code</span>
+              <input className={`${input} uppercase`} value={code} onChange={(e) => setCode(e.target.value)} maxLength={8} autoComplete="off" spellCheck={false} />
             </label>
             {problem && <p className="text-xl font-bold text-danger">{problem}</p>}
-            <BigButton type="submit" disabled={!first.trim() || !initial.trim() || !period}>
+            <BigButton type="submit" disabled={!first.trim() || !initial.trim() || !code.trim()}>
               Next →
             </BigButton>
           </form>
@@ -202,7 +197,7 @@ export function StartFlow({ periods, publicKey }: { periods: string[]; publicKey
         <Card className="flex w-full flex-col items-center gap-5 text-center">
           <h1 className="text-3xl font-bold">Is this you?</h1>
           <p className="rounded-2xl bg-amber-soft px-6 py-3 text-4xl font-bold">
-            {who} Period {period}
+            {who} {code}
           </p>
           {problem && <p className="text-xl font-bold text-danger">{problem}</p>}
           <div className="flex gap-4">

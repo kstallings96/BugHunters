@@ -20,7 +20,7 @@ export interface BackupMeta {
   session_id: string;
   first_name: string;
   last_initial: string;
-  class_period: string;
+  student_code: string;
   machine_order: string[];
   reveal_condition: string;
 }

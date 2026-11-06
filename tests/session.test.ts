@@ -1,18 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
+import { codeAllowed, machineOrder, readStudySettings, revealCondition, startOfToday } from "@/config/study";
 import { parseBatch } from "@/lib/eventBatch";
-import { isTestName, normalizeName, sameName } from "@/lib/identity";
+import { isTestName, normalizeCode, normalizeName, sameName } from "@/lib/identity";
 
 describe("study settings", () => {
-  it("defaults: periods 1-8, 5-minute nudge, Central time", () => {
-    expect(readStudySettings({})).toEqual({ periods: ["1", "2", "3", "4", "5", "6", "7", "8"], nudgeSeconds: 300, timeZone: "America/Chicago" });
+  it("defaults: no code list, 5-minute nudge, Central time", () => {
+    expect(readStudySettings({})).toEqual({ studentCodes: [], nudgeSeconds: 300, timeZone: "America/Chicago" });
   });
   it("reads env values", () => {
-    expect(readStudySettings({ CLASS_PERIODS: " 2, 4 ,6A ", NUDGE_SECONDS: "5", SCHOOL_TIMEZONE: "America/New_York" })).toEqual({
-      periods: ["2", "4", "6A"],
+    expect(readStudySettings({ STUDENT_CODES: " abc23, DEF-45 ,nope ", NUDGE_SECONDS: "5", SCHOOL_TIMEZONE: "America/New_York" })).toEqual({
+      studentCodes: ["ABC23", "DEF45"],
       nudgeSeconds: 30,
       timeZone: "America/New_York",
     });
+  });
+});
+
+describe("student codes", () => {
+  it("forgives lowercase, spaces and dashes, and refuses anything not shaped like a code", () => {
+    expect(normalizeCode(" abc-12 ")).toBe("ABC12");
+    // Other apps' rosters use I, O, 0 and 1 too, so those must pass.
+    expect(normalizeCode("OIL10")).toBe("OIL10");
+    for (const bad of ["", "AB12", "ABCD1", "ABC1", "12ABC", null, 12]) expect(normalizeCode(bad)).toBeNull();
+  });
+  it("any code-shaped code works with no list; with a list, only those", () => {
+    expect(codeAllowed("ABC12", { studentCodes: [] })).toBe(true);
+    expect(codeAllowed("ABC12", { studentCodes: ["DEF34"] })).toBe(false);
+    expect(codeAllowed("DEF34", { studentCodes: ["DEF34"] })).toBe(true);
   });
 });
 

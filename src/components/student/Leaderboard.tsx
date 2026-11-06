@@ -6,7 +6,6 @@ import { logEvent } from "@/lib/logger";
 interface Row {
   rank: number;
   nickname: string;
-  period: string;
   points: number;
   you: boolean;
 }
@@ -18,7 +17,7 @@ interface Board {
 }
 
 /**
- * Today's leaderboard on the end screen, all class periods together:
+ * Today's leaderboard on the end screen, everyone together:
  * nicknames only. Saves this
  * student's score once, then refreshes every minute as classmates
  * finish. Hidden if the server can't keep scores.
@@ -75,7 +74,6 @@ export function Leaderboard({ token, bugs, bugPoints, codePoints }: { token: str
                 {r.nickname}
                 {r.you && <span className="sr-only"> (you)</span>}
               </span>
-              <span className={`text-sm ${r.you ? "text-white" : "text-ink-soft"}`}>P{r.period}</span>
               <span className="tabular-nums">{r.points} {r.points === 1 ? "point" : "points"}</span>
             </li>
           ))}
